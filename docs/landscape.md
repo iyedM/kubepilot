@@ -9,6 +9,9 @@
   few secondary sources where marked. **No tool was installed or run** for
   this check; capability statements come from documentation, not from hands-on
   testing.
+- **Marker:** statements about proprietary products (Datadog, Dynatrace,
+  Komodor, Causely) that come from the vendor's own documentation, blog or
+  press material are tagged *(vendor claim, untested)*.
 
 ## Summary
 
@@ -21,7 +24,7 @@
 | Pixie | eBPF auto-telemetry for K8s, CNCF Sandbox | Apache-2.0 | 6.5k★, low activity (9 commits / 90 d), latest GitHub "release" 2025-01 | No RCA; scriptable queries (PxL) | No |
 | Grafana Beyla / OBI | eBPF auto-instrumentation (Beyla = Grafana distribution of OTel eBPF Instrumentation) | Apache-2.0 | Beyla 2.1k★, v3.38.0 (2026-10-05); OBI v0.15.2 (2026-10-16) | None (instrumentation only) | No: produces spans, does not diagnose |
 | Grafana Cloud AI Observability | Hosted dashboards for LLM apps (OpenLIT-based) | Proprietary SaaS (OpenLIT itself is open source) | n/a | Dashboards, no RCA described | No |
-| Datadog LLM Observability (+ Watchdog RCA) | Proprietary SaaS | Proprietary | n/a | Watchdog RCA (ML, generic); LLM spans linked to APM spans | Partial: LLM ↔ APM navigation is documented; automated LLM-trace ↔ K8s RCA not found in docs |
+| Datadog LLM Observability (+ Watchdog RCA) | Proprietary SaaS | Proprietary | n/a | Watchdog RCA (ML, generic); LLM spans linked to APM spans *(vendor claim, untested)* | Partial: LLM ↔ APM navigation is documented *(vendor claim, untested)*; automated LLM-trace ↔ K8s RCA not found in docs |
 
 **Verdict (see §Conclusion):** no tool found that does the exact thing
 KubePilot targets. The niche looks **open but narrow**, with Coroot and
@@ -127,14 +130,14 @@ HolmesGPT as the most credible "could do it next" threats.
 ### Datadog LLM Observability and Watchdog RCA
 
 - LLM Observability is built on the APM tracer; LLM spans and APM spans are
-  linked and navigable both ways.
+  linked and navigable both ways. *(vendor claim, untested)*
 - Watchdog RCA (GA) infers causal chains between application and
-  infrastructure anomalies, including Kubernetes.
+  infrastructure anomalies, including Kubernetes. *(vendor claim, untested)*
 - Datadog's own vLLM integration post (2024-11-22) states the intent to
   correlate model-server metrics with infrastructure: *"By correlating LLM
   performance data with the infrastructure metrics that you're already
   collecting in Datadog"*, with the example *"Datadog can help you trace the
-  issue back to its root cause, such as GPU saturation."* That post is about
+  issue back to its root cause, such as GPU saturation."* *(vendor claim, untested)* That post is about
   vLLM **metrics** and dashboards; it does not tie the correlation to LLM
   Observability **traces** or describe an automated causal ranking.
 - This check **did not find** documentation showing an automated RCA that
@@ -179,7 +182,7 @@ HolmesGPT as the most credible "could do it next" threats.
      **measured** (P3), not asserted: reproducibility, cost, latency and
      accuracy on the same cases.
    - *Dynatrace Davis* (not reviewed in depth) claims causal RCA that
-     includes LLM telemetry. It is the main commercial reference point, but it
+     includes LLM telemetry *(vendor claim, untested)*. It is the main commercial reference point, but it
      is proprietary and not self-hosted open source.
 3. **What KubePilot must bring to be worth existing:**
    - GenAI-specific signal model (TTFT, inter-token latency, token counts,
@@ -203,15 +206,15 @@ HolmesGPT as the most credible "could do it next" threats.
   - **Komodor (Klaudia):** proprietary AI SRE agent inside Komodor's K8s
     platform; combines ML with Komodor's history of changes, events and
     metrics; launch coverage says it was built on an LLM hosted on Amazon
-    Bedrock. [Klaudia overview](https://help.komodor.com/hc/en-us/articles/22447540595218)
+    Bedrock. *(vendor claim, untested)* [Klaudia overview](https://help.komodor.com/hc/en-us/articles/22447540595218)
   - **Causely:** proprietary "causal AI" platform for Kubernetes
     applications, with Grafana (via Beyla) and Datadog Watchdog integrations
-    and an MCP server (2025-11).
+    and an MCP server (2025-11). *(vendor claim, untested)*
     [Datadog integration page](https://docs.datadoghq.com/integrations/causely/),
     [MCP server press release](https://www.businesswire.com/news/home/20251106134583/en/Causely-Introduces-MCP-Server-for-Automated-Remediation-Across-Kubernetes-and-Application-Code)
   - **Dynatrace Davis AI:** proprietary causal engine over Smartscape
     topology, with a generative layer on top; Dynatrace says it connects LLM
-    telemetry to its causal topology. Likely the strongest commercial
+    telemetry to its causal topology *(vendor claim, untested)*. Likely the strongest commercial
     "deterministic RCA + LLM telemetry" offering; not self-hosted open source.
     [Dynatrace AI](https://dynatrace.com/ai),
     [TechTarget analysis](https://www.techtarget.com/searchapparchitecture/tip/Dynatrace-bets-on-causal-intelligence-for-AI-observability)
