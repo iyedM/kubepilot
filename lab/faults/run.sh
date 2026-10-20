@@ -22,6 +22,11 @@ source "$(dirname "$0")/lib.sh"
 QUIET_S="${QUIET_S:-300}"
 QUIET_MAX_WAIT_S="${QUIET_MAX_WAIT_S:-420}"
 BASELINE_S="${BASELINE_S:-180}"
+# Wall-clock guard: a phase whose real duration differs from the planned one
+# by more than PHASE_TOLERANCE (fraction) makes the run invalid. `sleep`
+# counts monotonic time, which stops while the machine is suspended, so a
+# suspend shows up as a phase much longer on the wall clock than planned.
+PHASE_TOLERANCE="${PHASE_TOLERANCE:-0.20}"
 FAULT_S="${FAULT_S:-300}"
 RECOVERY_S="${RECOVERY_S:-180}"
 
@@ -96,6 +101,30 @@ on_error() {
 }
 trap 'on_error ${LINENO} $?' ERR
 
+# abort_run REASON: undo the injection if there was one, then mark invalid.
+abort_run() {
+  if [[ "${injected}" == true ]]; then
+    "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
+    reapply_declared || true
+    injected=false
+  fi
+  finish_invalid "$1"
+}
+
+# timed_phase NAME SECONDS: sleep, then check the real (wall-clock) duration.
+timed_phase() {
+  local name="$1" planned="$2" t0 t1 real
+  t0="$(date +%s)"
+  sleep "${planned}"
+  t1="$(date +%s)"
+  real=$(( t1 - t0 ))
+  run_set "${dir}" '.phase_seconds[$n] = {planned: ($p | tonumber), real: ($r | tonumber)}' \
+    --arg n "${name}" --arg p "${planned}" --arg r "${real}"
+  if ! awk -v r="${real}" -v p="${planned}" -v t="${PHASE_TOLERANCE}" 'BEGIN {exit !(r >= p * (1 - t) && r <= p * (1 + t))}'; then
+    abort_run "phase ${name} lasted ${real}s instead of ${planned}s (machine suspended?)"
+  fi
+}
+
 finish_invalid() {
   note "${dir}" "$1"
   set_status "${dir}" invalid
@@ -129,7 +158,7 @@ fi
 mark "${dir}" baseline_start
 phase_begin "${dir}" baseline
 log "baseline ${BASELINE_S}s"
-sleep "${BASELINE_S}"
+timed_phase baseline "${BASELINE_S}"
 phase_end "${dir}" baseline
 
 # --- fault -------------------------------------------------------------------------
@@ -156,7 +185,7 @@ if [[ "${kind}" == fault ]]; then
     active_from: .timeline.inject_start, active_to: null}]'
 fi
 log "fault window ${FAULT_S}s"
-sleep "${FAULT_S}"
+timed_phase fault "${FAULT_S}"
 if [[ "${kind}" == fault ]]; then
   if "${FAULTS_DIR}/${fault}.sh" check "${dir}" > "${dir}/check.txt" 2>&1; then
     run_set "${dir}" '.check = {script: $s, result: "pass"}' --arg s "lab/faults/check-fault.sh ${fault}"
@@ -188,7 +217,7 @@ fi
 # --- recovery ----------------------------------------------------------------------
 phase_begin "${dir}" recovery
 log "recovery ${RECOVERY_S}s"
-sleep "${RECOVERY_S}"
+timed_phase recovery "${RECOVERY_S}"
 phase_end "${dir}" recovery
 mark "${dir}" end
 

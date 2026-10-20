@@ -75,6 +75,16 @@ quiet; if it does not, the run is `invalid` and `notes` says why (the last
 change seen and the number of changes). The start of the quiet period is
 recorded as `timeline.quiet_since`.
 
+**Wall-clock guard (precondition of a valid run).** Each waiting phase
+(baseline, fault window, recovery) is timed on the wall clock and recorded in
+`phase_seconds` (`planned`, `real`). `sleep` counts monotonic time, which
+stops while the machine is suspended, so a suspend makes a phase last much
+longer in real time than planned (on 2026-10-20 a lid-close suspend turned a
+180 s baseline into 20 907 s). If a phase differs from its planned duration
+by more than `PHASE_TOLERANCE` (20 %), the run is `invalid` with the reason
+`phase X lasted Ns instead of Ms (machine suspended?)`, the lab is reset if
+the fault was already injected, and the run is moved to `eval/runs/invalid/`.
+
 Kubernetes keeps events for 1 hour (`--event-ttl`); every run is far shorter
 and exports its events, traces and metrics at the end, so runs can be
 re-scored offline after Tempo (24 h) and Prometheus (2 d) retention.

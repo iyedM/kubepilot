@@ -6,9 +6,17 @@ include lab/versions.env
 EVENT_TTL ?= 1h
 SHELLCHECK_IMAGE ?= koalaman/shellcheck:v0.11.0
 PYTHON_IMAGE ?= python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+# INHIBIT_SLEEP=1 keeps the machine awake (no suspend, no lid-switch action)
+# during long runs; off by default (docs/lab.md, "Suspend during a run").
+INHIBIT_SLEEP ?= 0
+ifeq ($(INHIBIT_SLEEP),1)
+INHIBIT := systemd-inhibit --what=sleep:idle:handle-lid-switch --who=kubepilot --why="KubePilot fault runs" --mode=block
+else
+INHIBIT :=
+endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -62,17 +70,26 @@ fault-cpu-throttle: ## Inject cpu-throttle by hand (VARIANT=limit-300m), split "
 fault-oomkill: ## Inject oomkill by hand (VARIANT=noload-400mi), split "manual"
 	lab/faults/manual.sh inject oomkill $(VARIANT)
 
+fault-unschedulable: ## Inject unschedulable by hand (VARIANT=nodeselector-gpu), split "manual"
+	lab/faults/manual.sh inject unschedulable $(VARIANT)
+
+fault-readiness-fail: ## Inject readiness-fail by hand (VARIANT=probe-path-404), split "manual"
+	lab/faults/manual.sh inject readiness-fail $(VARIANT)
+
+fault-cold-start: ## Inject cold-start by hand (VARIANT=model-download-10mbs), split "manual"
+	lab/faults/manual.sh inject cold-start $(VARIANT)
+
 fault-reset: ## Undo the active manual fault and export its record
 	lab/faults/manual.sh reset
 
 fault-check: ## Is the signal of FAULT really present? (FAULT=cpu-throttle)
 	lab/faults/check-fault.sh $(FAULT)
 
-baseline-stability: ## Latency spread over 5 quiet 300 s windows (loadgen only)
-	lab/faults/baseline-stability.sh
+baseline-stability: ## Latency spread over 5 quiet 300 s windows (loadgen only; INHIBIT_SLEEP=1 keeps the machine awake)
+	$(INHIBIT) lab/faults/baseline-stability.sh
 
-run-fault: ## One recorded run: SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1
-	lab/faults/run.sh $(SPLIT) $(FAULT) $(VARIANT) $(REP)
+run-fault: ## One recorded run: SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1 (INHIBIT_SLEEP=1 keeps the machine awake)
+	$(INHIBIT) lab/faults/run.sh $(SPLIT) $(FAULT) $(VARIANT) $(REP)
 
 lab-hooks-on: ## Enable chat-api lab fault hooks (redeploys chat-api; between runs only)
 	lab/scripts/lab-hooks.sh on

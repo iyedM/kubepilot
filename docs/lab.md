@@ -260,6 +260,19 @@ and fault resets keep the current hook state instead of changing it.
 `lab-check` (`check-genai`) fails if the hooks are on while no `app-delay`
 run is active.
 
+**Suspend during a run.** A run needs the laptop awake for its whole
+duration. On 2026-10-20 the machine was suspended (lid closed) from 17:19:28
+to 23:05:04 UTC during the baseline of a cold-start run: the baseline lasted
+20 907 s instead of 180 s and the cluster was frozen in between. `run.sh` now
+times every phase on the wall clock and marks the run `invalid` if a phase
+differs from its planned duration by more than 20 % (`PHASE_TOLERANCE`),
+resetting the lab first if the fault was injected (tested by freezing the
+fault-window `sleep` with SIGSTOP: "phase fault lasted 48s instead of 20s").
+To prevent suspends during a batch, `make run-fault` and
+`make baseline-stability` accept `INHIBIT_SLEEP=1`, which wraps the command
+in `systemd-inhibit --what=sleep:idle:handle-lid-switch --mode=block`
+(off by default).
+
 **Validation thresholds are not diagnosis rules.** `check-fault` uses fixed
 thresholds, for example `MIN_THROTTLED_FRACTION=0.20` and
 `MIN_LATENCY_RATIO=2.0` for cpu-throttle. They only answer "did the
@@ -345,6 +358,14 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
   unschedulable run. The 3.5 s measured once in increment 3a (D1) was the
   favourable case; the unavailability caused by a Recreate rollout lasts up
   to the termination grace period (30 s by default).
+- **Rule for P2: a "Readiness probe failed ... connection refused" on the old
+  pod of a Recreate rollout is NOT `readiness_failing`.** An engine must
+  look at three things before blaming readiness: the **pod** (the old pod
+  that is being stopped, with a Killing event, or the new pod that should
+  serve), the **failure** (`connection refused` while the server shuts down
+  vs an HTTP status such as `statuscode: 404` from a running server) and the
+  **time** (during the termination of the old pod vs after the new pod has
+  started).
 - **CPU throttling also produces errors.** At 300m, `long-256` requests time
   out (502 after the 30 s client timeout): throttling is not only slowness.
 
