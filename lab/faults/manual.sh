@@ -22,7 +22,14 @@ inject() {
   # No waiting phase: the 3 minutes before the injection serve as baseline.
   run_set "${dir}" '.timeline.baseline_start = $t' --arg t "$(date -u -d '-180 seconds' +%Y-%m-%dT%H:%M:%S.000Z)"
   mark "${dir}" inject_start
-  "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}"
+  if ! "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}"; then
+    "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
+    reapply_declared || true
+    note "${dir}" "injection failed"
+    set_status "${dir}" invalid
+    : > "${ACTIVE_RUN}"
+    die "injection of ${fault}/${variant} failed; the lab was reset"
+  fi
   mark "${dir}" inject_done
   run_set "${dir}" '.expected_causes = [{cause: .fault.cause,
     component: {namespace: "genai", kind: "Pod", workload: ("deployment/" + (.fault.applied.app // "model-server"))},

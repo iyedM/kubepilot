@@ -44,6 +44,15 @@ run, then completed at reset and at the end of the run. Fields (see
 - `fault` (null for `nofault`), `decoys` (unrelated faults injected as
   noise), `expected_causes` (what a correct diagnosis must find, with the
   component and the time window the cause was active).
+- `expected_causes[].active_from` is `timeline.inject_start`: the cause is
+  active from the moment the change is applied, which is also when the
+  service becomes unavailable (with `Recreate`, the old pod stops right away).
+  For `cold-start/image-not-cached` the injection starts by scaling the model
+  server to 0, so **for the diagnosis the unavailability, and the
+  `cold_start` cause, start at the scale to 0**, not when the new pod is
+  created. `active_to` is `timeline.reset_done`, except for faults whose
+  effect ends by itself: cold-start records the time the new pod became
+  Ready (`fault.applied.effect_end`).
 - `timeline`: UTC timestamps with milliseconds, taken on the host. kind nodes
   share the host clock, so the lab has no clock skew; skew tolerance is
   tested separately with shifted fixtures.

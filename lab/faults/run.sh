@@ -121,7 +121,13 @@ phase_begin "${dir}" fault
 if [[ "${kind}" == fault ]]; then
   injected=true
   log "inject ${fault}/${variant}"
-  "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}"
+  if ! "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}" > "${dir}/inject.txt" 2>&1; then
+    cat "${dir}/inject.txt"
+    # Undo whatever part of the injection happened, then give up on the run.
+    "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
+    reapply_declared || true
+    finish_invalid "injection failed: $(tail -1 "${dir}/inject.txt")"
+  fi
 fi
 mark "${dir}" inject_done
 # The cause is active from the moment the change is applied (inject_start):
