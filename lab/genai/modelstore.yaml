@@ -1,0 +1,78 @@
+# In-cluster file server for the model, used by the cold-start fault: the
+# model-server initContainer downloads the GGUF from here (rate-limited by
+# curl) instead of the internet. Lives in its own namespace and is part of the
+# declared lab (deployed by lab-up), so it never appears inside a fault
+# window. Template rendered by lab-up.sh with envsubst, substituting only
+# ${CHAT_API_IMAGE} (reused for its Python: `python -m http.server`).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: modelstore
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-store
+  namespace: modelstore
+  labels:
+    app.kubernetes.io/name: model-store
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: model-store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: model-store
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: model-store
+          image: ${CHAT_API_IMAGE}
+          command: ["python", "-m", "http.server", "8000", "--directory", "/models"]
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+      volumes:
+        - name: models
+          hostPath:
+            path: /models
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-store
+  namespace: modelstore
+spec:
+  selector:
+    app.kubernetes.io/name: model-store
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

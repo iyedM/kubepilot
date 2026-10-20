@@ -66,6 +66,13 @@ done
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout 3m
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/loadgen --timeout 3m
 
+# Model file server for the cold-start fault, in its own namespace so that it
+# is part of the declared lab and never appears inside a fault window.
+log "deploying model-store (namespace modelstore)"
+# shellcheck disable=SC2016
+envsubst '${CHAT_API_IMAGE}' < "${LAB_DIR}/genai/modelstore.yaml" | kc apply -f -
+kc -n modelstore rollout status deploy/model-store --timeout 3m
+
 kc -n "${OBS_NAMESPACE}" get pods -o wide
 kc -n "${GENAI_NAMESPACE}" get pods -o wide
 log "lab is up. Use it with: export KUBECONFIG=${KUBECONFIG}"
