@@ -1,0 +1,381 @@
+{
+  "catalog_version": 1,
+  "frozen": false,
+  "_frozen_rule": "This file becomes immutable when it is referenced by a pre-registration (eval/README.md). Any later change, including to cause names, goes into catalog.v2.json.",
+  "causes": {
+    "cpu_throttling": "The model-server container is limited by its CFS CPU quota: throttled periods rise and inference slows down (and may time out).",
+    "oom_killed": "A container on the request path is killed by the kernel for exceeding its memory limit (terminated reason OOMKilled, exit code 137).",
+    "unschedulable": "The model-server pod cannot be placed on any node (FailedScheduling), so there is no serving endpoint.",
+    "readiness_failing": "The model-server pod runs but is not Ready, so the Service has no endpoint for it.",
+    "cold_start": "Requests fail or wait while a new model-server pod is still starting (image pull, model download or model load).",
+    "config_change": "A recent rollout of model-server changed its configuration and the change degrades serving, without any resource-pressure signal.",
+    "unknown_no_infrastructure_cause": "The request was slow or failed but no Kubernetes event, resource metric or configuration change in the cluster explains it."
+  },
+  "_causes_note": "Closed list. expected_causes[].cause in run.json must be one of these names. A no-fault window has expected_causes = [] (nothing abnormal to report).",
+  "repetitions": {
+    "dev": 1,
+    "test": 2,
+    "nofault_dev": 2,
+    "nofault_test": 7,
+    "_note": "test: 10 fault variants x 2 = 20 injections; no-fault test: 3 variants x 7 = 21 windows"
+  },
+  "faults": [
+    {
+      "name": "cpu-throttle",
+      "cause": "cpu_throttling",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "limit-300m",
+          "split": "dev",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "in-place resize of the running pod (kubectl patch --subresource resize --type strategic)",
+          "params": {
+            "cpu": "300m"
+          },
+          "signal": "events ResizeStarted/ResizeCompleted; ~98% CFS periods throttled; latency x6-7; long-256 times out (502)"
+        },
+        {
+          "id": "limit-500m",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "in-place resize of the running pod",
+          "params": {
+            "cpu": "500m"
+          },
+          "signal": "expected: same as limit-300m, weaker"
+        },
+        {
+          "id": "rollout-limit-400m",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "CPU limit lowered through a Deployment change (Recreate rollout)",
+          "params": {
+            "cpu": "400m"
+          },
+          "why_differs_from_dev": "the cause arrives through a rollout (new pod, short outage) instead of a live resize of the running pod",
+          "signal": "expected: ScalingReplicaSet/Killing/Created events, ~3.5 s outage with connection errors, then CFS throttling; no Resize events",
+          "signal_identical_to_dev": false
+        },
+        {
+          "id": "limit-200m",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "in-place resize of the running pod",
+          "params": {
+            "cpu": "200m"
+          },
+          "why_differs_from_dev": "same mechanism, stronger severity",
+          "signal": "expected: same as limit-300m, stronger",
+          "signal_identical_to_dev": true
+        }
+      ]
+    },
+    {
+      "name": "oomkill",
+      "cause": "oom_killed",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "noload-400mi",
+          "split": "dev",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "Deployment change: --load-mode none (model in anonymous memory, ~555 MB measured) and memory limit 400Mi",
+          "params": {
+            "load_mode": "none",
+            "memory_limit": "400Mi"
+          },
+          "signal": "measured on a probe pod with 300Mi: lastState OOMKilled exit 137, Warning BackOff, kube_pod_container_status_last_terminated_reason{reason=OOMKilled}; expected connection errors in traces"
+        },
+        {
+          "id": "noload-450mi",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "same as noload-400mi with 450Mi",
+          "params": {
+            "load_mode": "none",
+            "memory_limit": "450Mi"
+          },
+          "signal": "expected: same as noload-400mi"
+        },
+        {
+          "id": "kv-cache-ctx32k",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: context -c 32768 with mmap (default) and memory limit 512Mi: the KV cache, not the model, exceeds the limit",
+          "params": {
+            "context": 32768,
+            "memory_limit": "512Mi"
+          },
+          "why_differs_from_dev": "the memory is taken by the KV cache sized by the context length, not by loading the weights; the OOM itself is not verified yet",
+          "signal": "expected: OOMKilled, BackOff, connection errors; only the pod spec differs",
+          "signal_identical_to_dev": true
+        },
+        {
+          "id": "app-oom-40mi",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change on chat-api (not the model server): memory limit 40Mi, below the ~70 MiB the app needs",
+          "params": {
+            "target": "deployment/chat-api",
+            "memory_limit": "40Mi"
+          },
+          "why_differs_from_dev": "the OOM hits the application in front of the model, not the model server",
+          "signal": "expected: chat-api OOMKilled + BackOff; loadgen gets connection errors to chat-api; no chat-api trace for the failed requests (the app is down)",
+          "signal_identical_to_dev": false
+        }
+      ]
+    },
+    {
+      "name": "unschedulable",
+      "cause": "unschedulable",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "nodeselector-gpu",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: nodeSelector kubepilot.dev/gpu=true (no node has it)",
+          "params": {
+            "nodeSelector": {
+              "kubepilot.dev/gpu": "true"
+            }
+          },
+          "signal": "expected: FailedScheduling '... didn't match Pod's node affinity/selector'; pod Pending; connection errors"
+        },
+        {
+          "id": "cpu-request-64",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: CPU request 64",
+          "params": {
+            "cpu_request": "64"
+          },
+          "signal": "expected: FailedScheduling 'Insufficient cpu'; pod Pending; connection errors"
+        },
+        {
+          "id": "node-taint",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "NoSchedule taint added to both worker nodes, then the model-server pod is recreated; the pod spec is unchanged",
+          "params": {
+            "taint": "kubepilot.dev/maintenance=true:NoSchedule"
+          },
+          "why_differs_from_dev": "the cause is on the nodes (taint), not in the pod spec",
+          "signal": "expected: FailedScheduling '... untolerated taint(s)'; no event for the taint itself",
+          "signal_identical_to_dev": false
+        },
+        {
+          "id": "pvc-unbound",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: model-server mounts a PVC whose StorageClass does not exist",
+          "params": {
+            "storageClassName": "kubepilot-missing"
+          },
+          "why_differs_from_dev": "the pod cannot be placed because of storage (unbound PVC), not because of node selection or capacity",
+          "signal": "expected: FailedScheduling '... unbound immediate PersistentVolumeClaims' and a ProvisioningFailed/ExternalProvisioning event on the PVC",
+          "signal_identical_to_dev": false
+        }
+      ]
+    },
+    {
+      "name": "readiness-fail",
+      "cause": "readiness_failing",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "probe-path-404",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: readiness probe path /does-not-exist",
+          "params": {
+            "path": "/does-not-exist"
+          },
+          "signal": "expected: Warning Unhealthy 'Readiness probe failed: HTTP probe failed with statuscode: 404'; Running, not Ready; connection errors"
+        },
+        {
+          "id": "probe-wrong-port",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: readiness probe on port 9999",
+          "params": {
+            "port": 9999
+          },
+          "signal": "expected: Warning Unhealthy '... connect: connection refused'"
+        },
+        {
+          "id": "initial-delay-600",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: readiness initialDelaySeconds 600",
+          "params": {
+            "initialDelaySeconds": 600
+          },
+          "why_differs_from_dev": "the probe never fails: it has not run yet, so there is no Unhealthy event; the cause is only visible in the pod spec",
+          "signal": "expected: Running, not Ready, no Unhealthy event; connection errors",
+          "signal_identical_to_dev": false
+        },
+        {
+          "id": "server-wrong-port",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: llama-server listens on 8081 while the probe and the Service still use 8080",
+          "params": {
+            "server_port": 8081
+          },
+          "why_differs_from_dev": "the probe is correct; the server is misconfigured",
+          "signal": "expected: Warning Unhealthy '... connect: connection refused', the same as the dev variant probe-wrong-port; the cause is only visible in the container args",
+          "signal_identical_to_dev": true
+        }
+      ]
+    },
+    {
+      "name": "cold-start",
+      "cause": "cold_start",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "model-download-10mbs",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: model fetched by an initContainer from an in-cluster file server, curl --limit-rate 10M",
+          "params": {
+            "rate": "10M"
+          },
+          "signal": "expected: initContainer runs ~47 s, pod not Ready meanwhile; connection errors, then 200"
+        },
+        {
+          "id": "model-download-20mbs",
+          "split": "dev",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "same with --limit-rate 20M",
+          "params": {
+            "rate": "20M"
+          },
+          "signal": "expected: same, ~24 s"
+        },
+        {
+          "id": "image-not-cached",
+          "split": "test",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "llama.cpp image removed from the nodes (crictl rmi), then the model-server pod is recreated",
+          "params": {},
+          "why_differs_from_dev": "the delay comes from pulling the image, not from fetching the model",
+          "signal": "measured once on a probe pod: Pulling -> Pulled after ~80 s; expected: no initContainer, connection errors, then 200",
+          "signal_identical_to_dev": false
+        },
+        {
+          "id": "model-download-hf",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "Deployment change: initContainer downloads the model from Hugging Face (pinned revision, sha256 checked) instead of the in-cluster file server",
+          "params": {
+            "source": "huggingface",
+            "revision": "9217f5db79a29953eb74d5343926648285ec7e67"
+          },
+          "why_differs_from_dev": "external network dependency with uncontrolled speed (~2.5 min measured on the host at ~3 MB/s), instead of a rate-limited in-cluster copy",
+          "signal": "expected: initContainer running for minutes, pod not Ready; connection errors, then 200; duration varies with the internet link",
+          "signal_identical_to_dev": true
+        }
+      ]
+    },
+    {
+      "name": "config-regression",
+      "cause": "config_change",
+      "target": "deployment/model-server",
+      "_status_note": "sixth cause, accepted; excluded from the test split until it has a test variant of a different nature; not counted in the 20 test injections",
+      "variants": [
+        {
+          "id": "threads-1",
+          "split": "dev",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "Deployment change: --threads 1 (CPU limit unchanged at 2)",
+          "params": {
+            "threads": 1
+          },
+          "signal": "measured: 0 CFS throttled periods; 0.49 CPU core used of 2; 31 vs 55 tokens/s; latency x1.6-1.8; no errors; only rollout events before the slowdown"
+        }
+      ]
+    }
+  ],
+  "nofault": {
+    "variants": [
+      {
+        "id": "quiet",
+        "split": "dev",
+        "status": "planned",
+        "decoys": []
+      },
+      {
+        "id": "decoy-same-node",
+        "split": "dev",
+        "status": "planned",
+        "decoys": [
+          {
+            "what": "crash-looping pod in namespace noise, pinned to the model-server node"
+          }
+        ]
+      },
+      {
+        "id": "decoy-other-node-oom",
+        "split": "dev",
+        "status": "planned",
+        "decoys": [
+          {
+            "what": "OOMKilled pod in namespace noise, pinned to a node without model-server"
+          }
+        ]
+      },
+      {
+        "id": "quiet",
+        "split": "test",
+        "status": "planned",
+        "decoys": []
+      },
+      {
+        "id": "decoy-same-node-oom",
+        "split": "test",
+        "status": "planned",
+        "decoys": [
+          {
+            "what": "OOMKilled pod in namespace noise, pinned to the model-server node"
+          }
+        ],
+        "why_differs_from_dev": "an OOM kill (not a crash loop) on the same node as the model server"
+      },
+      {
+        "id": "decoy-other-node-crash",
+        "split": "test",
+        "status": "planned",
+        "decoys": [
+          {
+            "what": "crash-looping pod in namespace noise, pinned to a node without model-server"
+          }
+        ]
+      }
+    ],
+    "_repetitions": "dev variants x 2, test variants x 7 (21 test windows)"
+  }
+}
