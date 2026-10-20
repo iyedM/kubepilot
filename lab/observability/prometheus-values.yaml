@@ -1,0 +1,43 @@
+# prometheus-community/prometheus. Lab settings: no persistence, short
+# retention, OTLP receiver on, only the components KubePilot reads.
+
+# Not needed now (CLAUDE.md rule 6). node-exporter may come back if a rule
+# needs node-level metrics.
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+
+# kube-state-metrics gives object state: pod phase, readiness, restarts,
+# last termination reason (OOMKilled), requests/limits.
+kube-state-metrics:
+  enabled: true
+
+server:
+  retention: 2d
+  persistentVolume:
+    enabled: false
+  extraFlags:
+    - web.enable-lifecycle
+    # Accept OTLP metrics from the collector on /api/v1/otlp/v1/metrics.
+    - web.enable-otlp-receiver
+  otlp:
+    # Keep the k8s attributes added by the collector as labels, so app metrics
+    # can be joined with cAdvisor / kube-state-metrics series by pod.
+    promote_resource_attributes:
+      - service.name
+      - k8s.namespace.name
+      - k8s.pod.name
+      - k8s.node.name
+      - k8s.deployment.name
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+# cAdvisor (CPU throttling, memory) and kubelet scrape jobs are on by default
+# in this chart; kube-state-metrics is scraped through its service annotation.

@@ -1,0 +1,24 @@
+# grafana-community/tempo (single binary). Lab settings: local storage, short
+# retention, OTLP only.
+tempo:
+  # No anonymous usage report from a lab cluster.
+  reportingEnabled: false
+  retention: 24h
+  receivers:
+    # Only OTLP: the collector is the single entry point for telemetry.
+    jaeger: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+persistence:
+  enabled: false

@@ -1,0 +1,65 @@
+# open-telemetry/opentelemetry-collector. One gateway collector: receives
+# OTLP from workloads, adds Kubernetes attributes, sends traces to Tempo and
+# metrics to Prometheus. Image repository/tag are passed by lab-up.sh from
+# lab/versions.env.
+mode: deployment
+replicaCount: 1
+fullnameOverride: otel-collector
+
+presets:
+  # Adds k8s.pod.name, k8s.namespace.name, k8s.node.name, k8s.deployment.name
+  # ... to every span/metric, using the sender's pod IP. This is the join key
+  # between a trace and the Kubernetes objects KubePilot inspects. The preset
+  # also creates the read-only RBAC it needs (get/list/watch pods,
+  # namespaces, replicasets).
+  kubernetesAttributes:
+    enabled: true
+
+# Only OTLP ports are exposed.
+ports:
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+  exporters:
+    otlp/tempo:
+      endpoint: tempo.observability.svc:4317
+      tls:
+        insecure: true
+    otlphttp/prometheus:
+      metrics_endpoint: http://prometheus-server.observability.svc:80/api/v1/otlp/v1/metrics
+      tls:
+        insecure: true
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, batch]
+        exporters: [otlp/tempo]
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, batch]
+        exporters: [otlphttp/prometheus]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [debug]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    # A CPU limit makes cAdvisor export CFS throttling series for this
+    # container; lab-check uses them to prove the throttling metric is scraped.
+    cpu: "1"
+    memory: 512Mi

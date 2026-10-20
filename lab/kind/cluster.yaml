@@ -1,0 +1,32 @@
+# kind cluster for the KubePilot lab.
+#
+# This file is a template: lab/scripts/lab-up.sh renders it with envsubst,
+# substituting only ${EVENT_TTL}. Do not add other ${...} expressions.
+#
+# EVENT_TTL is the kube-apiserver --event-ttl: how long Kubernetes Events are
+# kept. Default: 1h, the upstream Kubernetes default, so the lab behaves like a
+# real cluster. Override with `make lab-up EVENT_TTL=24h`; the value only
+# applies when the cluster is created.
+#
+# Two workers so that scheduling faults (P1, "unschedulable") have more than
+# one candidate node, as in a real cluster.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: kubepilot-lab
+# kind v0.33 generates a kubeadm v1beta4 config, where extraArgs is a list of
+# {name, value}. A JSON6902 "add" appends to that list instead of replacing it,
+# so the flags kind sets itself are kept.
+kubeadmConfigPatchesJSON6902:
+  - group: kubeadm.k8s.io
+    version: v1beta4
+    kind: ClusterConfiguration
+    patch: |
+      - op: add
+        path: /apiServer/extraArgs/-
+        value:
+          name: event-ttl
+          value: "${EVENT_TTL}"
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker

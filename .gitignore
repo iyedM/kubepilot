@@ -31,3 +31,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Lab tooling and kubeconfig (downloaded, never committed)
+.tools/
