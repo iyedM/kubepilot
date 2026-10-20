@@ -68,7 +68,11 @@ image_json() {
 
 versions_json() {
   local dirty=false llama=""
+  # Dirty if a tracked file changed, or if an untracked file exists where run
+  # scripts and manifests live (an uncommitted new script is not in the
+  # recorded commit either).
   [[ -n "$(git -C "${ROOT_DIR}" status --porcelain --untracked-files=no)" ]] && dirty=true
+  git -C "${ROOT_DIR}" status --porcelain --untracked-files=all -- lab eval/faults | grep -q '^??' && dirty=true
   local pod
   pod="$(running_pod model-server)"
   [[ -n "${pod}" ]] && llama="$(kc -n "${GENAI_NAMESPACE}" exec "${pod}" -- /app/llama-server --version 2>&1 | head -1)"
