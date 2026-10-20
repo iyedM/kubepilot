@@ -105,10 +105,13 @@ if [[ "${kind}" == fault ]]; then
   "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}"
 fi
 mark "${dir}" inject_done
+# The cause is active from the moment the change is applied (inject_start):
+# with Recreate the outage starts right away, while inject_done may come
+# later (oomkill waits until the OOM kill is observed).
 if [[ "${kind}" == fault ]]; then
   run_set "${dir}" '.expected_causes = [{cause: .fault.cause,
     component: {namespace: "genai", kind: "Pod", workload: ("deployment/" + (.fault.applied.app // "model-server"))},
-    active_from: .timeline.inject_done, active_to: null}]'
+    active_from: .timeline.inject_start, active_to: null}]'
 fi
 log "fault window ${FAULT_S}s"
 sleep "${FAULT_S}"
