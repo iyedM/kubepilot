@@ -1,0 +1,160 @@
+{
+  "case": "C",
+  "completion_text": "Kubernetes is a scalable, open-source platform for deploying, managing, and scaling",
+  "content_found": {
+    "completion_text": false,
+    "prompt_canary": false
+  },
+  "env": {
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": null,
+    "OTEL_SEMCONV_STABILITY_OPT_IN": null
+  },
+  "errors": [],
+  "logs": [],
+  "metrics": [
+    {
+      "datapoints": [
+        {
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "openai",
+            "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+            "gen_ai.response.model": "qwen2.5-0.5b-instruct",
+            "openai.response.system_fingerprint": "b11723-31288c9c6",
+            "server.address": "kp-compat-llama",
+            "server.port": 8080
+          },
+          "count": 1,
+          "sum": 0.41898666599809076,
+          "value": null
+        },
+        {
+          "attributes": {
+            "error.type": "openai.APIConnectionError",
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "openai",
+            "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+            "server.address": "127.0.0.1",
+            "server.port": 9
+          },
+          "count": 1,
+          "sum": 0.0008728180000616703,
+          "value": null
+        }
+      ],
+      "name": "gen_ai.client.operation.duration",
+      "scope": "opentelemetry.instrumentation.genai.openai",
+      "type": "Histogram",
+      "unit": "s"
+    },
+    {
+      "datapoints": [
+        {
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "openai",
+            "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+            "gen_ai.response.model": "qwen2.5-0.5b-instruct",
+            "gen_ai.token.type": "input",
+            "openai.response.system_fingerprint": "b11723-31288c9c6",
+            "server.address": "kp-compat-llama",
+            "server.port": 8080
+          },
+          "count": 1,
+          "sum": 47,
+          "value": null
+        },
+        {
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "openai",
+            "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+            "gen_ai.response.model": "qwen2.5-0.5b-instruct",
+            "gen_ai.token.type": "output",
+            "openai.response.system_fingerprint": "b11723-31288c9c6",
+            "server.address": "kp-compat-llama",
+            "server.port": 8080
+          },
+          "count": 1,
+          "sum": 16,
+          "value": null
+        }
+      ],
+      "name": "gen_ai.client.token.usage",
+      "scope": "opentelemetry.instrumentation.genai.openai",
+      "type": "Histogram",
+      "unit": "{token}"
+    }
+  ],
+  "package": "opentelemetry-instrumentation-genai-openai",
+  "spans": [
+    {
+      "attributes": {
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": "openai",
+        "gen_ai.request.max_tokens": 16,
+        "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+        "gen_ai.request.temperature": 0,
+        "gen_ai.response.finish_reasons": [
+          "length"
+        ],
+        "gen_ai.response.id": "chatcmpl-VP8lxqbz8h9lrurvJge89WUnvQCiAnh5",
+        "gen_ai.response.model": "qwen2.5-0.5b-instruct",
+        "gen_ai.usage.cache_read.input_tokens": 24,
+        "gen_ai.usage.input_tokens": 47,
+        "gen_ai.usage.output_tokens": 16,
+        "openai.response.system_fingerprint": "b11723-31288c9c6",
+        "server.address": "kp-compat-llama",
+        "server.port": 8080
+      },
+      "events": [],
+      "kind": "SpanKind.CLIENT",
+      "name": "chat qwen2.5-0.5b-instruct",
+      "resource": {
+        "service.instance.id": "5d5bd7d0-72c7-471a-b08f-b9a3898b3b08",
+        "service.name": "unknown_service:python",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.45.1"
+      },
+      "scope": "opentelemetry.instrumentation.genai.openai",
+      "status": {
+        "code": "StatusCode.UNSET",
+        "description": null
+      }
+    },
+    {
+      "attributes": {
+        "error.type": "openai.APIConnectionError",
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": "openai",
+        "gen_ai.request.max_tokens": 4,
+        "gen_ai.request.model": "qwen2.5-0.5b-instruct",
+        "server.address": "127.0.0.1",
+        "server.port": 9
+      },
+      "events": [],
+      "kind": "SpanKind.CLIENT",
+      "name": "chat qwen2.5-0.5b-instruct",
+      "resource": {
+        "service.instance.id": "5d5bd7d0-72c7-471a-b08f-b9a3898b3b08",
+        "service.name": "unknown_service:python",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.45.1"
+      },
+      "scope": "opentelemetry.instrumentation.genai.openai",
+      "status": {
+        "code": "StatusCode.ERROR",
+        "description": "Connection error."
+      }
+    }
+  ],
+  "versions": {
+    "openai": "3.35.1",
+    "opentelemetry-instrumentation-genai-openai": "1.2b0",
+    "opentelemetry-sdk": "1.45.1",
+    "opentelemetry-semantic-conventions": "0.66b1",
+    "opentelemetry-util-genai": "1.2b0"
+  }
+}

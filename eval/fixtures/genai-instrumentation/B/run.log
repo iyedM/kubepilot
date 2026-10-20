@@ -1,0 +1,27 @@
+  WARNING: The script tqdm is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script distro is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts opentelemetry-bootstrap and opentelemetry-instrument are installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+/compat/probe.py:56: DeprecationWarning: Use InMemoryLogRecordExporter. Since logs are not stable yet this WILL be removed in future releases.
+  log_exporter = InMemoryLogExporter()
+Traceback (most recent call last):
+  File "/compat/probe.py", line 66, in <module>
+    from opentelemetry.instrumentation.genai.openai import OpenAIInstrumentor
+ModuleNotFoundError: No module named 'opentelemetry.instrumentation.genai'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/compat/probe.py", line 70, in <module>
+    from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
+  File "/tmp/pyuser/lib/python3.12/site-packages/opentelemetry/instrumentation/openai_v2/__init__.py", line 96, in <module>
+    from .instruments import Instruments
+  File "/tmp/pyuser/lib/python3.12/site-packages/opentelemetry/instrumentation/openai_v2/instruments.py", line 2, in <module>
+    from opentelemetry.util.genai.instruments import (
+ModuleNotFoundError: No module named 'opentelemetry.util.genai.instruments'

@@ -1,0 +1,23 @@
+  WARNING: The script idna is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts opentelemetry-bootstrap and opentelemetry-instrument are installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+/compat/probe.py:56: DeprecationWarning: Use InMemoryLogRecordExporter. Since logs are not stable yet this WILL be removed in future releases.
+  log_exporter = InMemoryLogExporter()
+Traceback (most recent call last):
+  File "/compat/probe.py", line 66, in <module>
+    from opentelemetry.instrumentation.genai.openai import OpenAIInstrumentor
+ModuleNotFoundError: No module named 'opentelemetry.instrumentation.genai'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/compat/probe.py", line 70, in <module>
+    from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
+  File "/tmp/pyuser/lib/python3.12/site-packages/opentelemetry/instrumentation/openai_v2/__init__.py", line 85, in <module>
+    from opentelemetry.instrumentation.openai_v2.utils import is_content_enabled
+  File "/tmp/pyuser/lib/python3.12/site-packages/opentelemetry/instrumentation/openai_v2/utils.py", line 23, in <module>
+    from httpx import URL
+ModuleNotFoundError: No module named 'httpx'

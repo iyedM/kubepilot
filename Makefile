@@ -5,9 +5,9 @@ include lab/versions.env
 # kube-apiserver --event-ttl for the lab cluster (applied at creation only).
 EVENT_TTL ?= 1h
 SHELLCHECK_IMAGE ?= koalaman/shellcheck:v0.11.0
-LAB_SCRIPTS := $(wildcard lab/scripts/*.sh)
+LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model lab-down lab-stats lint
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix lab-down lab-stats lint
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -42,3 +42,6 @@ lab-down: tools ## Delete the kind cluster
 
 lint: ## shellcheck the lab scripts (pinned image)
 	docker run --rm -v "$(CURDIR):/src:ro" -w /src $(SHELLCHECK_IMAGE) -x $(LAB_SCRIPTS)
+
+compat-matrix: ## Record what each OpenAI instrumentation package emits (fixtures for P2)
+	lab/compat/run-matrix.sh

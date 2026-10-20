@@ -1,0 +1,9 @@
+  WARNING: The script idna is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts opentelemetry-bootstrap and opentelemetry-instrument are installed in '/tmp/pyuser/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+/compat/probe.py:56: DeprecationWarning: Use InMemoryLogRecordExporter. Since logs are not stable yet this WILL be removed in future releases.
+  log_exporter = InMemoryLogExporter()
+{"case": "C", "errors": 0, "spans": 2, "metrics": 2, "logs": 0}

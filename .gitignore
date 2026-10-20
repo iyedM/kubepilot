@@ -34,3 +34,7 @@ go.work.sum
 
 # Lab tooling and kubeconfig (downloaded, never committed)
 .tools/
+
+# Python bytecode
+__pycache__/
+*.pyc
