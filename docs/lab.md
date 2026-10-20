@@ -33,6 +33,36 @@ export KUBECONFIG=$PWD/.tools/kubeconfig
 All versions and digests are pinned in [`lab/versions.env`](../lab/versions.env)
 and checked by `lab/scripts/verify-pins.sh` before anything is created.
 
+## What `make lab-check` proves, and what it does not
+
+- The trace path is proven end to end: a synthetic trace sent to the collector
+  is found in Tempo with `k8s.pod.name` equal to the sending pod.
+- The OTLP metric path is proven: a synthetic metric reaches Prometheus with
+  a `k8s_pod_name` label.
+- **CPU throttling check: limited.** It only proves that cAdvisor exports
+  `container_cpu_cfs_throttled_periods_total` (the series exists because the
+  collector has a CPU limit). It does **not** prove that throttling happens,
+  nor that the series belongs to a running container: during the negative
+  test the series of the previous collector pod was still returned. Actual
+  throttling is verified by the `cpu-throttle` fault in a later increment.
+
+### Negative test
+
+To check that lab-check can fail, scale the collector to zero and run it:
+
+```sh
+export KUBECONFIG=$PWD/.tools/kubeconfig
+.tools/bin/kubectl -n observability scale deploy/otel-collector --replicas=0
+make lab-check   # must fail on the trace and OTLP metric checks
+.tools/bin/kubectl -n observability scale deploy/otel-collector --replicas=1
+make lab-check   # must pass again
+```
+
+**Do not run `make lab-up` during a negative test.** `lab-up` runs
+`helm upgrade`, which resets the collector to its declared replica count (1)
+and silently invalidates the test. Check `replicas=0` before trusting a
+failing run.
+
 ## Kubernetes event retention
 
 Kubernetes Events are kept by the API server for `--event-ttl`, **1 hour by
