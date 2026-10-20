@@ -58,7 +58,8 @@ the old pod is stopped before the new one starts, as for a single-instance
 model server that cannot hold two copies of the model. Consequence: **any
 change that `make lab-up` applies to the `model-server` Deployment briefly
 cuts the model** (requests fail with connection errors until the new pod is
-Ready, about 3 s with the model on hostPath and the image cached).
+Ready: 3.5 s measured once with an idle server, up to ~30 s observed in
+fault runs while the old pod stops, see "Observations for P2").
 
 The model file is downloaded once on the host (`.tools/models`) and mounted
 read-only into every kind node as `/models` (kind `extraMounts`), then into the
@@ -302,6 +303,50 @@ check passes on the same injection. Both checks also fail when no fault is
 active. Limit: the oomkill check expects a new pod (all catalog variants
 change the Deployment); an OOM kill that restarts the container inside the
 same pod would not satisfy it.
+
+## Observations for P2
+
+Facts seen in the recorded runs that a diagnosis engine must not get wrong.
+
+- **"untolerated taint" without any injected taint.** In the
+  `unschedulable/nodeselector-gpu` run the FailedScheduling message was
+  `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 node(s)
+  didn't match Pod's node affinity/selector`. The taint is the standard
+  control-plane taint of the kind cluster. An engine that looks for the word
+  "taint" would blame a taint; it must read the **count of nodes per reason**
+  (here 1 control-plane taint + 2 selector mismatches, whereas the
+  `node-taint` variant should give 3 nodes with untolerated taints).
+- **The fault window contains the recovery events of the reset.** The window
+  of an exported run (and `expected_causes[].active_to = reset_done`) also
+  holds the events of the reset itself (ScalingReplicaSet, Killing,
+  SuccessfulCreate, Scheduled, Pulled, Created, Started of the new pod), a
+  few seconds before `reset_done`. They are the lab putting things back, not
+  a second fault; an engine must not report them as another cause.
+- **"Readiness probe failed" events that are not a readiness fault.** In
+  the oomkill run (`dev--oomkill--noload-400mi--r1`) the export contains two
+  kinds of Unhealthy events:
+  - on the **old pod being stopped** by the Recreate rollout
+    (`model-server-6c974f9667-57p7c`, x5 at 13:09:29):
+    `Readiness probe failed: Get "http://10.244.2.11:8080/health": dial tcp
+    10.244.2.11:8080: connect: connection refused`;
+  - on the **new crash-looping pod** (`model-server-7d785c95dc-6slrm`, x3 at
+    13:10:58): `Startup probe failed: Get "http://10.244.2.12:8080/health":
+    dial tcp 10.244.2.12:8080: connect: connection refused`.
+
+  The same "Readiness probe failed ... connection refused" appears on the
+  terminating old pod in the readiness-fail run (x5 at 16:51:59), before the
+  injected 404 failures. Every Recreate rollout of the model server can
+  produce it. **This is a possible confusion with `readiness_failing`**: the
+  injected readiness fault gives `HTTP probe failed with statuscode: 404` on
+  the *new* pod, while these come from the *old* pod while it stops.
+- **Stopping the old pod can take up to ~30 s.** Time between the injection
+  (old pod Killing) and the creation of the new pod: about 29 s in the
+  oomkill run, 30 s in the readiness-fail run, under 1 s in the
+  unschedulable run. The 3.5 s measured once in increment 3a (D1) was the
+  favourable case; the unavailability caused by a Recreate rollout lasts up
+  to the termination grace period (30 s by default).
+- **CPU throttling also produces errors.** At 300m, `long-256` requests time
+  out (502 after the 30 s client timeout): throttling is not only slowness.
 
 ## What `make lab-check` proves, and what it does not
 

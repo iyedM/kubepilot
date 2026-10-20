@@ -79,6 +79,23 @@ on_interrupt() {
 }
 trap on_interrupt INT TERM
 
+# Any unexpected error after the run started: try to put the lab back, record
+# why, free the active-run pointer and shelve the run (no run left "running").
+on_error() {
+  trap - ERR INT TERM
+  log "unexpected error at run.sh line $1: resetting the lab"
+  if [[ "${injected}" == true ]]; then
+    "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
+  fi
+  reapply_declared || true
+  note "${dir}" "unexpected error at run.sh line $1 (exit status $2)"
+  set_status "${dir}" invalid
+  : > "${ACTIVE_RUN}"
+  shelve_run "${dir}"
+  exit 3
+}
+trap 'on_error ${LINENO} $?' ERR
+
 finish_invalid() {
   note "${dir}" "$1"
   set_status "${dir}" invalid

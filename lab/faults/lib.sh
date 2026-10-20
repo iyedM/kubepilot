@@ -285,17 +285,34 @@ reapply_declared() {
                 envsubst '${CHAT_API_IMAGE} ${LAB_FAULT_HOOKS}' < "${LAB_DIR}/genai/${m}.yaml"
                 echo "---"
               done)"
-  kc apply -f - >/dev/null <<<"${rendered}"
-  # `kubectl apply` is a three-way merge: a field added by `kubectl patch`
-  # (e.g. a nodeSelector) that was never in the applied manifest survives it.
-  # Replacing the Deployments puts back exactly the declared spec. The objects
-  # come from `create --dry-run=client` (the manifest alone): `apply
-  # --dry-run=client` returns the live object merged with the manifest, so the
-  # drift would be written back. --save-config keeps the annotation that
-  # later `kubectl apply` calls rely on.
-  kc create --dry-run=client -o json -f - <<<"${rendered}" \
-    | jq -c '(.items // [.])[] | select(.kind == "Deployment")' \
-    | while read -r obj; do kc replace --save-config -f - >/dev/null <<<"${obj}"; done
+  local objects
+  # The objects come from `create --dry-run=client` (the manifest alone):
+  # `apply --dry-run=client` returns the live object merged with the
+  # manifest, so the drift would be written back.
+  objects="$(kc create --dry-run=client -o json -f - <<<"${rendered}" | jq -c '(.items // [.])[]')"
+  # Non-Deployment objects (namespace, services) are applied.
+  jq -c 'select(.kind != "Deployment")' <<<"${objects}" | while read -r obj; do
+    kc apply -f - >/dev/null <<<"${obj}"
+  done
+  # Deployments are replaced, never applied: `kubectl apply` is a three-way
+  # merge, and a field added by `kubectl patch` that was never in the applied
+  # manifest (a nodeSelector, an initContainer) survives it. Replacing puts
+  # back exactly the declared spec. A replace can hit a Conflict while the
+  # controller updates the object, so it is retried. --save-config keeps the
+  # annotation that later `kubectl apply` calls rely on.
+  jq -c 'select(.kind == "Deployment")' <<<"${objects}" | while read -r obj; do
+    local attempt out
+    for attempt in 1 2 3 4 5; do
+      if out="$(kc replace --save-config -f - 2>&1 <<<"${obj}")"; then
+        break
+      fi
+      if [[ "${out}" != *Conflict* || "${attempt}" == 5 ]]; then
+        echo "${out}" >&2
+        return 1
+      fi
+      sleep 2
+    done
+  done
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/model-server --timeout=5m >/dev/null
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout=3m >/dev/null
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/loadgen --timeout=3m >/dev/null
