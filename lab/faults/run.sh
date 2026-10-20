@@ -16,6 +16,11 @@ source "$(dirname "$0")/../scripts/checklib.sh"
 # shellcheck source=lab/faults/lib.sh
 source "$(dirname "$0")/lib.sh"
 
+# Quiet-period precondition: nothing changed in genai for QUIET_S before the
+# baseline; wait up to QUIET_MAX_WAIT_S for it (the previous run's reset
+# creates a pod only RECOVERY_S before), then the run is invalid.
+QUIET_S="${QUIET_S:-300}"
+QUIET_MAX_WAIT_S="${QUIET_MAX_WAIT_S:-420}"
 BASELINE_S="${BASELINE_S:-180}"
 FAULT_S="${FAULT_S:-300}"
 RECOVERY_S="${RECOVERY_S:-180}"
@@ -68,6 +73,7 @@ on_interrupt() {
     reapply_declared || true
   fi
   : > "${ACTIVE_RUN}"
+  shelve_run "${dir}"
   exit 4
 }
 trap on_interrupt INT TERM
@@ -77,6 +83,7 @@ finish_invalid() {
   set_status "${dir}" invalid
   : > "${ACTIVE_RUN}"
   log "run ${run_id} INVALID: $1"
+  shelve_run "${dir}"
   exit 3
 }
 
@@ -85,6 +92,17 @@ replicas="$(kc -n "${GENAI_NAMESPACE}" get deploy loadgen -o jsonpath='{.spec.re
 if [[ "${replicas:-0}" -lt 1 ]]; then
   finish_invalid "precondition: loadgen has ${replicas:-0} replicas (traffic is required)"
 fi
+deadline=$(( $(date +%s) + QUIET_MAX_WAIT_S ))
+while :; do
+  changes="$(genai_changes_since "${QUIET_S}")"
+  [[ "$(jq length <<<"${changes}")" -eq 0 ]] && break
+  if (( $(date +%s) >= deadline )); then
+    finish_invalid "precondition: genai not quiet for ${QUIET_S}s after waiting ${QUIET_MAX_WAIT_S}s; last change: $(jq -r 'last | "\(.time) \(.what)"' <<<"${changes}") ($(jq length <<<"${changes}") changes in the last ${QUIET_S}s)"
+  fi
+  log "waiting for a quiet genai namespace (last change: $(jq -r 'last | "\(.time) \(.what)"' <<<"${changes}"))"
+  sleep 15
+done
+run_set "${dir}" '.timeline.quiet_since = $t' --arg t "$(date -u -d "-${QUIET_S} seconds" +%Y-%m-%dT%H:%M:%SZ)"
 if ! "${LAB_DIR}/scripts/check-genai.sh" > "${dir}/precheck.txt" 2>&1; then
   finish_invalid "precondition: check-genai failed (see precheck.txt)"
 fi

@@ -41,5 +41,8 @@ __pycache__/
 
 # Fault runs: manual injections, previous incomplete attempts, internals
 eval/runs/manual/
-eval/runs/**/*.prev-*/
+eval/runs/invalid/
+eval/runs/**/*.prev-*
 eval/runs/**/.cpu-*
+eval/runs/**/.run.json.*
+eval/runs/**/.metrics.*

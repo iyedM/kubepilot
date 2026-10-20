@@ -123,6 +123,17 @@ init_run() {
 }
 
 mark() { run_set "$1" '.timeline[$k] = $t' --arg k "$2" --arg t "$(now_ms)"; }
+
+# shelve_run DIR: move an invalid or interrupted run out of its split
+# directory into eval/runs/invalid/ (never committed), so that split
+# directories only hold runs that can be scored or resumed.
+shelve_run() {
+  local dest
+  dest="${RUNS_DIR}/invalid/$(basename "$1")--$(date -u +%Y%m%dT%H%M%SZ)"
+  mkdir -p "${RUNS_DIR}/invalid"
+  mv "$1" "${dest}"
+  log "run record moved to ${dest#"${ROOT_DIR}/"}"
+}
 note() { run_set "$1" '.notes += [$n]' --arg n "$2"; }
 set_status() { run_set "$1" '.status = $s' --arg s "$2"; }
 
@@ -215,8 +226,11 @@ export_run() {
       "${dir}/metrics.json" > "${tmp}" && mv "${tmp}" "${dir}/metrics.json"
   done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' <<<"${queries}")
 
-  run_set "${dir}" '.exports = {events: "events.json", pods: "pods.json", loadgen: "loadgen.jsonl",
-                                traces: "traces.jsonl.gz", metrics: "metrics.json", check: "check.txt"}'
+  # Everything but run.json and the small text files is stored gzipped
+  # (eval/README.md, "What is committed"); -n keeps the files reproducible.
+  gzip -nf "${dir}/events.json" "${dir}/pods.json" "${dir}/loadgen.jsonl" "${dir}/metrics.json"
+  run_set "${dir}" '.exports = {events: "events.json.gz", pods: "pods.json.gz", loadgen: "loadgen.jsonl.gz",
+                                traces: "traces.jsonl.gz", metrics: "metrics.json.gz", check: "check.txt"}'
 }
 
 # chat_api_hooks -> "1" if the lab fault hooks are on in the chat-api
@@ -232,6 +246,22 @@ chat_api_hooks() {
 active_fault() {
   [[ -s "${ACTIVE_RUN}" ]] || return 0
   jq -r '.fault.name // empty' "$(cat "${ACTIVE_RUN}")/run.json" 2>/dev/null || true
+}
+
+# genai_changes_since SECONDS -> JSON array of changes in the genai namespace
+# during the last SECONDS: Kubernetes events and pods created. Used by the
+# quiet-period precondition of run.sh.
+genai_changes_since() {
+  local since
+  since="$(date -u -d "-$1 seconds" +%Y-%m-%dT%H:%M:%SZ)"
+  {
+    kc -n "${GENAI_NAMESPACE}" get events -o json \
+      | jq -c --arg s "${since}" '[.items[] | ((.lastTimestamp // .eventTime // .firstTimestamp) // "" | .[0:19] + "Z") as $t
+          | select($t >= $s) | {time: $t, what: "event \(.reason) on \(.involvedObject.kind)/\(.involvedObject.name)"}]'
+    kc -n "${GENAI_NAMESPACE}" get pods -o json \
+      | jq -c --arg s "${since}" '[.items[] | select(.metadata.creationTimestamp >= $s)
+          | {time: .metadata.creationTimestamp, what: "pod \(.metadata.name) created"}]'
+  } | jq -sc 'add | sort_by(.time)'
 }
 
 # --- reset to the declared state ----------------------------------------------

@@ -56,9 +56,58 @@ run, then completed at reset and at the end of the run. Fields (see
   per-fault check did not see the signal, or the lab was not healthy before
   injection). Only `complete` runs are scored.
 
+**Quiet-period precondition.** Before the baseline, `run.sh` requires that
+nothing changed in the `genai` namespace during the last `QUIET_S` = 300 s
+(no Kubernetes event, no pod created), so that the exported window (+/- 5
+min) does not contain changes unrelated to the injected fault. Because the
+previous run's reset creates a pod only 3 minutes before its end, the
+script **waits** up to `QUIET_MAX_WAIT_S` = 420 s for the namespace to become
+quiet; if it does not, the run is `invalid` and `notes` says why (the last
+change seen and the number of changes). The start of the quiet period is
+recorded as `timeline.quiet_since`.
+
 Kubernetes keeps events for 1 hour (`--event-ttl`); every run is far shorter
 and exports its events, traces and metrics at the end, so runs can be
 re-scored offline after Tempo (24 h) and Prometheus (2 d) retention.
+
+## What is committed (rule proposed 2026-10-20, pending validation)
+
+Tempo keeps traces 24 h and Prometheus 2 days, so a run can only be re-scored
+later from what it exported. For every scored run (`dev`, `test`) and every
+`dryrun`, these files are committed:
+
+| File | Why |
+|---|---|
+| `run.json` | ground truth |
+| `check.txt`, `precheck.txt` | proof that the injection produced its signal and that the lab was healthy before |
+| `events.json.gz` | Kubernetes events of the window (gone after 1 h) |
+| `traces.jsonl.gz` | Tempo traces of the window (gone after 24 h) |
+| `metrics.json.gz` | Prometheus series of the window (gone after 2 days) |
+| `loadgen.jsonl.gz` | client view of every request, including requests without a trace (app down) |
+| `pods.json.gz` | pod specs at the end of the run (needed to see a configuration cause offline) |
+
+`manual` runs, `*.prev-*` attempts and `eval/runs/invalid/` are never
+committed. A run that ends `invalid` (precondition or signal check failed)
+or `interrupted` is moved by `run.sh` from its split directory to
+`eval/runs/invalid/<run_id>--<UTC time>`, so split directories only contain
+runs that are complete (or still running), and the run can be redone.
+
+Measured sizes (bytes) on the first 5 exported runs (2 dev runs of the full
+length, 3 shorter manual runs), before the export compressed everything:
+
+| Run | run.json | events.json | events.gz | traces.gz | metrics.json | metrics.gz |
+|---|---|---|---|---|---|---|
+| dev cpu-throttle | 4 148 | 4 880 | 748 | 29 061 | 203 930 | 10 000 |
+| dev oomkill | 4 254 | 30 545 | 2 988 | 39 402 | 231 347 | 11 066 |
+| manual cpu-throttle | 3 775 | 47 631 | 4 030 | 7 352 | 198 587 | 9 000 |
+| manual oomkill | 3 777 | 33 350 | 2 913 | 15 015 | 160 760 | 7 600 |
+| manual oomkill | 3 778 | 48 291 | 3 804 | 15 617 | 210 242 | 9 351 |
+
+The committed set of the two full-length dev runs, as stored by the export
+(default gzip level, all files above): **53 647 bytes** (cpu-throttle) and
+**68 877 bytes** (oomkill). About 60 runs (dev, test, no-fault) would add
+about 4 MB to the repository; uncompressed `metrics.json` alone would have
+been about 12 MB.
 
 ## Splits
 
