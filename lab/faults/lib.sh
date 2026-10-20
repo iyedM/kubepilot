@@ -219,6 +219,21 @@ export_run() {
                                 traces: "traces.jsonl.gz", metrics: "metrics.json", check: "check.txt"}'
 }
 
+# chat_api_hooks -> "1" if the lab fault hooks are on in the chat-api
+# Deployment, "0" otherwise.
+chat_api_hooks() {
+  local v
+  v="$(kc -n "${GENAI_NAMESPACE}" get deploy chat-api -o json 2>/dev/null \
+    | jq -r '.spec.template.spec.containers[0].env[]? | select(.name == "LAB_FAULT_HOOKS") | .value')"
+  [[ "${v}" == 1 ]] && echo 1 || echo 0
+}
+
+# active_fault -> name of the fault of the active run, or empty.
+active_fault() {
+  [[ -s "${ACTIVE_RUN}" ]] || return 0
+  jq -r '.fault.name // empty' "$(cat "${ACTIVE_RUN}")/run.json" 2>/dev/null || true
+}
+
 # --- reset to the declared state ----------------------------------------------
 # reapply_declared: model-server, chat-api and loadgen manifests as lab-up
 # renders them (without rebuilding or reloading images), then wait.
@@ -228,12 +243,15 @@ reapply_declared() {
   # Deployment is the declared one; reading it avoids a rebuild/reload.
   CHAT_API_IMAGE="$(kc -n "${GENAI_NAMESPACE}" get deploy chat-api -o jsonpath='{.spec.template.spec.containers[0].image}')"
   [[ -n "${CHAT_API_IMAGE}" ]] || die "cannot read the chat-api image from its Deployment"
-  export CHAT_API_IMAGE
+  # Keep the current hook state: it is only changed between runs, by
+  # lab/scripts/lab-hooks.sh, never by a fault reset.
+  LAB_FAULT_HOOKS="$(chat_api_hooks)"
+  export CHAT_API_IMAGE LAB_FAULT_HOOKS
   # shellcheck disable=SC2016
   envsubst '${LLAMACPP_IMAGE} ${MODEL_FILE}' < "${LAB_DIR}/genai/model-server.yaml" | kc apply -f - >/dev/null
   for m in chat-api loadgen; do
     # shellcheck disable=SC2016
-    envsubst '${CHAT_API_IMAGE}' < "${LAB_DIR}/genai/${m}.yaml" | kc apply -f - >/dev/null
+    envsubst '${CHAT_API_IMAGE} ${LAB_FAULT_HOOKS}' < "${LAB_DIR}/genai/${m}.yaml" | kc apply -f - >/dev/null
   done
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/model-server --timeout=5m >/dev/null
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout=3m >/dev/null

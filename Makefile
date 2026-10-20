@@ -8,7 +8,7 @@ SHELLCHECK_IMAGE ?= koalaman/shellcheck:v0.11.0
 PYTHON_IMAGE ?= python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -73,3 +73,9 @@ baseline-stability: ## Latency spread over 5 quiet 300 s windows (loadgen only)
 
 run-fault: ## One recorded run: SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1
 	lab/faults/run.sh $(SPLIT) $(FAULT) $(VARIANT) $(REP)
+
+lab-hooks-on: ## Enable chat-api lab fault hooks (redeploys chat-api; between runs only)
+	lab/scripts/lab-hooks.sh on
+
+lab-hooks-off: ## Disable chat-api lab fault hooks (redeploys chat-api; between runs only)
+	lab/scripts/lab-hooks.sh off

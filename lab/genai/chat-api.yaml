@@ -1,5 +1,6 @@
 # chat-api: instrumented GenAI app of the lab. Template rendered by
-# lab/scripts/lab-up.sh with envsubst, substituting only ${CHAT_API_IMAGE}.
+# lab/scripts/lab-up.sh with envsubst, substituting only ${CHAT_API_IMAGE}
+# and ${LAB_FAULT_HOOKS}.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,10 +60,12 @@ spec:
               value: http://model-server.genai.svc.cluster.local:8080/v1
             - name: MODEL_REQUEST_TIMEOUT_S
               value: "30"
-            # Lab-only fault hooks (PUT /lab/delay, used by the
-            # unknown_no_infrastructure_cause case). Off by default in the app.
+            # Lab-only fault hooks (PUT /lab/delay). "0" in the declared state;
+            # switched with `make lab-hooks-on` / `make lab-hooks-off` between
+            # runs only (each switch redeploys chat-api). lab-check fails if
+            # they are on while no app-delay run is active.
             - name: LAB_FAULT_HOOKS
-              value: "1"
+              value: "${LAB_FAULT_HOOKS}"
           resources:
             # Measured with loadgen running and a 500m limit: average 7m CPU,
             # max 21m (2-minute rate), yet 25 of 616 CFS periods throttled

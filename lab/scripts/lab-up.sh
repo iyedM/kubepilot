@@ -55,11 +55,13 @@ envsubst '${LLAMACPP_IMAGE} ${MODEL_FILE}' < "${LAB_DIR}/genai/model-server.yaml
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/model-server --timeout 5m
 
 CHAT_API_IMAGE="$("${LAB_DIR}/scripts/build-app.sh")"
-export CHAT_API_IMAGE
-log "deploying chat-api and loadgen (${CHAT_API_IMAGE})"
+# Lab fault hooks are off in the declared state (see lab/scripts/lab-hooks.sh).
+LAB_FAULT_HOOKS="${LAB_FAULT_HOOKS:-0}"
+export CHAT_API_IMAGE LAB_FAULT_HOOKS
+log "deploying chat-api and loadgen (${CHAT_API_IMAGE}, LAB_FAULT_HOOKS=${LAB_FAULT_HOOKS})"
 for manifest in chat-api loadgen; do
   # shellcheck disable=SC2016
-  envsubst '${CHAT_API_IMAGE}' < "${LAB_DIR}/genai/${manifest}.yaml" | kc apply -f -
+  envsubst '${CHAT_API_IMAGE} ${LAB_FAULT_HOOKS}' < "${LAB_DIR}/genai/${manifest}.yaml" | kc apply -f -
 done
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout 3m
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/loadgen --timeout 3m

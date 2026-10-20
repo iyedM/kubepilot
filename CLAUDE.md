@@ -100,8 +100,11 @@ eval/      benchmark scripts and recorded results
 
 ## Lab decisions (P1)
 
-- Model app instrumentation: Python with `opentelemetry-instrumentation-openai-v2`,
-  version pinned. Record which `gen_ai.*` names it actually emits; the P2
-  adapter must handle both `gen_ai.client.operation.duration` and
-  `gen_ai.client.inference.duration`.
+- Model app instrumentation: Python with
+  `opentelemetry-instrumentation-genai-openai==1.2b0` (pre-release),
+  `openai==3.35.1`, pinned with hashes. `opentelemetry-instrumentation-openai-v2`
+  is deprecated upstream and fails at import with `openai` 3.x (see
+  `docs/genai-conventions.md`). Record which `gen_ai.*` names it actually
+  emits; the P2 adapter must handle both `gen_ai.client.operation.duration`
+  and `gen_ai.client.inference.duration`.
 - Grafana is optional (`make demo-ui`), not part of `make lab-up`.

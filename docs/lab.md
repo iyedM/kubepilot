@@ -247,6 +247,18 @@ A run takes about 12 minutes: precheck, 3 min baseline, injection, 5 min
 fault window with the per-fault check at its end, reset to the declared
 manifests, wait until chat-api answers again, 3 min recovery, export.
 
+**Lab fault hooks of chat-api.** `chat-api` has a lab-only endpoint
+`PUT /lab/delay {"ms": N}` that sleeps before the model call (used by the
+proposed `app-delay` fault). It only exists when the container runs with
+`LAB_FAULT_HOOKS=1`; the declared state is `LAB_FAULT_HOOKS=0` (the endpoint
+answers 404). Switch it with `make lab-hooks-on` / `make lab-hooks-off`:
+**each switch changes the chat-api Deployment and therefore redeploys
+chat-api** (rolling update, a new pod), so it is only allowed **between
+runs**: the script refuses while a fault is active or a run holds the lock,
+and fault resets keep the current hook state instead of changing it.
+`lab-check` (`check-genai`) fails if the hooks are on while no `app-delay`
+run is active.
+
 **Validation thresholds are not diagnosis rules.** `check-fault` uses fixed
 thresholds, for example `MIN_THROTTLED_FRACTION=0.20` and
 `MIN_LATENCY_RATIO=2.0` for cpu-throttle. They only answer "did the

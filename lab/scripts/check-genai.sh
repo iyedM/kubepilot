@@ -9,6 +9,8 @@
 source "$(dirname "$0")/lib.sh"
 # shellcheck source=lab/scripts/checklib.sh
 source "$(dirname "$0")/checklib.sh"
+# shellcheck source=lab/faults/lib.sh
+source "$(dirname "$0")/../faults/lib.sh"
 
 POLL_SECONDS=90
 RULES="${LAB_DIR}/genai/content-keys.json"
@@ -168,6 +170,17 @@ if [[ "${ok_lines}" -ge 3 ]]; then
   pass "loadgen: ${ok_lines} successful requests in the last 60s"
 else
   fail "loadgen: only ${ok_lines} successful requests in the last 60s (expected >= 3)"
+fi
+
+# --- 8. Lab fault hooks are off unless an app-delay run is active -------------
+hooks="$(chat_api_hooks)"
+current="$(active_fault)"
+if [[ "${hooks}" == 0 ]]; then
+  pass "lab fault hooks are off on chat-api (LAB_FAULT_HOOKS=0)"
+elif [[ "${current}" == app-delay ]]; then
+  pass "lab fault hooks are on during an active app-delay run"
+else
+  fail "lab fault hooks are on (LAB_FAULT_HOOKS=1) but no app-delay run is active (active fault: '${current:-none}'); run 'make lab-hooks-off' between runs"
 fi
 
 check_summary "check-genai"
