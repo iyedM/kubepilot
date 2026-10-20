@@ -265,6 +265,32 @@ must **not** be copied into the P2 rule engine, because:
 P2 rules are written from the dev runs and the quiet-window statistics, and
 validated on the test split only.
 
+**Baseline stability** (`make baseline-stability`, 2026-10-20, file
+`eval/baseline/stability-20261020T132611Z.json`): 5 consecutive quiet
+windows of 300 s (load generator only, no fault, no check), host CPU busy
+22-24%, 0 errors, 19-20 requests per prompt and window.
+
+| Prompt | p50 min | p50 max | max/min | CV of p50 |
+|---|---|---|---|---|
+| `short-16` | 487 ms | 501 ms | x1.03 | 1.1% |
+| `medium-64` | 1 410 ms | 1 476 ms | x1.05 | 1.6% |
+| `long-256` | 5 007 ms | 5 272 ms | x1.05 | 1.9% |
+
+The window-to-window spread of the p50 (at most x1.05) is far below the
+effects measured for the faults (cpu-throttle at 300m x6.6, host CPU
+contention x1.85-2.2, one inference thread x1.6-1.7). Limits: this is the
+p50 only (tails were not studied), on a quiet host, in one session; it does
+not say how stable the baseline is across days or under other host loads.
+
+**Cross negative tests of the checks** (2026-10-20, 150 s after injection):
+the cpu-throttle check fails during an oomkill fault (0 throttled periods, no
+successful `short-16` request), and the oomkill check fails during a
+cpu-throttle fault (no pod created after the injection); each fault's own
+check passes on the same injection. Both checks also fail when no fault is
+active. Limit: the oomkill check expects a new pod (all catalog variants
+change the Deployment); an OOM kill that restarts the container inside the
+same pod would not satisfy it.
+
 ## What `make lab-check` proves, and what it does not
 
 - The trace path is proven end to end: a synthetic trace sent to the collector

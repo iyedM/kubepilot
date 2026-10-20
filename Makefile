@@ -6,9 +6,9 @@ include lab/versions.env
 EVENT_TTL ?= 1h
 SHELLCHECK_IMAGE ?= koalaman/shellcheck:v0.11.0
 PYTHON_IMAGE ?= python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
-LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh)
+LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -54,3 +54,22 @@ test-app: ## Run the chat-api pytest suite in the pinned Python image
 	  -e PYTHONDONTWRITEBYTECODE=1 -v "$(CURDIR):/src:ro" -w /src/lab/apps/chat-api \
 	  $(PYTHON_IMAGE) sh -c "pip install --user --quiet --no-cache-dir --disable-pip-version-check \
 	    --require-hashes --no-deps -r requirements-dev.txt && python -m pytest -p no:cacheprovider -v tests"
+
+# --- Fault injection (docs/lab.md, eval/README.md) ---------------------------
+fault-cpu-throttle: ## Inject cpu-throttle by hand (VARIANT=limit-300m), split "manual"
+	lab/faults/manual.sh inject cpu-throttle $(VARIANT)
+
+fault-oomkill: ## Inject oomkill by hand (VARIANT=noload-400mi), split "manual"
+	lab/faults/manual.sh inject oomkill $(VARIANT)
+
+fault-reset: ## Undo the active manual fault and export its record
+	lab/faults/manual.sh reset
+
+fault-check: ## Is the signal of FAULT really present? (FAULT=cpu-throttle)
+	lab/faults/check-fault.sh $(FAULT)
+
+baseline-stability: ## Latency spread over 5 quiet 300 s windows (loadgen only)
+	lab/faults/baseline-stability.sh
+
+run-fault: ## One recorded run: SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1
+	lab/faults/run.sh $(SPLIT) $(FAULT) $(VARIANT) $(REP)

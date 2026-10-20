@@ -1,0 +1,176 @@
+{
+  "windows": 5,
+  "window_s": 300,
+  "versions": {
+    "git_commit": "297e36ea0979d6d01e5ac95a2eb0b0cfef7a6587",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:e9670b1c8876",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:821d5ed5659cf496a76447a349e944baca83a4f81395cd5800672b376ec076ad"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:e9670b1c8876",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:821d5ed5659cf496a76447a349e944baca83a4f81395cd5800672b376ec076ad"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "per_window": [
+    {
+      "start": "2026-10-20T13:26:11.934Z",
+      "end": "2026-10-20T13:31:11.940Z",
+      "host_cpu_busy_pct": 24.0,
+      "prompts": {
+        "long-256": {
+          "n": 19,
+          "ok": 19,
+          "errors": 0,
+          "p50_ms": 5272.3
+        },
+        "medium-64": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 1475.5
+        },
+        "short-16": {
+          "n": 19,
+          "ok": 19,
+          "errors": 0,
+          "p50_ms": 494.4
+        }
+      }
+    },
+    {
+      "start": "2026-10-20T13:31:11.996Z",
+      "end": "2026-10-20T13:36:12.001Z",
+      "host_cpu_busy_pct": 22.5,
+      "prompts": {
+        "long-256": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 5045.9
+        },
+        "medium-64": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 1410.2
+        },
+        "short-16": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 488.0
+        }
+      }
+    },
+    {
+      "start": "2026-10-20T13:36:12.058Z",
+      "end": "2026-10-20T13:41:12.064Z",
+      "host_cpu_busy_pct": 22.0,
+      "prompts": {
+        "long-256": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 5099.7
+        },
+        "medium-64": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 1427.3
+        },
+        "short-16": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 501.4
+        }
+      }
+    },
+    {
+      "start": "2026-10-20T13:41:12.125Z",
+      "end": "2026-10-20T13:46:12.130Z",
+      "host_cpu_busy_pct": 22.4,
+      "prompts": {
+        "long-256": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 5007.4
+        },
+        "medium-64": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 1437.5
+        },
+        "short-16": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 486.6
+        }
+      }
+    },
+    {
+      "start": "2026-10-20T13:46:12.180Z",
+      "end": "2026-10-20T13:51:12.185Z",
+      "host_cpu_busy_pct": 21.9,
+      "prompts": {
+        "long-256": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 5040.5
+        },
+        "medium-64": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 1417.5
+        },
+        "short-16": {
+          "n": 20,
+          "ok": 20,
+          "errors": 0,
+          "p50_ms": 496.8
+        }
+      }
+    }
+  ],
+  "p50_spread_ms": {
+    "long-256": {
+      "min": 5007.4,
+      "max": 5272.3,
+      "mean": 5093.2,
+      "max_over_min": 1.05,
+      "cv_pct": 1.9
+    },
+    "medium-64": {
+      "min": 1410.2,
+      "max": 1475.5,
+      "mean": 1433.6,
+      "max_over_min": 1.05,
+      "cv_pct": 1.6
+    },
+    "short-16": {
+      "min": 486.6,
+      "max": 501.4,
+      "mean": 493.4,
+      "max_over_min": 1.03,
+      "cv_pct": 1.1
+    }
+  },
+  "errors": 0
+}
