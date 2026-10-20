@@ -1,0 +1,15 @@
+# Runtime dependencies of chat-api. Locked with hashes into requirements.txt
+# by lock.sh; never install from this file directly.
+#
+# opentelemetry-instrumentation-genai-openai and opentelemetry-util-genai are
+# PRE-RELEASES (beta): attribute and metric names may still change. Any
+# version change must re-run `make compat-matrix` and update
+# docs/genai-conventions.md.
+fastapi==0.150.0
+uvicorn==0.54.0
+openai==3.35.1
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-grpc==1.45.1
+opentelemetry-instrumentation-fastapi==0.66b1
+opentelemetry-instrumentation-genai-openai==1.2b0
+opentelemetry-util-genai==1.2b0

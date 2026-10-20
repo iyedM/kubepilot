@@ -1,0 +1,30 @@
+{
+  "_comment": "Telemetry keys that carry prompt/completion content. Single source for the pytest privacy tests and lab/scripts/check-genai.sh. 'observed' entries were seen in case C-capture of make compat-matrix (genai-openai 1.2b0); 'legacy' entries are the v1.30.0 names documented by opentelemetry-instrumentation-openai-v2.",
+  "attribute_keys": [
+    "gen_ai.input.messages",
+    "gen_ai.output.messages",
+    "gen_ai.system_instructions",
+    "gen_ai.tool.definitions",
+    "gen_ai.tool.call.arguments",
+    "gen_ai.tool.call.result",
+    "gen_ai.prompt",
+    "gen_ai.completion"
+  ],
+  "attribute_key_prefixes": [
+    "gen_ai.prompt.",
+    "gen_ai.completion."
+  ],
+  "event_names": [
+    "gen_ai.client.inference.operation.details",
+    "gen_ai.user.message",
+    "gen_ai.system.message",
+    "gen_ai.assistant.message",
+    "gen_ai.tool.message",
+    "gen_ai.choice"
+  ],
+  "observed": [
+    "gen_ai.input.messages",
+    "gen_ai.output.messages",
+    "gen_ai.client.inference.operation.details"
+  ]
+}

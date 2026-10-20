@@ -1,9 +1,9 @@
 # Lab
 
 Local, reproducible environment used to inject faults and measure
-KubePilot. Status: P1 increments 1 (cluster + observability stack) and 2a
-(model server). The instrumented GenAI app and fault injection come in later
-increments.
+KubePilot. Status: P1 increments 1 (cluster + observability stack), 2a
+(model server) and 2b (instrumented GenAI app + load generator). Fault
+injection comes next.
 
 ## Usage
 
@@ -12,6 +12,8 @@ make models      # download the pinned GGUF model (sha256 checked)
 make lab-up      # create cluster + observability stack + model server
 make lab-check   # end-to-end check, non-zero exit on any failure
 make bench-model # latency benchmark of the model server (50 requests)
+make test-app    # pytest suite of chat-api, in the pinned Python image
+make compat-matrix # record what the OpenAI instrumentation packages emit
 make lab-stats   # memory/CPU of the kind node containers
 make lab-down    # delete the cluster
 make lint        # shellcheck the lab scripts
@@ -33,6 +35,8 @@ export KUBECONFIG=$PWD/.tools/kubeconfig
 | Tempo (single binary) | `observability` | Trace storage and search (24 h retention) |
 | Prometheus + kube-state-metrics | `observability` | cAdvisor (CPU throttling, memory), object state (phase, readiness, restarts, termination reasons), OTLP metrics |
 | llama.cpp `llama-server` | `genai` | OpenAI-compatible API serving Qwen2.5-0.5B-Instruct (Q4_K_M) on CPU; `llamacpp:*` metrics |
+| `chat-api` (FastAPI) | `genai` | Instrumented GenAI app: `POST /chat {prompt_id}` → model server; traces + metrics over OTLP |
+| `loadgen` | `genai` | Steady background traffic: one request every 5 s, one at a time |
 
 All versions and digests are pinned in [`lab/versions.env`](../lab/versions.env)
 and checked by `lab/scripts/verify-pins.sh` before anything is created.
@@ -93,6 +97,83 @@ the `oomkill` fault (increment 3): lowering the memory limit alone will
 probably not trigger an OOM kill while the model is mmapped; loading it with
 `--no-mmap` is the likely way. Not verified yet.
 
+## GenAI app and load generator (increment 2b)
+
+**Instrumentation:** `opentelemetry-instrumentation-genai-openai==1.2b0` with
+`openai==3.35.1` and `opentelemetry-util-genai==1.2b0`, locked with hashes in
+`lab/apps/chat-api/requirements.txt`. **Pre-release (beta): attribute and
+metric names may still change.** It was chosen with `make compat-matrix`;
+`opentelemetry-instrumentation-openai-v2` is deprecated upstream and fails at
+import with `openai` 3.x (details in
+[`genai-conventions.md`](genai-conventions.md)).
+
+**`chat-api`** (`lab/apps/chat-api`, image `kubepilot/chat-api:<content hash>`,
+built locally and loaded with `kind load`):
+
+- `POST /chat {"prompt_id": ...}` accepts only ids of a fixed synthetic
+  catalog (`short-16`, `medium-64`, `long-256`, `check`, `privacy-canary`);
+  free text is rejected (404). It returns token counts, latency and the
+  **trace id**, never the completion text; checks fetch that exact trace.
+- Calls the model with `temperature 0`, a fixed `seed`, `max_retries=0` (a
+  retry would hide failures) and `cache_prompt: false` (prompt cache hits
+  would skew token counts and latencies).
+- `/healthz` does not depend on the model server, so a model outage does not
+  make the app unready (verified in negative test N1).
+- Pod identity is set at the source through the Downward API in
+  `OTEL_RESOURCE_ATTRIBUTES` (`k8s.pod.name`, `k8s.pod.uid`, namespace, node);
+  the collector then matches the pod by uid and adds `k8s.deployment.name`.
+- Privacy: `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=no_content` is
+  set explicitly, and the app configures **no log exporter** (with capture on,
+  content is also emitted as log records; without a log pipeline it cannot
+  leave the pod).
+- Runs as uid 65532, read-only root filesystem, no capabilities.
+
+**CPU limit decision for `chat-api`.** Measured with the load generator
+running and a provisional 500m CPU limit: average 7m CPU, at most 21m over a
+2-minute rate, yet **25 of 616 CFS periods throttled (~4%)** in 10 minutes:
+millisecond bursts exceed the quota. Throttling adds latency to the app that
+P2 could mistake for a model problem, so `chat-api` has **no CPU limit** and a
+50m request (memory stays limited: request 128Mi, limit 256Mi; measured
+working set ≈ 70 MiB). After the change cAdvisor exports no CFS throttling
+series for the container (no quota). The model server keeps its CPU limit on
+purpose: CPU throttling of the model is one of the faults to inject.
+
+**Concurrency and context.** The model server runs `--parallel 1`: requests
+that arrive while another is being served are **queued, not run in
+parallel**, so each request always gets the full 2048-token context. The
+longest catalog request (576 prompt tokens + 256 generated = 832 tokens) was
+verified to fit (`make compat-matrix`). Queueing is real in the lab: the
+load generator and lab-check can overlap, and a 2-token `check` request took
+5.4 s while a `long-256` request was being served. The
+`llamacpp:requests_deferred` gauge stayed at 0 over 15 minutes because it is
+only sampled once a minute; queueing must be read from trace timings, not
+from that gauge. If `--parallel` is ever raised, llama.cpp may split the
+context between slots: re-check that 832 tokens still fit.
+
+**Observed latencies** (load generator client side, 15 minutes, 40 requests
+per prompt, 1 run, same shared laptop as above):
+
+| Prompt | `max_tokens` | p50 | max |
+|---|---|---|---|
+| `short-16` | 16 | 498 ms | 994 ms |
+| `medium-64` | 64 | 1 457 ms | 1 733 ms |
+| `long-256` | 256 | 5 160 ms | 5 886 ms |
+
+These latencies were taken over a window that overlaps lab-check runs and the
+negative tests, so the max values are inflated by queueing behind
+`--parallel 1`; the P2 latency baseline will be measured in a quiet window
+(load generator only, no checks running).
+
+**Lab footprint** after 2b (`make lab-stats`, one sample): ≈ 1.91 GiB for the
+three kind nodes (750 + 577 + 626 MiB); `free -h` still reports 10 GiB
+available.
+
+**Known oddity, not explained:** `kubectl create --raw` POSTs through the API
+server proxy reach `chat-api` as a JSON *string* (FastAPI answers 422), while
+the same method works against llama.cpp. `check-genai.sh` therefore sends its
+requests from inside the `chat-api` pod to the `chat-api` Service with
+`kubectl exec` (the same path as an in-cluster client).
+
 ## What `make lab-check` proves, and what it does not
 
 - The trace path is proven end to end: a synthetic trace sent to the collector
@@ -128,6 +209,20 @@ make lab-check   # must pass again
 Same procedure for the model server
 (`.tools/bin/kubectl -n genai scale deploy/model-server --replicas=0`): all 6
 `check-model` checks must fail, then pass again at 1 replica.
+
+`check-genai.sh` has two negative tests (results of 2026-10-20):
+
+- **N1, model server at 0 replicas:** `/chat` returns 502, the GenAI span has
+  no tokens and the load generator has no successful request (3 FAIL); the
+  failure trace carries `error.type=openai.APIConnectionError`, and chat-api
+  stays Ready. This proves the checks depend on a real end-to-end model call.
+- **N2, content capture switched on**
+  (`kubectl -n genai set env deploy/chat-api OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=span_only`):
+  the privacy check fails and names what it found
+  (`gen_ai.input.messages`, `gen_ai.output.messages`, the marker). This
+  proves the privacy check detects content. Restore with `make lab-up`
+  (re-applies `no_content`). The canary traces stored in Tempo during N2
+  contain only the synthetic canary prompt and expire with the 24 h retention.
 
 **Do not run `make lab-up` during a negative test.** `lab-up` runs
 `helm upgrade`, which resets the collector to its declared replica count (1)

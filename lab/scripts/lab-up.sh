@@ -54,6 +54,16 @@ export LLAMACPP_IMAGE MODEL_FILE
 envsubst '${LLAMACPP_IMAGE} ${MODEL_FILE}' < "${LAB_DIR}/genai/model-server.yaml" | kc apply -f -
 kc -n "${GENAI_NAMESPACE}" rollout status deploy/model-server --timeout 5m
 
+CHAT_API_IMAGE="$("${LAB_DIR}/scripts/build-app.sh")"
+export CHAT_API_IMAGE
+log "deploying chat-api and loadgen (${CHAT_API_IMAGE})"
+for manifest in chat-api loadgen; do
+  # shellcheck disable=SC2016
+  envsubst '${CHAT_API_IMAGE}' < "${LAB_DIR}/genai/${manifest}.yaml" | kc apply -f -
+done
+kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout 3m
+kc -n "${GENAI_NAMESPACE}" rollout status deploy/loadgen --timeout 3m
+
 kc -n "${OBS_NAMESPACE}" get pods -o wide
 kc -n "${GENAI_NAMESPACE}" get pods -o wide
 log "lab is up. Use it with: export KUBECONFIG=${KUBECONFIG}"

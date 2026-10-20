@@ -79,6 +79,34 @@ A failed call gives the same span with status `ERROR` and
 
 **Logs/events:** none with the default settings.
 
+## In the lab: Prometheus series and trace resource
+
+Metrics go app → OTLP → collector (`k8sattributes`) → Prometheus OTLP
+receiver. Series names actually present in Prometheus (v3.15.0, default
+translation strategy), recorded on 2026-10-20:
+
+| OTLP metric | Prometheus series |
+|---|---|
+| `gen_ai.client.operation.duration` (unit `s`) | `gen_ai_client_operation_duration_seconds_bucket`, `_count`, `_sum` |
+| `gen_ai.client.token.usage` (unit `{token}`) | `gen_ai_client_token_usage_bucket`, `_count`, `_sum` (the `{token}` annotation adds no suffix) |
+| `http.server.duration` (FastAPI instrumentation) | `http_server_duration_milliseconds_*` (older HTTP semantic conventions, unit `ms`) |
+
+Labels on a GenAI series: attributes become labels with dots replaced by
+underscores (`gen_ai_operation_name`, `gen_ai_request_model`,
+`gen_ai_response_model`, `gen_ai_provider_name`, `server_address`,
+`server_port`, `openai_response_system_fingerprint`, `error_type` on
+failures), plus the promoted resource attributes `k8s_pod_name`,
+`k8s_namespace_name`, `k8s_node_name`, `k8s_deployment_name`,
+`service_name`. `job` is `<service.namespace>/<service.name>`
+(`genai/chat-api`) and `instance` is `service.instance.id`.
+
+Trace resource of a chat-api span in Tempo: the app sets `service.name`,
+`k8s.pod.name`, `k8s.pod.uid`, `k8s.namespace.name`, `k8s.node.name`
+(Downward API); the collector's `k8sattributes` adds, among others,
+`k8s.deployment.name`, `k8s.replicaset.name`, `k8s.container.name`,
+`k8s.pod.start_time`, `container.image.name`, `service.namespace`,
+`service.version` (the image tag) and `service.instance.id`.
+
 ## Notes for the P2 adapter
 
 a. **`gen_ai.provider.name=openai` describes the SDK, not the server.** The

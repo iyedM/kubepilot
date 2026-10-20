@@ -1,0 +1,4 @@
+# Test dependencies, constrained to the exact runtime versions.
+-c requirements.txt
+-r requirements.in
+pytest==9.1.1

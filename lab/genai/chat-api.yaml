@@ -1,0 +1,104 @@
+# chat-api: instrumented GenAI app of the lab. Template rendered by
+# lab/scripts/lab-up.sh with envsubst, substituting only ${CHAT_API_IMAGE}.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-api
+  namespace: genai
+  labels:
+    app.kubernetes.io/name: chat-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chat-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chat-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: chat-api
+          image: ${CHAT_API_IMAGE}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            # Downward API: the pod's own identity, declared before
+            # OTEL_RESOURCE_ATTRIBUTES which references it with $(VAR).
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: POD_UID
+              valueFrom: {fieldRef: {fieldPath: metadata.uid}}
+            - name: POD_NAMESPACE
+              valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+            - name: NODE_NAME
+              valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+            - name: OTEL_SERVICE_NAME
+              value: chat-api
+            # Set at the source, so the trace -> pod link does not depend on
+            # the collector seeing the pod IP (k8sattributes then matches on
+            # k8s.pod.uid).
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: k8s.pod.name=$(POD_NAME),k8s.pod.uid=$(POD_UID),k8s.namespace.name=$(POD_NAMESPACE),k8s.node.name=$(NODE_NAME)
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4317
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "10000"
+            # Explicit, although it is the package default: no prompt or
+            # completion content in telemetry (CLAUDE.md rule 4).
+            - name: OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT
+              value: no_content
+            - name: MODEL_BASE_URL
+              value: http://model-server.genai.svc.cluster.local:8080/v1
+            - name: MODEL_REQUEST_TIMEOUT_S
+              value: "30"
+          resources:
+            # Measured with loadgen running and a 500m limit: average 7m CPU,
+            # max 21m (2-minute rate), yet 25 of 616 CFS periods throttled
+            # (~4%): short bursts exceed the quota. Throttling would add app
+            # latency that P2 could mistake for a model problem, so there is
+            # no CPU limit; the request matches the measured need.
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          # /healthz does not depend on the model server (see app.py).
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-api
+  namespace: genai
+  labels:
+    app.kubernetes.io/name: chat-api
+spec:
+  selector:
+    app.kubernetes.io/name: chat-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

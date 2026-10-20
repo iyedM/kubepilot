@@ -1,0 +1,46 @@
+# Steady background traffic: one POST /chat every 5 s, one request at a
+# time. Scale to 0 for quiet windows. Template rendered by lab-up.sh with
+# envsubst, substituting only ${CHAT_API_IMAGE}.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: genai
+  labels:
+    app.kubernetes.io/name: loadgen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loadgen
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loadgen
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: loadgen
+          image: ${CHAT_API_IMAGE}
+          command: ["python", "-m", "chat_api.loadgen"]
+          env:
+            - name: CHAT_API_URL
+              value: http://chat-api.genai.svc.cluster.local:8000
+            - name: LOADGEN_INTERVAL_S
+              value: "5"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

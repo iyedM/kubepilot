@@ -1,0 +1,6 @@
+tests/
+**/__pycache__/
+*.pyc
+lock.sh
+requirements.in
+requirements-dev.*

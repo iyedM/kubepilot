@@ -28,7 +28,10 @@ and a **confidence score**. When the evidence is ambiguous, it answers
   traces unless explicitly enabled.
 - **Convention-proof.** The OpenTelemetry GenAI semantic conventions are still
   in *Development* status, so every `gen_ai.*` name lives in one versioned
-  adapter package.
+  adapter package. The lab app is instrumented with
+  `opentelemetry-instrumentation-genai-openai==1.2b0`, a **pre-release (beta)**
+  whose attribute names may still change; what it actually emits is recorded in
+  [`docs/genai-conventions.md`](docs/genai-conventions.md).
 - **Measured, not claimed.** Accuracy is reported only from a reproducible
   benchmark in [`eval/`](eval/), with its limits. Results will be measured on
   **faults injected in a local lab**, not on real production incidents, and

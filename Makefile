@@ -5,9 +5,10 @@ include lab/versions.env
 # kube-apiserver --event-ttl for the lab cluster (applied at creation only).
 EVENT_TTL ?= 1h
 SHELLCHECK_IMAGE ?= koalaman/shellcheck:v0.11.0
-LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh)
+PYTHON_IMAGE ?= python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix lab-down lab-stats lint
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -29,6 +30,8 @@ lab-check: ## End-to-end check of the lab (runs every check, fails if any failed
 	lab/scripts/check-observability.sh || rc=1; \
 	echo; \
 	lab/scripts/check-model.sh || rc=1; \
+	echo; \
+	lab/scripts/check-genai.sh || rc=1; \
 	exit $$rc
 
 bench-model: ## Latency benchmark of the model server (BENCH_REQUESTS=50)
@@ -45,3 +48,9 @@ lint: ## shellcheck the lab scripts (pinned image)
 
 compat-matrix: ## Record what each OpenAI instrumentation package emits (fixtures for P2)
 	lab/compat/run-matrix.sh
+
+test-app: ## Run the chat-api pytest suite in the pinned Python image
+	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONUSERBASE=/tmp/pyuser \
+	  -e PYTHONDONTWRITEBYTECODE=1 -v "$(CURDIR):/src:ro" -w /src/lab/apps/chat-api \
+	  $(PYTHON_IMAGE) sh -c "pip install --user --quiet --no-cache-dir --disable-pip-version-check \
+	    --require-hashes --no-deps -r requirements-dev.txt && python -m pytest -p no:cacheprovider -v tests"
