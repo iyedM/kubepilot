@@ -231,6 +231,40 @@ node. kube-state-metrics exposes
 deletion requested at 30.086, old container terminated at 30.350, new pod
 created at 30.362 (only after), new pod Ready at 33.603: a ≈ 3.5 s outage.
 
+## Fault injection (P1 increment 3)
+
+Faults are injected by `lab/faults/` and recorded in `eval/runs/` (format and
+rules: [`eval/README.md`](../eval/README.md)).
+
+```sh
+make run-fault SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1   # full recorded run
+make fault-cpu-throttle VARIANT=limit-300m && make fault-reset          # by hand, never scored
+make fault-check FAULT=cpu-throttle                                     # is the signal there?
+make baseline-stability                                                 # 5 quiet windows
+```
+
+A run takes about 12 minutes: precheck, 3 min baseline, injection, 5 min
+fault window with the per-fault check at its end, reset to the declared
+manifests, wait until chat-api answers again, 3 min recovery, export.
+
+**Validation thresholds are not diagnosis rules.** `check-fault` uses fixed
+thresholds, for example `MIN_THROTTLED_FRACTION=0.20` and
+`MIN_LATENCY_RATIO=2.0` for cpu-throttle. They only answer "did the
+injection produce the signal the catalog announces?", so that a run whose
+injection silently failed is marked `invalid` instead of being scored. They
+must **not** be copied into the P2 rule engine, because:
+
+- they were chosen knowing which fault was injected and how strongly; a rule
+  that reuses them would be tuned on the answer and would inflate accuracy;
+- they are deliberately loose to accept every variant of the catalog, which
+  says nothing about where the boundary between "normal" and "abnormal"
+  lies in a quiet window (the baseline-stability measurement does);
+- a rule must also handle evidence the check ignores (other pods, other
+  nodes, decoys, clock skew) and be able to answer "unknown".
+
+P2 rules are written from the dev runs and the quiet-window statistics, and
+validated on the test split only.
+
 ## What `make lab-check` proves, and what it does not
 
 - The trace path is proven end to end: a synthetic trace sent to the collector

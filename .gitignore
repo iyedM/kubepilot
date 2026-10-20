@@ -38,3 +38,8 @@ go.work.sum
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Fault runs: manual injections, previous incomplete attempts, internals
+eval/runs/manual/
+eval/runs/**/*.prev-*/
+eval/runs/**/.cpu-*

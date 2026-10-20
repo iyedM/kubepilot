@@ -13,13 +13,20 @@
     "name": "cpu-throttle",
     "variant": "limit-300m",
     "mechanism": "in-place resize of the model-server pod (kubectl patch --subresource resize --type strategic)",
-    "params": {"cpu_request": "300m", "cpu_limit": "300m"}
+    "params": {
+      "cpu_request": "300m",
+      "cpu_limit": "300m"
+    }
   },
   "decoys": [],
   "expected_causes": [
     {
       "cause": "cpu_throttling",
-      "component": {"namespace": "genai", "kind": "Pod", "workload": "deployment/model-server"},
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
       "active_from": "2026-10-21T01:03:00.412Z",
       "active_to": "2026-10-21T01:08:00.907Z"
     }
@@ -37,12 +44,22 @@
     "namespace": "genai",
     "workload": "deployment/model-server",
     "pods_before": [
-      {"name": "model-server-6c974f9667-4rhd4", "uid": "<uid>", "node": "kubepilot-lab-worker2",
-       "container_id": "containerd://<id>", "restarts": 0}
+      {
+        "name": "model-server-6c974f9667-4rhd4",
+        "uid": "<uid>",
+        "node": "kubepilot-lab-worker2",
+        "container_id": "containerd://<id>",
+        "restarts": 0
+      }
     ],
     "pods_after": [
-      {"name": "model-server-6c974f9667-4rhd4", "uid": "<uid>", "node": "kubepilot-lab-worker2",
-       "container_id": "containerd://<id>", "restarts": 0}
+      {
+        "name": "model-server-6c974f9667-4rhd4",
+        "uid": "<uid>",
+        "node": "kubepilot-lab-worker2",
+        "container_id": "containerd://<id>",
+        "restarts": 0
+      }
     ]
   },
   "versions": {
@@ -51,20 +68,44 @@
     "versions_env_sha256": "<sha256 of lab/versions.env>",
     "kubernetes": "v1.37.0",
     "images": {
-      "model-server": "<imageID of the running container>",
-      "chat-api": "<imageID>",
-      "loadgen": "<imageID>"
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:<digest>",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:<digest>"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:<content hash>",
+        "image_id": "docker.io/library/import-<date>@sha256:<id> (kind load)"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:<content hash>",
+        "image_id": "docker.io/library/import-<date>@sha256:<id> (kind load)"
+      }
     },
     "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
   },
   "host": {
     "nproc": 12,
-    "loadavg_start": [1.5, 1.7, 1.9],
-    "loadavg_end": [2.1, 1.9, 1.9],
+    "loadavg_start": [
+      1.5,
+      1.7,
+      1.9
+    ],
+    "loadavg_end": [
+      2.1,
+      1.9,
+      1.9
+    ],
     "mem_available_mib_start": 10240,
-    "cpu_busy_pct": {"baseline": 24.8, "fault": 26.1, "recovery": 25.0}
+    "cpu_busy_pct": {
+      "baseline": 24.8,
+      "fault": 26.1,
+      "recovery": 25.0
+    }
   },
-  "loadgen": {"replicas": 1, "interval_s": 5},
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
   "exports": {
     "events": "events.json",
     "pods": "pods.json",
@@ -73,6 +114,9 @@
     "metrics": "metrics.json",
     "check": "check.txt"
   },
-  "check": {"script": "lab/faults/check-fault.sh cpu-throttle", "result": "pass"},
+  "check": {
+    "script": "lab/faults/check-fault.sh cpu-throttle",
+    "result": "pass"
+  },
   "notes": []
 }
