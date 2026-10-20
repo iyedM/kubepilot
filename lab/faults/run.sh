@@ -62,6 +62,7 @@ fi
 
 log "run ${run_id}"
 init_run "${dir}" "${run_id}" "${split}" "${kind}" "${fault}" "${variant}"
+mark "${dir}" run_start
 echo "${dir}" > "${ACTIVE_RUN}"
 
 injected=false
@@ -151,7 +152,9 @@ if [[ "${kind}" == fault ]]; then
 fi
 reapply_declared
 mark "${dir}" reset_done
-run_set "${dir}" '(.expected_causes[]?.active_to) = .timeline.reset_done'
+# A fault whose effect ends by itself (cold start: the pod becomes Ready)
+# records fault.applied.effect_end; otherwise the cause lasts until reset.
+run_set "${dir}" '(.expected_causes[]?.active_to) = (.fault.applied.effect_end // .timeline.reset_done)'
 injected=false
 if wait_chat_ok 300; then
   mark "${dir}" lab_healthy_again
@@ -170,6 +173,7 @@ run_set "${dir}" '.target.pods_after = $p | .host.loadavg_end = $l' \
   --argjson p "$(pods_json model-server)" --argjson l "$(loadavg_json)"
 log "export"
 export_run "${dir}"
+mark "${dir}" export_done
 
 if [[ "${kind}" == fault && "$(run_get "${dir}" '.check.result')" != pass ]]; then
   finish_invalid "the per-fault check did not see the signal (see check.txt)"

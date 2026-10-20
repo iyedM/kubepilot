@@ -277,12 +277,25 @@ reapply_declared() {
   # lab/scripts/lab-hooks.sh, never by a fault reset.
   LAB_FAULT_HOOKS="$(chat_api_hooks)"
   export CHAT_API_IMAGE LAB_FAULT_HOOKS
+  local rendered
   # shellcheck disable=SC2016
-  envsubst '${LLAMACPP_IMAGE} ${MODEL_FILE}' < "${LAB_DIR}/genai/model-server.yaml" | kc apply -f - >/dev/null
-  for m in chat-api loadgen; do
-    # shellcheck disable=SC2016
-    envsubst '${CHAT_API_IMAGE} ${LAB_FAULT_HOOKS}' < "${LAB_DIR}/genai/${m}.yaml" | kc apply -f - >/dev/null
-  done
+  rendered="$(envsubst '${LLAMACPP_IMAGE} ${MODEL_FILE}' < "${LAB_DIR}/genai/model-server.yaml"
+              echo "---"
+              for m in chat-api loadgen; do
+                envsubst '${CHAT_API_IMAGE} ${LAB_FAULT_HOOKS}' < "${LAB_DIR}/genai/${m}.yaml"
+                echo "---"
+              done)"
+  kc apply -f - >/dev/null <<<"${rendered}"
+  # `kubectl apply` is a three-way merge: a field added by `kubectl patch`
+  # (e.g. a nodeSelector) that was never in the applied manifest survives it.
+  # Replacing the Deployments puts back exactly the declared spec. The objects
+  # come from `create --dry-run=client` (the manifest alone): `apply
+  # --dry-run=client` returns the live object merged with the manifest, so the
+  # drift would be written back. --save-config keeps the annotation that
+  # later `kubectl apply` calls rely on.
+  kc create --dry-run=client -o json -f - <<<"${rendered}" \
+    | jq -c '(.items // [.])[] | select(.kind == "Deployment")' \
+    | while read -r obj; do kc replace --save-config -f - >/dev/null <<<"${obj}"; done
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/model-server --timeout=5m >/dev/null
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/chat-api --timeout=3m >/dev/null
   kc -n "${GENAI_NAMESPACE}" rollout status deploy/loadgen --timeout=3m >/dev/null
