@@ -15,6 +15,14 @@ metadata:
     app.kubernetes.io/name: model-server
 spec:
   replicas: 1
+  # Recreate, as is common for a single-instance model server that cannot
+  # hold two copies of the model at once: the old pod is stopped before the
+  # new one starts. With RollingUpdate a broken rollout (unschedulable pod,
+  # failing readiness, slow cold start) would never take the old pod down,
+  # so those faults would have no user impact. Consequence: any change applied
+  # by `make lab-up` to this Deployment causes a short model outage.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: model-server

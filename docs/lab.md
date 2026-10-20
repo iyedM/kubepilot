@@ -53,6 +53,13 @@ and checked by `lab/scripts/verify-pins.sh` before anything is created.
 | Settings | `--threads 2 --parallel 1 -c 2048 --metrics`; CPU request = limit = 2; memory 768Mi / 1536Mi |
 | Security | runs as uid 65532 (the image defaults to root; it works unprivileged), read-only root filesystem, all capabilities dropped |
 
+The Deployment uses the **`Recreate`** strategy (P1 increment 3 decision):
+the old pod is stopped before the new one starts, as for a single-instance
+model server that cannot hold two copies of the model. Consequence: **any
+change that `make lab-up` applies to the `model-server` Deployment briefly
+cuts the model** (requests fail with connection errors until the new pod is
+Ready, about 3 s with the model on hostPath and the image cached).
+
 The model file is downloaded once on the host (`.tools/models`) and mounted
 read-only into every kind node as `/models` (kind `extraMounts`), then into the
 pod through a `hostPath` volume.
@@ -173,6 +180,56 @@ server proxy reach `chat-api` as a JSON *string* (FastAPI answers 422), while
 the same method works against llama.cpp. `check-genai.sh` therefore sends its
 requests from inside the `chat-api` pod to the `chat-api` Service with
 `kubectl exec` (the same path as an in-cluster client).
+
+## Fault mechanisms verified before implementation (P1 increment 3a)
+
+Measured on 2026-10-20 before writing any fault script.
+
+**In-place CPU resize (for `cpu-throttle`).** `InPlacePodVerticalScaling` is
+enabled (GA) on Kubernetes 1.37. `kubectl patch pod … --subresource resize
+--type strategic` changed the model-server CPU from 2 to 300m without
+recreating anything: same pod uid, same containerID, same start time, 0
+restarts; the cgroup went from `cpu.max 200000 100000` to `30000 100000`.
+cAdvisor counters kept counting (`resets()` = 0 over 10 minutes for usage,
+periods and throttled periods), so deltas across the resize are valid.
+Notes:
+- `--type merge` (JSON merge patch) is **rejected**: it replaces the whole
+  `containers` list, which would remove the memory values ("resource requests
+  cannot be removed"). Use a strategic merge patch.
+- The resize **does emit events**: `Normal ResizeStarted` and
+  `ResizeCompleted` with the new values (the plan wrongly assumed none).
+- Effect at 300m, from the load generator: throttled periods went from ~4 to
+  ~547 per minute (~98% of periods); `short-16` 0.48 s → 3.1–3.9 s,
+  `medium-64` 1.5 s → 9.2 s, and `long-256` **failed with 502 after the 30 s
+  client timeout**. CPU throttling therefore produces errors (timeouts), not
+  only slowness.
+
+**Memory limit and mmap (for `oomkill`).** Same image and model, Docker with
+cgroup v2, then confirmed in the cluster:
+
+| Case | Memory limit | Load mode | Result |
+|---|---|---|---|
+| E1 | 300 MB | mmap (default) | runs and answers; anon ≈ 110 MB, file-mapped 15 MB in one run and 0 MB in another |
+| E2 | 300 MB | `--load-mode none` | **OOMKilled** (exit 137) while loading |
+| E3 | 1 GB | `--load-mode none` | runs; anon ≈ 547 MB, peak ≈ 555 MB |
+
+With mmap, what is charged to the container depends on which cgroup first
+read the model file (15 MB vs 0 MB above), so an mmap-based OOM fault would
+not be deterministic. The fault will load the model with `--load-mode none`
+(this build no longer accepts `--no-mmap`: "invalid argument") and a limit
+below the measured ~555 MB. In the cluster the kubelet records
+`lastState.terminated.reason=OOMKilled`, exit code 137, with a
+`Warning BackOff` event; **there is no OOM-specific event** on the pod or the
+node. kube-state-metrics exposes
+`kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}` and
+`kube_pod_container_status_last_terminated_exitcode` = 137.
+
+**Image pull on a node without the image:** pulling the llama.cpp image took
+80 s on a worker that did not have it, a natural cold-start mechanism.
+
+**`Recreate` strategy, observed with a pod watch (ms timestamps):** old pod
+deletion requested at 30.086, old container terminated at 30.350, new pod
+created at 30.362 (only after), new pod Ready at 33.603: a ≈ 3.5 s outage.
 
 ## What `make lab-check` proves, and what it does not
 
