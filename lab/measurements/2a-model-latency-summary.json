@@ -1,0 +1,45 @@
+{
+  "started_utc": "2026-10-20T01:19:40Z",
+  "duration_s": 55,
+  "conditions": {
+    "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)",
+    "model": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "model_sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "model_server_pod": "model-server-5bd4cc46f9-rxp66",
+    "cpu_limit": "2",
+    "threads": 2,
+    "parallel": 1,
+    "context": 2048,
+    "prompt": "Explain in two sentences what a Kubernetes readiness probe does.",
+    "max_tokens": 64,
+    "temperature": 0,
+    "cache_prompt": false,
+    "client": "curl pod in the same cluster, sequential requests"
+  },
+  "host": {
+    "nproc": 12,
+    "cpu_busy_pct_during_run": 25.5,
+    "loadavg_before": "1.50 1.72 1.91",
+    "loadavg_after": "2.14 1.86 1.95"
+  },
+  "requests": 50,
+  "ok": 50,
+  "failed": 0,
+  "warmup_s": 0.875268,
+  "latency_s": {
+    "p50": 0.861624,
+    "p95_indicative": 0.913801,
+    "max": 0.933383,
+    "min": 0.834580
+  },
+  "completion_tokens_mean": 36,
+  "prompt_tokens": 41,
+  "generation_tokens_per_s_mean": 54.95933980174028,
+  "prompt_ms_mean": 229.35085999999998,
+  "cfs_throttling": {
+    "throttled_periods_delta": 1,
+    "periods_delta": 527,
+    "note": "counters read from Prometheus (1m scrape) before the run and 75s after it"
+  }
+}

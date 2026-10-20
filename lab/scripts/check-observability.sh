@@ -1,29 +1,17 @@
 #!/usr/bin/env bash
 # End-to-end check of the observability stack. Runs every check, prints
 # PASS/FAIL for each, exits non-zero if any failed.
-#
-# Tempo and Prometheus are queried through the API server's service proxy, so
-# no port-forward and no extra client image are needed.
 # shellcheck source=lab/scripts/lib.sh
 source "$(dirname "$0")/lib.sh"
+# shellcheck source=lab/scripts/checklib.sh
+source "$(dirname "$0")/checklib.sh"
 
 CHECK_NS="kp-lab-check"
 RUN_ID="$(date -u +%Y%m%d%H%M%S)"
 SERVICE_NAME="kp-lab-check-${RUN_ID}"
 METRIC_NAME="kp_lab_check"
-POLL_SECONDS=90
-
-passed=0
-failed=0
-pass() { printf 'PASS  %s\n' "$*"; passed=$((passed + 1)); }
-fail() { printf 'FAIL  %s\n' "$*"; failed=$((failed + 1)); }
 
 cluster_exists || die "cluster ${CLUSTER_NAME} not found, run 'make lab-up' first"
-
-# svc_get SERVICE:PORT PATH -> response body via the API server proxy.
-svc_get() {
-  kc get --raw "/api/v1/namespaces/${OBS_NAMESPACE}/services/$1/proxy$2"
-}
 
 # --- 1. Stack pods are Ready -------------------------------------------------
 if out="$(kc -n "${OBS_NAMESPACE}" wait --for=condition=Ready pod --all --timeout=120s 2>&1)"; then
@@ -108,7 +96,7 @@ query="$(jq -rn --arg s "${SERVICE_NAME}" '"{ resource.service.name = \"" + $s +
 now="$(date +%s)"
 trace_id=""
 for _ in $(seq 1 $((POLL_SECONDS / 5))); do
-  resp="$(svc_get tempo:3200 "/api/search?q=${query}&start=$((now - 900))&end=$((now + 300))&limit=5" 2>/dev/null || true)"
+  resp="$(svc_get "${OBS_NAMESPACE}" tempo:3200 "/api/search?q=${query}&start=$((now - 900))&end=$((now + 300))&limit=5" 2>/dev/null || true)"
   trace_id="$(jq -r '.traces[0].traceID // empty' <<<"${resp}" 2>/dev/null || true)"
   [[ -n "${trace_id}" ]] && break
   sleep 5
@@ -118,7 +106,7 @@ if [[ -z "${trace_id}" ]]; then
   fail "no trace for ${SERVICE_NAME} in Tempo after ${POLL_SECONDS}s (last response: ${resp:-<empty>})"
 else
   pass "Tempo returned trace ${trace_id}"
-  trace="$(svc_get tempo:3200 "/api/v2/traces/${trace_id}" 2>&1 || true)"
+  trace="$(svc_get "${OBS_NAMESPACE}" tempo:3200 "/api/v2/traces/${trace_id}" 2>&1 || true)"
   pod_attr="$(jq -r '
       [.. | objects | select(.key? == "k8s.pod.name") | .value.stringValue] | first // empty
     ' <<<"${trace}" 2>/dev/null || true)"
@@ -130,29 +118,6 @@ else
 fi
 
 # --- 5. Prometheus scrapes cAdvisor and kube-state-metrics -------------------
-# prom_count EXPR -> number of series returned by an instant query.
-prom_count() {
-  local q
-  q="$(jq -rn --arg q "$1" '$q | @uri')"
-  svc_get prometheus-server:80 "/api/v1/query?query=${q}" 2>/dev/null \
-    | jq -r '.data.result | length' 2>/dev/null || echo 0
-}
-
-# check_series DESCRIPTION EXPR : PASS if at least one series, polling.
-check_series() {
-  local desc="$1" expr="$2" n=0
-  for _ in $(seq 1 $((POLL_SECONDS / 5))); do
-    n="$(prom_count "${expr}")"
-    [[ "${n}" -gt 0 ]] && break
-    sleep 5
-  done
-  if [[ "${n}" -gt 0 ]]; then
-    pass "${desc}: ${n} series for ${expr}"
-  else
-    fail "${desc}: no series for ${expr} after ${POLL_SECONDS}s"
-  fi
-}
-
 check_series "cAdvisor scraped on every node" 'up{job="kubernetes-nodes-cadvisor"} == 1'
 check_series "cAdvisor CPU throttling series" 'container_cpu_cfs_throttled_periods_total{namespace="observability"}'
 check_series "cAdvisor memory working set" 'container_memory_working_set_bytes{namespace="observability"}'
@@ -164,7 +129,4 @@ check_series "kube-state-metrics restarts" 'kube_pod_container_status_restarts_t
 check_series "OTLP metric via collector, with k8s_pod_name" \
   "${METRIC_NAME}{kp_run_id=\"${RUN_ID}\", k8s_pod_name=~\".+\"}"
 
-# --- Summary -----------------------------------------------------------------
-echo
-echo "lab-check: ${passed} passed, ${failed} failed"
-[[ "${failed}" -eq 0 ]]
+check_summary "check-observability"

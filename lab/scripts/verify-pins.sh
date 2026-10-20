@@ -55,6 +55,8 @@ mapfile -t images < <(
   {
     grep -E '^\s*image:\s' <<<"${rendered}" | sed -E 's/^\s*image:\s*//; s/"//g'
     echo "${TELEMETRYGEN_IMAGE}"
+    echo "${LLAMACPP_IMAGE}"
+    echo "${CURL_IMAGE}"
   } | sort -u
 )
 
@@ -65,4 +67,11 @@ for img in "${images[@]}"; do
   fi
 done
 
-log "all pins resolve (${#images[@]} images, 3 charts, 1 node image)"
+# The model URL is pinned to a repository commit; HEAD it (following the
+# redirect to the storage backend). The sha256 is checked by models.sh.
+log "model ${MODEL_URL}"
+if ! out="$(curl -fsSIL --retry 3 --retry-all-errors --connect-timeout 20 -o /dev/null "${MODEL_URL}" 2>&1)"; then
+  fail "model ${MODEL_URL}" "${out}"
+fi
+
+log "all pins resolve (${#images[@]} images, 3 charts, 1 node image, 1 model)"

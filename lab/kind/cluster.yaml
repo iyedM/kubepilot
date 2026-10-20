@@ -1,7 +1,8 @@
 # kind cluster for the KubePilot lab.
 #
 # This file is a template: lab/scripts/lab-up.sh renders it with envsubst,
-# substituting only ${EVENT_TTL}. Do not add other ${...} expressions.
+# substituting only ${EVENT_TTL} and ${MODELS_DIR}. Do not add other ${...}
+# expressions.
 #
 # EVENT_TTL is the kube-apiserver --event-ttl: how long Kubernetes Events are
 # kept. Default: 1h, the upstream Kubernetes default, so the lab behaves like a
@@ -26,7 +27,23 @@ kubeadmConfigPatchesJSON6902:
         value:
           name: event-ttl
           value: "${EVENT_TTL}"
+#
+# MODELS_DIR (absolute path of .tools/models on the host) is mounted read-only
+# as /models on every node, so the model server can start on any node without
+# downloading the model. extraMounts only apply when the cluster is created.
 nodes:
   - role: control-plane
+    extraMounts:
+      - hostPath: "${MODELS_DIR}"
+        containerPath: /models
+        readOnly: true
   - role: worker
+    extraMounts:
+      - hostPath: "${MODELS_DIR}"
+        containerPath: /models
+        readOnly: true
   - role: worker
+    extraMounts:
+      - hostPath: "${MODELS_DIR}"
+        containerPath: /models
+        readOnly: true

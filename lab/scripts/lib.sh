@@ -13,12 +13,14 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LAB_DIR="${ROOT_DIR}/lab"
 TOOLS_DIR="${ROOT_DIR}/.tools"
 BIN_DIR="${TOOLS_DIR}/bin"
+MODELS_DIR="${TOOLS_DIR}/models"
 
 # shellcheck source=lab/versions.env
 source "${LAB_DIR}/versions.env"
 
 CLUSTER_NAME="kubepilot-lab"
 OBS_NAMESPACE="observability"
+GENAI_NAMESPACE="genai"
 export KUBECONFIG="${TOOLS_DIR}/kubeconfig"
 
 KIND="${BIN_DIR}/kind"
