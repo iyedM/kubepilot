@@ -28,18 +28,28 @@ check_chart tempo "${TEMPO_CHART_REPO}" "${TEMPO_CHART_VERSION}"
 check_chart prometheus "${PROMETHEUS_CHART_REPO}" "${PROMETHEUS_CHART_VERSION}"
 check_chart opentelemetry-collector "${OTELCOL_CHART_REPO}" "${OTELCOL_CHART_VERSION}"
 
-# Render the charts with the lab values and list the images they reference.
-rendered="$(
-  {
-    helm template tempo tempo --repo "${TEMPO_CHART_REPO}" --version "${TEMPO_CHART_VERSION}" \
-      -n "${OBS_NAMESPACE}" -f "${LAB_DIR}/observability/tempo-values.yaml"
-    helm template prometheus prometheus --repo "${PROMETHEUS_CHART_REPO}" --version "${PROMETHEUS_CHART_VERSION}" \
-      -n "${OBS_NAMESPACE}" -f "${LAB_DIR}/observability/prometheus-values.yaml"
-    helm template otel-collector opentelemetry-collector --repo "${OTELCOL_CHART_REPO}" --version "${OTELCOL_CHART_VERSION}" \
-      -n "${OBS_NAMESPACE}" -f "${LAB_DIR}/observability/otel-collector-values.yaml" \
-      --set image.repository="${OTELCOL_IMAGE_REPO}" --set image.tag="${OTELCOL_IMAGE_TAG}"
-  } 2>&1
-)" || fail "helm template" "${rendered}"
+# Render each chart with the lab values; any rendering error is fatal. Each
+# chart is rendered on its own so that one failure cannot be masked by the
+# exit status of the next command.
+# render RELEASE CHART REPO VERSION ARGS...
+render() {
+  local release="$1" chart="$2" repo="$3" version="$4" out
+  shift 4
+  log "render ${chart} ${version} with lab values"
+  if ! out="$(helm template "${release}" "${chart}" --repo "${repo}" --version "${version}" \
+    -n "${OBS_NAMESPACE}" "$@" 2>&1)"; then
+    fail "helm template ${chart} ${version}" "${out}"
+  fi
+  rendered+="${out}"$'\n'
+}
+rendered=""
+render tempo tempo "${TEMPO_CHART_REPO}" "${TEMPO_CHART_VERSION}" \
+  -f "${LAB_DIR}/observability/tempo-values.yaml"
+render prometheus prometheus "${PROMETHEUS_CHART_REPO}" "${PROMETHEUS_CHART_VERSION}" \
+  -f "${LAB_DIR}/observability/prometheus-values.yaml"
+render otel-collector opentelemetry-collector "${OTELCOL_CHART_REPO}" "${OTELCOL_CHART_VERSION}" \
+  -f "${LAB_DIR}/observability/otel-collector-values.yaml" \
+  --set image.repository="${OTELCOL_IMAGE_REPO}" --set image.tag="${OTELCOL_IMAGE_TAG}"
 
 mapfile -t images < <(
   {

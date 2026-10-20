@@ -1,18 +1,14 @@
 # grafana-community/tempo (single binary). Lab settings: local storage, short
-# retention, OTLP only.
+# retention.
+#
+# Receivers are left at the chart defaults (OTLP + Jaeger): chart 3.2.0's
+# service template always reads tempo.receivers.jaeger.protocols.*, so the
+# Jaeger receiver cannot be removed through values (rendering fails with a nil
+# pointer). Only the collector sends to Tempo, and only over OTLP.
 tempo:
   # No anonymous usage report from a lab cluster.
   reportingEnabled: false
   retention: 24h
-  receivers:
-    # Only OTLP: the collector is the single entry point for telemetry.
-    jaeger: null
-    otlp:
-      protocols:
-        grpc:
-          endpoint: "0.0.0.0:4317"
-        http:
-          endpoint: "0.0.0.0:4318"
   resources:
     requests:
       cpu: 100m

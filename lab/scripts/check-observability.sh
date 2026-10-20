@@ -69,11 +69,23 @@ EOF
   kc -n "${CHECK_NS}" wait --for=condition=Complete "job/${name}" --timeout=120s >/dev/null 2>&1
 }
 
-endpoint="otel-collector.${OBS_NAMESPACE}.svc:4317"
+# Fully qualified on purpose: gRPC also looks up a TXT record
+# "_grpc_config.<host>". With a short name ("...svc") that lookup leaves the
+# cluster.local zone, CoreDNS forwards it upstream, and in kind the upstream
+# times out (~10s), longer than telemetrygen's 10s export timeout.
+endpoint="otel-collector.${OBS_NAMESPACE}.svc.cluster.local:4317"
+# telemetrygen's traces mode exits 0 even when every export fails (it only
+# logs "traces export: ..."), so job completion alone proves nothing: the
+# logs must also be free of export errors.
 if run_telemetrygen telemetrygen-traces traces \
   --otlp-endpoint "${endpoint}" --otlp-insecure \
   --service "${SERVICE_NAME}" --traces 3; then
-  pass "telemetrygen sent 3 traces (service.name=${SERVICE_NAME})"
+  export_errors="$(kc -n "${CHECK_NS}" logs job/telemetrygen-traces 2>&1 | grep -E 'traces export: ' || true)"
+  if [[ -z "${export_errors}" ]]; then
+    pass "telemetrygen exported 3 traces without error (service.name=${SERVICE_NAME})"
+  else
+    fail "telemetrygen traces job completed but exports failed: $(head -1 <<<"${export_errors}")"
+  fi
 else
   fail "telemetrygen traces job did not complete"
   kc -n "${CHECK_NS}" logs job/telemetrygen-traces --tail=20 || true
