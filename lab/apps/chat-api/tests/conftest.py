@@ -97,8 +97,9 @@ def fake_model():
 
 
 class RunningApp:
-    def __init__(self, model_base_url: str, tel) -> None:
-        app = create_app(Settings(model_base_url=model_base_url, request_timeout_s=5))
+    def __init__(self, model_base_url: str, tel, lab_fault_hooks: bool = False) -> None:
+        app = create_app(Settings(model_base_url=model_base_url, request_timeout_s=5,
+                                  lab_fault_hooks=lab_fault_hooks))
         telemetry.instrument_app(app, tel["telemetry"])
         self.port = free_port()
         self.server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=self.port, log_level="warning"))
@@ -110,10 +111,10 @@ class RunningApp:
                 raise RuntimeError("uvicorn did not start")
             time.sleep(0.05)
 
-    def post(self, path: str, payload: dict) -> tuple[int, dict]:
+    def post(self, path: str, payload: dict, method: str = "POST") -> tuple[int, dict]:
         req = urllib.request.Request(
             f"http://127.0.0.1:{self.port}{path}", data=json.dumps(payload).encode(),
-            headers={"content-type": "application/json"}, method="POST",
+            headers={"content-type": "application/json"}, method=method,
         )
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -129,6 +130,14 @@ class RunningApp:
 @pytest.fixture(scope="session")
 def app(fake_model, tel):
     running = RunningApp(fake_model.base_url, tel)
+    yield running
+    running.stop()
+
+
+@pytest.fixture(scope="session")
+def hooked_app(fake_model, tel):
+    """chat-api with the lab fault hooks enabled (LAB_FAULT_HOOKS=1)."""
+    running = RunningApp(fake_model.base_url, tel, lab_fault_hooks=True)
     yield running
     running.stop()
 
@@ -156,6 +165,8 @@ def spans_as_dicts(exporter: InMemorySpanExporter) -> list[dict]:
             "trace_id": format(s.context.trace_id, "032x"),
             "span_id": format(s.context.span_id, "016x"),
             "parent_id": format(s.parent.span_id, "016x") if s.parent else None,
+            "start_ns": s.start_time,
+            "end_ns": s.end_time,
             "kind": s.kind.name,
             "status": s.status.status_code.name,
             "attributes": dict(s.attributes or {}),

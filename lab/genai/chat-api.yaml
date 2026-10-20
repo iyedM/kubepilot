@@ -59,6 +59,10 @@ spec:
               value: http://model-server.genai.svc.cluster.local:8080/v1
             - name: MODEL_REQUEST_TIMEOUT_S
               value: "30"
+            # Lab-only fault hooks (PUT /lab/delay, used by the
+            # unknown_no_infrastructure_cause case). Off by default in the app.
+            - name: LAB_FAULT_HOOKS
+              value: "1"
           resources:
             # Measured with loadgen running and a 500m limit: average 7m CPU,
             # max 21m (2-minute rate), yet 25 of 616 CFS periods throttled

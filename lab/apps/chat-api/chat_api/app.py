@@ -25,6 +25,8 @@ class Settings:
     model_name: str = "qwen2.5-0.5b-instruct"
     request_timeout_s: float = 30.0
     seed: int = 42
+    # Lab-only fault hooks (PUT /lab/delay). Off unless LAB_FAULT_HOOKS=1.
+    lab_fault_hooks: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -33,11 +35,16 @@ class Settings:
             model_name=os.environ.get("MODEL_NAME", cls.model_name),
             request_timeout_s=float(os.environ.get("MODEL_REQUEST_TIMEOUT_S", cls.request_timeout_s)),
             seed=int(os.environ.get("MODEL_SEED", cls.seed)),
+            lab_fault_hooks=os.environ.get("LAB_FAULT_HOOKS") == "1",
         )
 
 
 class ChatRequest(BaseModel):
     prompt_id: str
+
+
+class DelayRequest(BaseModel):
+    ms: int
 
 
 def _trace_id() -> str:
@@ -55,6 +62,18 @@ def create_app(settings: Settings) -> FastAPI:
         timeout=settings.request_timeout_s,
     )
 
+    # Artificial delay before the model call, set at runtime through the lab
+    # hook. It only sleeps: no CPU, no memory, no Kubernetes object or event
+    # changes, so it reproduces "slow for no infrastructure reason".
+    delay = {"ms": 0}
+
+    if settings.lab_fault_hooks:
+
+        @app.put("/lab/delay")
+        def set_delay(req: DelayRequest) -> dict[str, int]:
+            delay["ms"] = max(0, req.ms)
+            return delay
+
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
         # Deliberately independent of the model server: a model outage must
@@ -70,6 +89,8 @@ def create_app(settings: Settings) -> FastAPI:
 
         trace_id = _trace_id()
         start = time.perf_counter()
+        if delay["ms"]:
+            time.sleep(delay["ms"] / 1000)
         try:
             resp = client.chat.completions.create(
                 model=settings.model_name,

@@ -182,3 +182,28 @@ def test_long_prompt_budget_is_the_one_measured():
     # 2048 context (make compat-matrix); keep the catalog entry identical.
     assert CATALOG["long-256"].max_tokens == 256
     assert CATALOG["long-256"].text.count("readiness probe") == 30
+
+
+def test_lab_delay_hook_is_off_by_default(app):
+    status, _ = app.post("/lab/delay", {"ms": 500}, method="PUT")
+    assert status == 404
+
+
+def test_lab_delay_shows_as_a_gap_before_the_genai_span(hooked_app, tel, fake_model):
+    status, body = hooked_app.post("/lab/delay", {"ms": 400}, method="PUT")
+    assert (status, body) == (200, {"ms": 400})
+    try:
+        status, body = hooked_app.post("/chat", {"prompt_id": "short-16"})
+        assert status == 200
+        assert body["latency_ms"] >= 400
+        spans = wait_for_spans(tel["spans"], _have_both)
+        chat, server = _chat_span(spans), _server_span(spans)
+        # The delay is spent in the app before the model call: no extra span,
+        # only a gap between the HTTP span start and the GenAI span start.
+        assert (chat["start_ns"] - server["start_ns"]) / 1e6 >= 400
+        assert len([s for s in spans if s["kind"] == "CLIENT"]) == 1
+        # The model request itself is unchanged.
+        [sent] = fake_model.requests
+        assert sent["max_tokens"] == CATALOG["short-16"].max_tokens
+    finally:
+        hooked_app.post("/lab/delay", {"ms": 0}, method="PUT")
