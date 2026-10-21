@@ -29,7 +29,7 @@
       "component": {
         "namespace": "genai",
         "kind": "Pod",
-        "workload": "deployment/model-server"
+        "workload": "deployment/chat-api"
       },
       "active_from": "2026-10-21T14:16:49.987Z",
       "active_to": "2026-10-21T14:21:52.060Z"
@@ -49,27 +49,27 @@
   },
   "target": {
     "namespace": "genai",
-    "workload": "deployment/model-server",
+    "workload": "deployment/chat-api",
     "pods_before": [
       {
-        "name": "model-server-5bd4cc46f9-xd8d4",
-        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
-        "node": "kubepilot-lab-worker2",
+        "name": "chat-api-69fb959bd4-2lst4",
+        "uid": "99a96be9-48af-46c8-837d-1a8083b92b17",
+        "node": "kubepilot-lab-worker",
         "phase": "Running",
-        "container_id": "containerd://851181d53fad8a8fe17d90568887358c0121c62eea69037ec21ede8ea6b24387",
-        "restarts": 1,
-        "created": "2026-10-21T06:25:00Z"
+        "container_id": "containerd://04a9f55446089a6916a2807b6d9781b572ceaebf13d86e4eebd3a4e910b27ca7",
+        "restarts": 0,
+        "created": "2026-10-21T14:08:15Z"
       }
     ],
     "pods_after": [
       {
-        "name": "model-server-5bd4cc46f9-xd8d4",
-        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
-        "node": "kubepilot-lab-worker2",
+        "name": "chat-api-69fb959bd4-2lst4",
+        "uid": "99a96be9-48af-46c8-837d-1a8083b92b17",
+        "node": "kubepilot-lab-worker",
         "phase": "Running",
-        "container_id": "containerd://851181d53fad8a8fe17d90568887358c0121c62eea69037ec21ede8ea6b24387",
-        "restarts": 1,
-        "created": "2026-10-21T06:25:00Z"
+        "container_id": "containerd://04a9f55446089a6916a2807b6d9781b572ceaebf13d86e4eebd3a4e910b27ca7",
+        "restarts": 0,
+        "created": "2026-10-21T14:08:15Z"
       }
     ]
   },
@@ -129,7 +129,9 @@
     "script": "lab/faults/check-fault.sh app-delay",
     "result": "pass"
   },
-  "notes": [],
+  "notes": [
+    "target and expected_causes[0].component.workload updated offline from pods.json.gz to deployment/chat-api to match catalog.v1.json (init_run and run.sh previously defaulted to deployment/model-server)"
+  ],
   "phase_seconds": {
     "baseline": {
       "planned": 180,
