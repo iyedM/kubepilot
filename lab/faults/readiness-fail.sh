@@ -31,10 +31,14 @@ inject() {
     probe-wrong-port) patch_readiness '{"httpGet":{"path":"/health","port":9999}}' ;;
     initial-delay-600) patch_readiness '{"initialDelaySeconds":600}' ;;
     server-wrong-port)
-      # The probe is right, the server listens elsewhere.
+      # The probe is right, the server listens elsewhere. Remove startupProbe
+      # and livenessProbe so the container stays Running (0 restarts) and
+      # readinessProbe runs against 8080; 8081 only appears in containers[0].args.
       kc -n "${GENAI_NAMESPACE}" patch deploy model-server --type json -p '[
         {"op":"test","path":"/spec/template/spec/containers/0/args/4","value":"--port"},
-        {"op":"replace","path":"/spec/template/spec/containers/0/args/5","value":"8081"}]' >/dev/null
+        {"op":"replace","path":"/spec/template/spec/containers/0/args/5","value":"8081"},
+        {"op":"remove","path":"/spec/template/spec/containers/0/startupProbe"},
+        {"op":"remove","path":"/spec/template/spec/containers/0/livenessProbe"}]' >/dev/null
       ;;
     *) die "unknown readiness-fail variant ${variant}" ;;
   esac

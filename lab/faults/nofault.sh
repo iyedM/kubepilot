@@ -81,6 +81,7 @@ metadata:
 spec:
   nodeName: ${node}
   restartPolicy: Always
+  terminationGracePeriodSeconds: 0
   securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
   containers:
     - name: decoy

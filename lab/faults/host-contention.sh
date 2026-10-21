@@ -54,6 +54,7 @@ metadata:
 spec:
   nodeName: ${node}
   restartPolicy: Never
+  terminationGracePeriodSeconds: 0
   securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
   containers:
     - name: burn
@@ -86,7 +87,7 @@ reset() {
     [[ "${left:-0}" -eq 0 ]] || die "host-contention reset: ${left} busy loop(s) still running (${marker})"
   fi
   if [[ "$(run_get "${dir}" '.fault.variant')" == neighbor-pod-same-node ]]; then
-    kc -n "${NOISE_NS}" delete pod "${NEIGHBOR}" --ignore-not-found --wait=false >/dev/null
+    kc -n "${NOISE_NS}" delete pod "${NEIGHBOR}" --ignore-not-found --wait=true --timeout=60s >/dev/null
   fi
 }
 

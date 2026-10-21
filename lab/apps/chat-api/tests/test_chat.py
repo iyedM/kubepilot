@@ -191,7 +191,7 @@ def test_lab_delay_hook_is_off_by_default(app):
 
 def test_lab_delay_shows_as_a_gap_before_the_genai_span(hooked_app, tel, fake_model):
     status, body = hooked_app.post("/lab/delay", {"ms": 400}, method="PUT")
-    assert (status, body) == (200, {"ms": 400})
+    assert (status, body) == (200, {"ms": 400, "every_n": 1})
     try:
         status, body = hooked_app.post("/chat", {"prompt_id": "short-16"})
         assert status == 200
@@ -205,5 +205,22 @@ def test_lab_delay_shows_as_a_gap_before_the_genai_span(hooked_app, tel, fake_mo
         # The model request itself is unchanged.
         [sent] = fake_model.requests
         assert sent["max_tokens"] == CATALOG["short-16"].max_tokens
+    finally:
+        hooked_app.post("/lab/delay", {"ms": 0}, method="PUT")
+
+
+def test_lab_intermittent_delay_delays_one_request_in_n(hooked_app):
+    status, body = hooked_app.post("/lab/delay", {"ms": 300, "every_n": 3}, method="PUT")
+    assert (status, body) == (200, {"ms": 300, "every_n": 3})
+    try:
+        latencies = []
+        for _ in range(4):
+            status, body = hooked_app.post("/chat", {"prompt_id": "short-16"})
+            assert status == 200
+            latencies.append(body["latency_ms"])
+        assert latencies[0] >= 300
+        assert latencies[1] < 200
+        assert latencies[2] < 200
+        assert latencies[3] >= 300
     finally:
         hooked_app.post("/lab/delay", {"ms": 0}, method="PUT")

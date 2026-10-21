@@ -58,7 +58,7 @@ compat-matrix: ## Record what each OpenAI instrumentation package emits (fixture
 	lab/compat/run-matrix.sh
 
 test-app: ## Run the chat-api pytest suite in the pinned Python image
-	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONUSERBASE=/tmp/pyuser \
+	docker run --rm --network=host --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONUSERBASE=/tmp/pyuser \
 	  -e PYTHONDONTWRITEBYTECODE=1 -v "$(CURDIR):/src:ro" -w /src/lab/apps/chat-api \
 	  $(PYTHON_IMAGE) sh -c "pip install --user --quiet --no-cache-dir --disable-pip-version-check \
 	    --require-hashes --no-deps -r requirements-dev.txt && python -m pytest -p no:cacheprovider -v tests"

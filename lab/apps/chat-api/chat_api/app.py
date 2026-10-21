@@ -45,6 +45,7 @@ class ChatRequest(BaseModel):
 
 class DelayRequest(BaseModel):
     ms: int
+    every_n: int = 1
 
 
 def _trace_id() -> str:
@@ -65,14 +66,16 @@ def create_app(settings: Settings) -> FastAPI:
     # Artificial delay before the model call, set at runtime through the lab
     # hook. It only sleeps: no CPU, no memory, no Kubernetes object or event
     # changes, so it reproduces "slow for no infrastructure reason".
-    delay = {"ms": 0}
+    delay = {"ms": 0, "every_n": 1, "count": 0}
 
     if settings.lab_fault_hooks:
 
         @app.put("/lab/delay")
         def set_delay(req: DelayRequest) -> dict[str, int]:
             delay["ms"] = max(0, req.ms)
-            return delay
+            delay["every_n"] = max(1, req.every_n)
+            delay["count"] = 0
+            return {"ms": delay["ms"], "every_n": delay["every_n"]}
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -90,7 +93,9 @@ def create_app(settings: Settings) -> FastAPI:
         trace_id = _trace_id()
         start = time.perf_counter()
         if delay["ms"]:
-            time.sleep(delay["ms"] / 1000)
+            delay["count"] += 1
+            if (delay["count"] - 1) % delay["every_n"] == 0:
+                time.sleep(delay["ms"] / 1000)
         try:
             resp = client.chat.completions.create(
                 model=settings.model_name,

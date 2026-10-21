@@ -109,28 +109,28 @@
           "id": "kv-cache-ctx32k",
           "split": "test",
           "status": "planned",
-          "measured": false,
-          "mechanism": "Deployment change: context -c 32768 with mmap (default) and memory limit 512Mi: the KV cache, not the model, exceeds the limit",
+          "measured": true,
+          "mechanism": "Deployment change: context -c 32768 with mmap (default) and memory limit 400Mi: the KV cache, not the model, exceeds the limit (measured RssAnon: 467.9 MiB at -c 32768 vs 107.6 MiB at -c 2048)",
           "params": {
             "context": 32768,
-            "memory_limit": "512Mi"
+            "memory_limit": "400Mi"
           },
-          "why_differs_from_dev": "the memory is taken by the KV cache sized by the context length, not by loading the weights; the OOM itself is not verified yet",
-          "signal": "expected: OOMKilled, BackOff, connection errors; only the pod spec differs",
+          "why_differs_from_dev": "the memory is taken by the KV cache sized by the context length (467.9 MiB anonymous memory vs 107.6 MiB at -c 2048), not by loading the weights with --load-mode none",
+          "signal": "measured: OOMKilled, BackOff, kube_pod_container_status_last_terminated_reason{reason=OOMKilled}, connection errors; only the pod spec differs",
           "signal_identical_to_dev": true
         },
         {
           "id": "app-oom-40mi",
           "split": "test",
           "status": "planned",
-          "measured": false,
+          "measured": true,
           "mechanism": "Deployment change on chat-api (not the model server): memory limit 40Mi, below the ~70 MiB the app needs",
           "params": {
             "target": "deployment/chat-api",
             "memory_limit": "40Mi"
           },
           "why_differs_from_dev": "the OOM hits the application in front of the model, not the model server",
-          "signal": "expected: chat-api OOMKilled + BackOff; loadgen gets connection errors to chat-api; no chat-api trace for the failed requests (the app is down)",
+          "signal": "measured: chat-api OOMKilled + BackOff, kube_pod_container_status_last_terminated_reason{reason=OOMKilled}; loadgen gets connection errors to chat-api; no chat-api trace for the failed requests (the app is down)",
           "signal_identical_to_dev": false
         }
       ]
@@ -168,26 +168,26 @@
           "id": "node-taint",
           "split": "test",
           "status": "planned",
-          "measured": false,
+          "measured": true,
           "mechanism": "NoSchedule taint added to both worker nodes, then the model-server pod is recreated; the pod spec is unchanged",
           "params": {
             "taint": "kubepilot.dev/maintenance=true:NoSchedule"
           },
           "why_differs_from_dev": "the cause is on the nodes (taint), not in the pod spec",
-          "signal": "expected: FailedScheduling '0/3 nodes are available: 3 node(s) had untolerated taint(s)' (control-plane taint + kubepilot.dev/maintenance on both workers); no event for the taint itself. Note: the dev variants also mention 'untolerated taint(s)' because of the control-plane taint (measured in nodeselector-gpu: 1 taint + 2 selector), so the node count per reason, not the word 'taint', identifies this variant",
+          "signal": "measured: FailedScheduling '0/3 nodes are available: 3 node(s) had untolerated taint(s). preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.' (control-plane taint + kubepilot.dev/maintenance on both workers); no event for the taint itself. Note: the dev variants also mention 'untolerated taint(s)' because of the control-plane taint (measured in nodeselector-gpu: 1 taint + 2 selector), so the node count per reason, not the word 'taint', identifies this variant",
           "signal_identical_to_dev": false
         },
         {
           "id": "pvc-unbound",
           "split": "test",
           "status": "planned",
-          "measured": false,
+          "measured": true,
           "mechanism": "Deployment change: model-server mounts a PVC whose StorageClass does not exist",
           "params": {
             "storageClassName": "kubepilot-missing"
           },
           "why_differs_from_dev": "the pod cannot be placed because of storage (unbound PVC), not because of node selection or capacity",
-          "signal": "expected: FailedScheduling '... unbound immediate PersistentVolumeClaims' and a ProvisioningFailed/ExternalProvisioning event on the PVC",
+          "signal": "measured: FailedScheduling '0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims. not found' and Warning ProvisioningFailed 'storageclass.storage.k8s.io \"kubepilot-missing\" not found' on the PVC",
           "signal_identical_to_dev": false
         }
       ]
@@ -236,13 +236,13 @@
           "id": "server-wrong-port",
           "split": "test",
           "status": "planned",
-          "measured": false,
-          "mechanism": "Deployment change: llama-server listens on 8081 while the probe and the Service still use 8080",
+          "measured": true,
+          "mechanism": "Deployment change: llama-server listens on 8081 while the readiness probe and the Service still use 8080 (startupProbe and livenessProbe removed so the container stays Running with 0 restarts)",
           "params": {
             "server_port": 8081
           },
           "why_differs_from_dev": "the probe is correct; the server is misconfigured",
-          "signal": "expected: Warning Unhealthy '... connect: connection refused', the same as the dev variant probe-wrong-port; the cause is only visible in the container args",
+          "signal": "measured: Warning Unhealthy 'Readiness probe failed: ...:8080/health: dial tcp ...:8080: connect: connection refused', Running, Ready=False, 0 restarts; 8081 only appears in the container args",
           "signal_identical_to_dev": true
         }
       ]
@@ -342,18 +342,18 @@
           "id": "neighbor-pod-same-node",
           "split": "test",
           "status": "planned",
-          "measured": false,
+          "measured": true,
           "mechanism": "CPU-hungry pod without CPU limit in namespace noise, pinned to the model-server node",
           "params": {
             "busy_loops": 8,
             "namespace": "noise"
           },
           "why_differs_from_dev": "the competitor is a pod inside the cluster (visible with its own CPU usage on the same node), not a host process",
-          "signal": "expected: PSI cpu waiting of model-server up, no CFS throttling, a neighbor pod with high CPU usage on the same node",
+          "signal": "measured: PSI cpu waiting of model-server 0.11 s -> 10.5 s over 120 s, 0 CFS throttled periods, short-16 p50 x2.54, neighbor pod noise/cpu-neighbor using ~7.4 CPU cores on the same node",
           "signal_identical_to_dev": false
         }
       ],
-      "test_set": "excluded until its test variant is measured (measured: true) and dry-run; not counted in the 20 test injections"
+      "test_set": "measured; excluded from the test split until dry-run; not counted in the 20 test injections"
     },
     {
       "name": "app-delay",
@@ -375,21 +375,21 @@
         {
           "id": "intermittent-delay",
           "split": "test",
-          "status": "proposed",
-          "measured": false,
-          "mechanism": "lab hook delaying 1 request in 3 by 2000 ms (requires extending the hook)",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "lab hook delaying 1 request in 3 by 2000 ms (PUT /lab/delay {\"ms\": 2000, \"every_n\": 3})",
           "params": {
             "delay_ms": 2000,
             "every_n": 3
           },
           "why_differs_from_dev": "intermittent instead of constant: the p50 moves little, the tail moves a lot",
-          "signal": "expected: no infrastructure signal; gap in one trace in three",
+          "signal": "measured: 4/12 traces with ~2000 ms gap before the GenAI span, 8/12 fast (median gap 0 ms); no CFS throttling, no Kubernetes event",
           "signal_identical_to_dev": false
         }
       ],
       "description": "slow in the application, visible as a gap between the HTTP span and the GenAI span in the trace, but with no Kubernetes event, no resource metric and no configuration change explaining it",
       "preconditions": "LAB_FAULT_HOOKS=1 on chat-api, switched with make lab-hooks-on before the runs and make lab-hooks-off after (redeploys chat-api, between runs only)",
-      "test_set": "excluded until its test variant is measured (measured: true) and dry-run; not counted in the 20 test injections",
+      "test_set": "measured; excluded from the test split until dry-run; not counted in the 20 test injections",
       "expected_answer": "unknown_no_infrastructure_cause, with the trace gap (HTTP span start -> GenAI span start) as the only cited evidence; an invented infrastructure cause is an error"
     }
   ],
