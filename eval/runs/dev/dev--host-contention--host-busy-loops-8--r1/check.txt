@@ -1,0 +1,4 @@
+PASS  CPU pressure (PSI waiting) of model-server-5bd4cc46f9-xd8d4: 20.18227087414624 s over 300 s vs 0.13722138947368817 s over 180 s of baseline
+PASS  no CFS throttling: fraction 0.001 < 0.05
+PASS  short-16 p50 872.9 ms vs baseline 509.4 ms (x1.71 >= x1.3)
+PASS  8 host busy loops running (kubepilot-burn-dev--host-contention--host-busy-loops-8--r1)

@@ -1,0 +1,3 @@
+PASS  trace gap HTTP span start -> GenAI span start: median 2000 ms over 11 traces (delay 2000 ms)
+PASS  no CFS throttling of the model server: fraction 0.007
+PASS  no Kubernetes event in genai since the injection

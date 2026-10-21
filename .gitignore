@@ -46,3 +46,4 @@ eval/runs/**/*.prev-*
 eval/runs/**/.cpu-*
 eval/runs/**/.run.json.*
 eval/runs/**/.metrics.*
+eval/runs/**/inject.txt
