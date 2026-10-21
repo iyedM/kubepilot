@@ -1,0 +1,3 @@
+PASS  pod model-server-6555fb9694-6dgpr became Ready at 2026-10-21T06:05:42Z (56 s after the injection)
+PASS  initContainer fetch-model completed after 24 s (>= 15 s)
+PASS  load generator: 7 failed requests while starting, 59 successful after Ready

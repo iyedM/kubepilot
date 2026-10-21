@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--config-regression--threads-1--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "running",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "8bad53282aa7688794b40349ad7e3ccbd70213a411e058eab1a6a8f81e893a10",
+    "entry_id": "config-regression/threads-1"
+  },
+  "fault": {
+    "name": "config-regression",
+    "variant": "threads-1",
+    "cause": "config_change",
+    "mechanism": "Deployment change: --threads 1 (CPU limit unchanged at 2)",
+    "params": {
+      "threads": 1
+    },
+    "applied": {
+      "variant": "threads-1",
+      "threads": "1",
+      "pod": "model-server-58dc78d5f6-7rmjw"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "config_change",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-21T06:19:26.155Z",
+      "active_to": null
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-21T06:15:28.548Z",
+    "quiet_since": "2026-10-21T06:11:13Z",
+    "baseline_start": "2026-10-21T06:16:26.123Z",
+    "inject_start": "2026-10-21T06:19:26.155Z",
+    "inject_done": "2026-10-21T06:19:29.398Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-vbrql",
+        "uid": "59f6af20-d9a5-46c8-8d86-314b8f35412b",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://4e916b4be6d6eb78cc1d04a733152b34186c8a51b156a1ddf0126e9e78729556",
+        "restarts": 0,
+        "created": "2026-10-21T06:11:11Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "05a919712c598824b463f5873e699f8eb6eae669",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      4.30,
+      3.62,
+      3.14
+    ],
+    "mem_available_mib_start": 8055,
+    "cpu_busy_pct": {
+      "baseline": 23.8
+    }
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {},
+  "check": null,
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}
