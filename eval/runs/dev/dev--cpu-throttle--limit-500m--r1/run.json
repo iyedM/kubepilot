@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--cpu-throttle--limit-500m--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "cpu-throttle/limit-500m"
+  },
+  "fault": {
+    "name": "cpu-throttle",
+    "variant": "limit-500m",
+    "cause": "cpu_throttling",
+    "mechanism": "in-place resize of the running pod",
+    "params": {
+      "cpu": "500m"
+    },
+    "applied": {
+      "mode": "in-place",
+      "pod": "model-server-5bd4cc46f9-7tvn9",
+      "cpu": "500m"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "cpu_throttling",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T23:21:52.908Z",
+      "active_to": "2026-10-20T23:26:58.352Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-20T23:16:38.992Z",
+    "quiet_since": "2026-10-20T23:13:40Z",
+    "baseline_start": "2026-10-20T23:18:52.888Z",
+    "inject_start": "2026-10-20T23:21:52.908Z",
+    "inject_done": "2026-10-20T23:21:55.062Z",
+    "reset_start": "2026-10-20T23:26:55.366Z",
+    "reset_done": "2026-10-20T23:26:58.352Z",
+    "lab_healthy_again": "2026-10-20T23:27:02.681Z",
+    "end": "2026-10-20T23:30:02.703Z",
+    "export_done": "2026-10-20T23:30:11.648Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-7tvn9",
+        "uid": "014e94fa-ef1e-47b9-8122-2b0217a430bc",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://8e5dff046403d0ca755eec7f45a79e07462e3a5a6f07f0827c55a00be34ff00c",
+        "restarts": 0,
+        "created": "2026-10-20T23:13:28Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-7tvn9",
+        "uid": "014e94fa-ef1e-47b9-8122-2b0217a430bc",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://8e5dff046403d0ca755eec7f45a79e07462e3a5a6f07f0827c55a00be34ff00c",
+        "restarts": 0,
+        "created": "2026-10-20T23:13:28Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "577ab11ba4b697997d225fed8c1096cc36c23c9a",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      3.36,
+      3.48,
+      3.84
+    ],
+    "mem_available_mib_start": 9396,
+    "cpu_busy_pct": {
+      "baseline": 26.1,
+      "fault": 18.6,
+      "recovery": 22.4
+    },
+    "loadavg_end": [
+      2.66,
+      2.84,
+      3.32
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh cpu-throttle",
+    "result": "pass"
+  },
+  "notes": []
+}

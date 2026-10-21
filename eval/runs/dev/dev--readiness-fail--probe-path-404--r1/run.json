@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--readiness-fail--probe-path-404--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "readiness-fail/probe-path-404"
+  },
+  "fault": {
+    "name": "readiness-fail",
+    "variant": "probe-path-404",
+    "cause": "readiness_failing",
+    "mechanism": "Deployment change: readiness probe path /does-not-exist",
+    "params": {
+      "path": "/does-not-exist"
+    },
+    "applied": {
+      "variant": "probe-path-404"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "readiness_failing",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T16:51:33.489Z",
+      "active_to": "2026-10-20T16:57:10.200Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-20T16:48:16.586Z",
+    "quiet_since": "2026-10-20T16:43:16Z",
+    "baseline_start": "2026-10-20T16:48:33.469Z",
+    "inject_start": "2026-10-20T16:51:33.489Z",
+    "inject_done": "2026-10-20T16:52:06.233Z",
+    "reset_start": "2026-10-20T16:57:06.561Z",
+    "reset_done": "2026-10-20T16:57:10.200Z",
+    "lab_healthy_again": "2026-10-20T16:57:10.809Z",
+    "end": "2026-10-20T17:00:10.831Z",
+    "export_done": "2026-10-20T17:00:17.498Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-gk8gm",
+        "uid": "e459cca0-266c-486e-860c-d3cd269f2126",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://47104078fa1d8f773645fadf0fd6b0d907a38c82b6eb77898ee0d1816c474cdc",
+        "restarts": 0,
+        "created": "2026-10-20T16:42:12Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-56wgr",
+        "uid": "1f1085b8-5945-4841-9876-b62e4cf92280",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://c270502320d8b467d130a294658d24a505f5d58c9de6e20239a286085a3030e0",
+        "restarts": 0,
+        "created": "2026-10-20T16:57:07Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "e6c5d6eb0baddc70527a38ac42d621714aef5044",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      2.48,
+      2.97,
+      3.17
+    ],
+    "mem_available_mib_start": 8140,
+    "cpu_busy_pct": {
+      "baseline": 22.9,
+      "fault": 20.0,
+      "recovery": 33.4
+    },
+    "loadavg_end": [
+      4.75,
+      3.85,
+      3.39
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh readiness-fail",
+    "result": "pass"
+  },
+  "notes": []
+}

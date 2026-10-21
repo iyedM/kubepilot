@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--cold-start--model-download-10mbs--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "cold-start/model-download-10mbs"
+  },
+  "fault": {
+    "name": "cold-start",
+    "variant": "model-download-10mbs",
+    "cause": "cold_start",
+    "mechanism": "Deployment change: model fetched by an initContainer from an in-cluster file server, curl --limit-rate 10M",
+    "params": {
+      "rate": "10M"
+    },
+    "applied": {
+      "variant": "model-download-10mbs",
+      "pod": "model-server-bd95fc88f-jn6b9",
+      "effect_end": "2026-10-20T23:42:31Z"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "cold_start",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T23:41:39.566Z",
+      "active_to": "2026-10-20T23:42:31Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-20T23:37:54.591Z",
+    "quiet_since": "2026-10-20T23:33:24Z",
+    "baseline_start": "2026-10-20T23:38:39.539Z",
+    "inject_start": "2026-10-20T23:41:39.566Z",
+    "inject_done": "2026-10-20T23:42:31.865Z",
+    "reset_start": "2026-10-20T23:47:32.101Z",
+    "reset_done": "2026-10-20T23:48:05.619Z",
+    "lab_healthy_again": "2026-10-20T23:48:06.123Z",
+    "end": "2026-10-20T23:51:06.157Z",
+    "export_done": "2026-10-20T23:51:12.307Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-7tvn9",
+        "uid": "014e94fa-ef1e-47b9-8122-2b0217a430bc",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://8e5dff046403d0ca755eec7f45a79e07462e3a5a6f07f0827c55a00be34ff00c",
+        "restarts": 0,
+        "created": "2026-10-20T23:13:28Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-lkmvg",
+        "uid": "8fd172a0-3911-4d03-89da-5eba87c105e2",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://d5e26ff2b15dfea77b590bd050a93ce031192105593e17c5052cffed10444263",
+        "restarts": 0,
+        "created": "2026-10-20T23:48:02Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "081b9d7d627837fd0a92c6b5f943e9a86db539a6",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      3.65,
+      3.58,
+      3.51
+    ],
+    "mem_available_mib_start": 9747,
+    "cpu_busy_pct": {
+      "baseline": 24.9,
+      "fault": 22.1,
+      "recovery": 22.8
+    },
+    "loadavg_end": [
+      2.72,
+      2.98,
+      3.24
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh cold-start",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}

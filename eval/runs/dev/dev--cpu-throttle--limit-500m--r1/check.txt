@@ -1,0 +1,3 @@
+PASS  throttled fraction 0.879 >= 0.20 for model-server-5bd4cc46f9-7tvn9 over the fault window (300s, 2490.1693218245096/2831.719783280984 periods)
+PASS  short-16 p50 1812.7 ms vs baseline 505.9 ms (x3.58 >= x2.0)
+PASS  in-place: same container (8e5dff046403), ResizeCompleted event present

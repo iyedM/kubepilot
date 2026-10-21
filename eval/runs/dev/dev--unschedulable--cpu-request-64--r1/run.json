@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--unschedulable--cpu-request-64--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "unschedulable/cpu-request-64"
+  },
+  "fault": {
+    "name": "unschedulable",
+    "variant": "cpu-request-64",
+    "cause": "unschedulable",
+    "mechanism": "Deployment change: CPU request 64",
+    "params": {
+      "cpu_request": "64"
+    },
+    "applied": {
+      "variant": "cpu-request-64"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "unschedulable",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T23:56:52.039Z",
+      "active_to": "2026-10-21T00:02:26.808Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-20T23:53:35.474Z",
+    "quiet_since": "2026-10-20T23:48:35Z",
+    "baseline_start": "2026-10-20T23:53:52.009Z",
+    "inject_start": "2026-10-20T23:56:52.039Z",
+    "inject_done": "2026-10-20T23:57:22.684Z",
+    "reset_start": "2026-10-21T00:02:22.950Z",
+    "reset_done": "2026-10-21T00:02:26.808Z",
+    "lab_healthy_again": "2026-10-21T00:02:27.668Z",
+    "end": "2026-10-21T00:05:27.699Z",
+    "export_done": "2026-10-21T00:05:33.333Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-lkmvg",
+        "uid": "8fd172a0-3911-4d03-89da-5eba87c105e2",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://d5e26ff2b15dfea77b590bd050a93ce031192105593e17c5052cffed10444263",
+        "restarts": 0,
+        "created": "2026-10-20T23:48:02Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-8wj68",
+        "uid": "4f2c8acf-4ca6-4f08-9907-1d2fd52f1d78",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://cdb57d62a78d93e386cbf2aa89d04397ceb1dfa0dd2d8e41ef49754bf5d661f1",
+        "restarts": 0,
+        "created": "2026-10-21T00:02:23Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "b4308ee9b6b915e213279223324b572111886aa5",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      4.09,
+      3.50,
+      3.39
+    ],
+    "mem_available_mib_start": 8587,
+    "cpu_busy_pct": {
+      "baseline": 21.4,
+      "fault": 15.9,
+      "recovery": 21.8
+    },
+    "loadavg_end": [
+      2.86,
+      2.63,
+      2.90
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh unschedulable",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}

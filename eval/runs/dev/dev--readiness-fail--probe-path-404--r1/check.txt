@@ -1,0 +1,5 @@
+PASS  pod model-server-6b46964796-qkvvp: container running, Ready=False
+PASS  Service model-server has no ready endpoint
+PASS  Unhealthy event: Readiness probe failed: HTTP probe failed with statuscode: 404
+PASS  kube-state-metrics: kube_pod_status_ready{condition="true",pod="model-server-6b46964796-qkvvp"} == 0
+PASS  load generator saw 60 failed requests in the fault window

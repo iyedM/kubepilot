@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--oomkill--noload-400mi--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "oomkill/noload-400mi"
+  },
+  "fault": {
+    "name": "oomkill",
+    "variant": "noload-400mi",
+    "cause": "oom_killed",
+    "mechanism": "Deployment change: --load-mode none (model in anonymous memory, ~555 MB measured) and memory limit 400Mi",
+    "params": {
+      "load_mode": "none",
+      "memory_limit": "400Mi"
+    },
+    "applied": {
+      "app": "model-server",
+      "memory_limit": "400Mi"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "oom_killed",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T13:09:03.195Z",
+      "active_to": "2026-10-20T13:14:40.667Z"
+    }
+  ],
+  "timeline": {
+    "baseline_start": "2026-10-20T13:06:03.174Z",
+    "inject_start": "2026-10-20T13:09:03.195Z",
+    "inject_done": "2026-10-20T13:09:36.686Z",
+    "reset_start": "2026-10-20T13:14:36.955Z",
+    "reset_done": "2026-10-20T13:14:40.667Z",
+    "lab_healthy_again": "2026-10-20T13:14:41.188Z",
+    "end": "2026-10-20T13:17:41.209Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-6c974f9667-57p7c",
+        "uid": "ffd49c73-996d-4019-b6b0-720ccb2f8995",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://d2ec56a412b540e442b2d59d09af664ce49026b0b23a2f1b23b2a36bf2b10d17",
+        "restarts": 0,
+        "created": "2026-10-20T11:49:06Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-6c974f9667-j95hc",
+        "uid": "257566ba-705f-450e-822c-527345284914",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://5440f91de561c3546ff2da071326c29e11a37dbeed7ba83b3b4dd2b46c316fee",
+        "restarts": 0,
+        "created": "2026-10-20T13:14:37Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "a58ed7406b165e05ba46964599e243e325ead9fa",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:e9670b1c8876",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:821d5ed5659cf496a76447a349e944baca83a4f81395cd5800672b376ec076ad"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:e9670b1c8876",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:821d5ed5659cf496a76447a349e944baca83a4f81395cd5800672b376ec076ad"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      3.49,
+      3.06,
+      3.15
+    ],
+    "mem_available_mib_start": 9975,
+    "cpu_busy_pct": {
+      "baseline": 21.7,
+      "fault": 13.3,
+      "recovery": 20.9
+    },
+    "loadavg_end": [
+      2.29,
+      2.54,
+      2.76
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh oomkill",
+    "result": "pass"
+  },
+  "notes": [
+    "expected_causes[0].active_from corrected from inject_done (2026-10-20T13:09:36.686Z) to inject_start after the run: the cause is active from the moment the change is applied (script fix)",
+    "attribution: git_commit a58ed74 with git_dirty=true; the only uncommitted file used was lab/faults/oomkill.sh, first committed unchanged in 297e36e",
+    "exports gzipped after the run (lossless) to match the committed-files rule"
+  ]
+}

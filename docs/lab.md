@@ -329,6 +329,24 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
   "taint" would blame a taint; it must read the **count of nodes per reason**
   (here 1 control-plane taint + 2 selector mismatches, whereas the
   `node-taint` variant should give 3 nodes with untolerated taints).
+- **Same cause, different FailedScheduling messages.** Both `unschedulable`
+  dev runs left the new pod `Pending` with `PodScheduled=False/Unschedulable`
+  and `kube_pod_status_unschedulable == 1`, but the scheduler message depends
+  on the mechanism (messages as recorded in `check.txt` and `events.json.gz`):
+
+  | Run | Mechanism | FailedScheduling message |
+  |---|---|---|
+  | `dev--unschedulable--nodeselector-gpu--r1` | nodeSelector matching no node | `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 node(s) didn't match Pod's node affinity/selector. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.` |
+  | `dev--unschedulable--cpu-request-64--r1` | CPU request of 64 cores | `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 Insufficient cpu. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.` |
+
+- **Rule for P2: one cause, several messages; the control-plane taint is not
+  the cause.** Both messages are the same cause (`unschedulable`); only the
+  reason given for the 2 workers differs (`didn't match Pod's node
+  affinity/selector` vs `Insufficient cpu`). The `1 node(s) had untolerated
+  taint(s)` part is present in **both** messages: it is the control-plane
+  taint of the kind cluster, and it is the cause in neither run. An engine
+  must not key on one exact message text, and must not blame a taint unless
+  the taint accounts for the nodes that could otherwise run the pod.
 - **The fault window contains the recovery events of the reset.** The window
   of an exported run (and `expected_causes[].active_to = reset_done`) also
   holds the events of the reset itself (ScalingReplicaSet, Killing,

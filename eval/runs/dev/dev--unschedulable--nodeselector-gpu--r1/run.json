@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--unschedulable--nodeselector-gpu--r1",
+  "split": "dev",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "ba9eeab091ebaf0f3fd363bf2ac8f5cd2ac82b38a8bbcdb93fffafbcaed62a8e",
+    "entry_id": "unschedulable/nodeselector-gpu"
+  },
+  "fault": {
+    "name": "unschedulable",
+    "variant": "nodeselector-gpu",
+    "cause": "unschedulable",
+    "mechanism": "Deployment change: nodeSelector kubepilot.dev/gpu=true (no node has it)",
+    "params": {
+      "nodeSelector": {
+        "kubepilot.dev/gpu": "true"
+      }
+    },
+    "applied": {
+      "variant": "nodeselector-gpu"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "unschedulable",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-20T16:37:09.447Z",
+      "active_to": "2026-10-20T16:42:14.935Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-20T16:31:11.141Z",
+    "quiet_since": "2026-10-20T16:28:57Z",
+    "baseline_start": "2026-10-20T16:34:09.426Z",
+    "inject_start": "2026-10-20T16:37:09.447Z",
+    "inject_done": "2026-10-20T16:37:11.583Z",
+    "reset_start": "2026-10-20T16:42:11.849Z",
+    "reset_done": "2026-10-20T16:42:14.935Z",
+    "lab_healthy_again": "2026-10-20T16:42:15.443Z",
+    "end": "2026-10-20T16:45:15.465Z",
+    "export_done": "2026-10-20T16:45:20.963Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-fcpvs",
+        "uid": "16868650-a784-4a7b-9da1-0e08a072a1de",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://cb9cf790f8a11f5d3590f9d8a3666f9d3bddd1bf790bc16ddf9d655dd1571eeb",
+        "restarts": 0,
+        "created": "2026-10-20T16:28:08Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-gk8gm",
+        "uid": "e459cca0-266c-486e-860c-d3cd269f2126",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://47104078fa1d8f773645fadf0fd6b0d907a38c82b6eb77898ee0d1816c474cdc",
+        "restarts": 0,
+        "created": "2026-10-20T16:42:12Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "3b6f7f7842d6a51b97ee896484c234723fa7d1dd",
+    "git_dirty": true,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      4.63,
+      3.74,
+      3.53
+    ],
+    "mem_available_mib_start": 9883,
+    "cpu_busy_pct": {
+      "baseline": 25.5,
+      "fault": 16.3,
+      "recovery": 23.1
+    },
+    "loadavg_end": [
+      3.68,
+      3.17,
+      3.25
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh unschedulable",
+    "result": "pass"
+  },
+  "notes": []
+}
