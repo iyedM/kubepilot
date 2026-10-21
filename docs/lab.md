@@ -444,6 +444,20 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
 - **CPU throttling also produces errors.** At 300m, `long-256` requests time
   out (502 after the 30 s client timeout): throttling is not only slowness.
 
+## Provenance log
+
+Commits created outside the working sessions, with a generic message that
+does not describe their content (already pushed, not rewritten):
+
+| Commit | Time (UTC) | Content |
+|---|---|---|
+| `74ed0dc` | 2026-10-21 00:18 | the 7 first dev runs and a docs section on FailedScheduling messages |
+| `019e2b9` | 2026-10-21 06:20 | three dev runs (oomkill noload-450mi, readiness-fail probe-wrong-port, cold-start model-download-20mbs) and a **partial** record of `dev--config-regression--threads-1--r1` taken while that run was in progress (`status: running`, no check, no exports) |
+| `611e3e1` | 2026-10-21 11:46 | the complete `dev--config-regression--threads-1--r1` run, and two fixes: `lab/faults/host-contention.sh` (busy loops stopped reliably through the `kubepilot-burn-<run_id>` command-line marker, with a check that none is left) and `lab/faults/lib.sh` (dirty-tree check limited to code: `lab/`, `eval/faults/`, `eval/schema/`, `Makefile`) |
+
+The run record of `dev--config-regression--threads-1--r1` carries a note
+about the partial copy.
+
 ## What `make lab-check` proves, and what it does not
 
 - The trace path is proven end to end: a synthetic trace sent to the collector
