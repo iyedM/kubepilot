@@ -16,7 +16,7 @@ INHIBIT :=
 endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -56,6 +56,12 @@ lint: ## shellcheck the lab scripts (pinned image)
 
 compat-matrix: ## Record what each OpenAI instrumentation package emits (fixtures for P2)
 	lab/compat/run-matrix.sh
+
+test: ## Run gofmt check, go vet and Go unit tests with the race detector
+	@unformatted="$$(gofmt -l .)"; \
+	if [ -n "$$unformatted" ]; then echo "gofmt needed on: $$unformatted" >&2; exit 1; fi
+	go vet ./...
+	go test -race -v ./...
 
 test-app: ## Run the chat-api pytest suite in the pinned Python image
 	docker run --rm --network=host --user "$$(id -u):$$(id -g)" -e HOME=/tmp -e PYTHONUSERBASE=/tmp/pyuser \
