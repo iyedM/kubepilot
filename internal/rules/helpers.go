@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -35,12 +36,33 @@ func workloadForPodName(podName string) string {
 	}
 }
 
-// isPodBefore reports whether podName was already running before the fault
-// window started (and is therefore the old pod being replaced during a rollout).
+// isPodBefore reports whether podName was already running before the analysis
+// window started (either listed in snap.PodsBefore, created before Window.From,
+// or already emitting metrics during the pre-injection baseline window).
 func isPodBefore(snap *snapshot.Snapshot, podName string) bool {
 	for _, pb := range snap.PodsBefore {
 		if pb.Name == podName {
 			return true
+		}
+	}
+	if !snap.Window.From.IsZero() {
+		cutoff := snap.Window.From.Add(-5 * time.Second)
+		if p := findPodSnapshot(snap, targetNamespace, podName); p != nil {
+			if !p.CreationTimestamp.IsZero() && p.CreationTimestamp.Before(cutoff) {
+				return true
+			}
+		}
+		for _, series := range snap.Metrics {
+			for _, stream := range series.Streams {
+				if stream.Labels["pod"] != podName {
+					continue
+				}
+				for _, s := range stream.Samples {
+					if s.Timestamp.Before(cutoff) && snap.Window.InBaseline(s.Timestamp) {
+						return true
+					}
+				}
+			}
 		}
 	}
 	return false
@@ -110,7 +132,8 @@ func analysisOKRequestsAfter(snap *snapshot.Snapshot, after time.Time) (int, tim
 }
 
 // candidateRequestPathPods collects all unique request-path pod names seen in
-// snap.Pods, snap.Events, or snap.Metrics during the skew-adjusted analysis window.
+// snap.Pods, snap.Events, or snap.Metrics during the skew-adjusted analysis window,
+// excluding pods created at or after the end of the analysis window (post-reset pods).
 func candidateRequestPathPods(snap *snapshot.Snapshot) []string {
 	seen := make(map[string]struct{})
 	var pods []string
@@ -124,9 +147,15 @@ func candidateRequestPathPods(snap *snapshot.Snapshot) []string {
 		}
 	}
 	for _, p := range snap.Pods {
+		if !snap.Window.To.IsZero() && !p.CreationTimestamp.IsZero() && !p.CreationTimestamp.Before(snap.Window.To) {
+			continue
+		}
 		add(p.Namespace, p.Name)
 	}
 	for _, ev := range snap.Events {
+		if !snap.Window.To.IsZero() && !ev.Timestamp.IsZero() && !ev.Timestamp.Before(snap.Window.To) {
+			continue
+		}
 		if snap.Window.InWindowWithSkew(ev.Timestamp) {
 			add(ev.Namespace, ev.InvolvedName)
 		}
@@ -139,6 +168,9 @@ func candidateRequestPathPods(snap *snapshot.Snapshot) []string {
 				continue
 			}
 			for _, s := range stream.Samples {
+				if !snap.Window.To.IsZero() && !s.Timestamp.Before(snap.Window.To) {
+					continue
+				}
 				if snap.Window.InWindowWithSkew(s.Timestamp) {
 					add(ns, pod)
 					break
@@ -191,6 +223,196 @@ func podMetricWindowStats(snap *snapshot.Snapshot, metricKey, podName, labelKey,
 		}
 	}
 	return has, minV, maxV, maxTS
+}
+
+// podCounterIncrease computes the positive counter increase, last sample timestamp,
+// and sample span duration for a counter metric series on (ns, podName) inside
+// either the baseline window (inBaseline=true) or the analysis window (inBaseline=false).
+// It prefers container-level streams (container != "" && container != "POD") over
+// pod-level cgroup streams to avoid double-counting.
+func podCounterIncrease(snap *snapshot.Snapshot, metricKey, ns, podName string, inBaseline bool) (float64, time.Time, time.Duration, bool) {
+	series, ok := snap.Metrics[metricKey]
+	if !ok {
+		return 0, time.Time{}, 0, false
+	}
+
+	matchStream := func(requireContainer bool) []snapshot.MetricSample {
+		for _, stream := range series.Streams {
+			if stream.Labels["pod"] != podName {
+				continue
+			}
+			if ns != "" && stream.Labels["namespace"] != "" && stream.Labels["namespace"] != ns {
+				continue
+			}
+			c := stream.Labels["container"]
+			if requireContainer && (c == "" || c == "POD") {
+				continue
+			}
+			var filtered []snapshot.MetricSample
+			for _, s := range stream.Samples {
+				if inBaseline {
+					if snap.Window.InBaseline(s.Timestamp) {
+						filtered = append(filtered, s)
+					}
+				} else {
+					if snap.Window.InAnalysisWindow(s.Timestamp) {
+						filtered = append(filtered, s)
+					}
+				}
+			}
+			if len(filtered) >= 2 {
+				return filtered
+			}
+		}
+		return nil
+	}
+
+	samples := matchStream(true)
+	if len(samples) < 2 {
+		samples = matchStream(false)
+	}
+	if len(samples) < 2 {
+		return 0, time.Time{}, 0, false
+	}
+
+	var delta float64
+	for i := 1; i < len(samples); i++ {
+		if d := samples[i].Value - samples[i-1].Value; d > 0 {
+			delta += d
+		}
+	}
+	firstTS := samples[0].Timestamp
+	lastTS := samples[len(samples)-1].Timestamp
+	return delta, lastTS, lastTS.Sub(firstTS), true
+}
+
+// podCFSThrottleStats returns the CFS throttled period fraction
+// (throttledDelta / periodsDelta) for podName in namespace genai over the
+// analysis window.
+func podCFSThrottleStats(snap *snapshot.Snapshot, podName string) (fraction, throttledDelta, periodsDelta float64, ts time.Time, ok bool) {
+	periodsDelta, pTS, _, okP := podCounterIncrease(snap, "cpu_periods", targetNamespace, podName, false)
+	if !okP || periodsDelta < 10 {
+		return 0, 0, 0, time.Time{}, false
+	}
+	throttledDelta, tTS, _, okT := podCounterIncrease(snap, "cpu_throttled_periods", targetNamespace, podName, false)
+	if !okT {
+		throttledDelta = 0
+		tTS = pTS
+	}
+	return throttledDelta / periodsDelta, throttledDelta, periodsDelta, tTS, true
+}
+
+// requestLatencyComparison compares median (p50) HTTP 200 request latency in
+// the analysis window (optionally at or after `after`) against the baseline
+// window. It prefers the fixed-length "short-16" prompt when >= 2 samples exist
+// in both windows, falling back to all HTTP 200 requests or trace durations.
+func requestLatencyComparison(snap *snapshot.Snapshot, after time.Time) (baseP50, winP50, ratio float64, sampleTS time.Time, ok bool) {
+	collectReqLat := func(promptFilter string, baseline bool) ([]float64, time.Time) {
+		var vals []float64
+		var lastTS time.Time
+		for _, r := range snap.Requests {
+			if r.Status != 200 || r.ClientLatencyMs <= 0 {
+				continue
+			}
+			if promptFilter != "" && r.PromptID != promptFilter {
+				continue
+			}
+			if baseline {
+				if !snap.Window.InBaseline(r.Timestamp) {
+					continue
+				}
+			} else {
+				if !snap.Window.InAnalysisWindow(r.Timestamp) {
+					continue
+				}
+				if !after.IsZero() && r.Timestamp.Before(after) {
+					continue
+				}
+			}
+			vals = append(vals, r.ClientLatencyMs)
+			if lastTS.IsZero() || r.Timestamp.After(lastTS) {
+				lastTS = r.Timestamp
+			}
+		}
+		return vals, lastTS
+	}
+
+	bVals, _ := collectReqLat("short-16", true)
+	wVals, lastTS := collectReqLat("short-16", false)
+	if len(bVals) < 2 || len(wVals) < 2 {
+		bVals, _ = collectReqLat("", true)
+		wVals, lastTS = collectReqLat("", false)
+	}
+	if len(bVals) < 2 || len(wVals) < 2 {
+		return 0, 0, 0, time.Time{}, false
+	}
+	baseP50 = percentileFloat64(bVals, 0.50)
+	winP50 = percentileFloat64(wVals, 0.50)
+	if baseP50 <= 0 {
+		return 0, 0, 0, time.Time{}, false
+	}
+	return baseP50, winP50, winP50 / baseP50, lastTS, true
+}
+
+// llamaTokensPerSecComparison compares llamacpp:predicted_tokens_seconds in the
+// analysis window (at or after `after`) against the baseline window.
+func llamaTokensPerSecComparison(snap *snapshot.Snapshot, after time.Time) (baseAvg, winAvg, winMin float64, ts time.Time, ok bool) {
+	series, exists := snap.Metrics["llama_predicted_tokens_per_second"]
+	if !exists {
+		return 0, 0, 0, time.Time{}, false
+	}
+	var bSum, wSum float64
+	var bCount, wCount int
+	for _, stream := range series.Streams {
+		if ns := stream.Labels["namespace"]; ns != "" && ns != targetNamespace {
+			continue
+		}
+		for _, s := range stream.Samples {
+			if s.Value <= 0 {
+				continue
+			}
+			if snap.Window.InBaseline(s.Timestamp) {
+				bSum += s.Value
+				bCount++
+			} else if snap.Window.InAnalysisWindow(s.Timestamp) {
+				if !after.IsZero() && s.Timestamp.Before(after) {
+					continue
+				}
+				wSum += s.Value
+				if wCount == 0 || s.Value < winMin {
+					winMin = s.Value
+				}
+				wCount++
+				if ts.IsZero() || s.Timestamp.After(ts) {
+					ts = s.Timestamp
+				}
+			}
+		}
+	}
+	if bCount == 0 || wCount == 0 {
+		return 0, 0, 0, time.Time{}, false
+	}
+	return bSum / float64(bCount), wSum / float64(wCount), winMin, ts, true
+}
+
+func percentileFloat64(vals []float64, q float64) float64 {
+	if len(vals) == 0 {
+		return 0
+	}
+	cp := make([]float64, len(vals))
+	copy(cp, vals)
+	sort.Float64s(cp)
+	if q <= 0 {
+		return cp[0]
+	}
+	if q >= 1 {
+		return cp[len(cp)-1]
+	}
+	idx := int(float64(len(cp)) * q)
+	if idx >= len(cp) {
+		idx = len(cp) - 1
+	}
+	return cp[idx]
 }
 
 // hasOOMSignal reports whether podName has an OOMKilled termination in

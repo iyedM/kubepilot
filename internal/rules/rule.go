@@ -27,6 +27,10 @@ var registry = []Rule{
 	unschedulableRule,
 	readinessFailingRule,
 	coldStartRule,
+	cpuThrottlingRule,
+	hostContentionRule,
+	configChangeRule,
+	unknownNoInfraRule,
 }
 
 // All returns a copy of the registered rules in priority order.
