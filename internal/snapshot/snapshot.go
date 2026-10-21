@@ -72,6 +72,22 @@ func (w Window) IsExcluded(t time.Time) bool {
 	return false
 }
 
+// InAnalysisWindow reports whether t is inside [w.From, w.To) and not excluded.
+func (w Window) InAnalysisWindow(t time.Time) bool {
+	if w.IsExcluded(t) {
+		return false
+	}
+	return !t.Before(w.From) && t.Before(w.To)
+}
+
+// InBaseline reports whether t is inside the optional baseline range and not excluded.
+func (w Window) InBaseline(t time.Time) bool {
+	if w.Baseline == nil || w.IsExcluded(t) {
+		return false
+	}
+	return w.Baseline.Contains(t)
+}
+
 // InWindowWithSkew reports whether timestamp t falls within
 // [w.From - w.SkewTolerance, w.To + w.SkewTolerance] and is not excluded.
 func (w Window) InWindowWithSkew(t time.Time) bool {
