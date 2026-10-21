@@ -33,8 +33,8 @@ run, then completed at reset and at the end of the run. Fields (see
 `schema/run.example.json`):
 
 - `run_id`: deterministic, `<split>--<fault or nofault>--<variant>--r<n>`
-  (no timestamp), so an interrupted batch can resume: a run whose `run.json`
-  has `"status": "complete"` is never redone.
+  (no timestamp), so an interrupted batch (`make run-batch SPLIT=dev`) can
+  resume: a run whose `run.json` has `"status": "complete"` is never redone.
 - `split`: `dev` or `test` (scored), `dryrun` (validates a test variant's
   injection, never scored) or `manual` (a fault injected by hand with
   `make fault-<name>`, never scored); `kind`: `fault` or `nofault`.

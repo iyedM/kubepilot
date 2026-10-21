@@ -240,6 +240,7 @@ rules: [`eval/README.md`](../eval/README.md)).
 
 ```sh
 make run-fault SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1   # full recorded run
+make run-batch SPLIT=dev INHIBIT_SLEEP=1                                # run/resume a whole split
 make fault-cpu-throttle VARIANT=limit-300m && make fault-reset          # by hand, never scored
 make fault-check FAULT=cpu-throttle                                     # is the signal there?
 make baseline-stability                                                 # 5 quiet windows
@@ -299,10 +300,12 @@ times every phase on the wall clock and marks the run `invalid` if a phase
 differs from its planned duration by more than 20 % (`PHASE_TOLERANCE`),
 resetting the lab first if the fault was injected (tested by freezing the
 fault-window `sleep` with SIGSTOP: "phase fault lasted 48s instead of 20s").
-To prevent suspends during a batch, `make run-fault` and
+To prevent suspends during a batch, `make run-fault`, `make run-batch` and
 `make baseline-stability` accept `INHIBIT_SLEEP=1`, which wraps the command
 in `systemd-inhibit --what=sleep:idle:handle-lid-switch --mode=block`
-(off by default).
+(off by default; `run-batch` holds a single inhibitor lock across the whole
+split, groups `app-delay` runs at the end so `LAB_FAULT_HOOKS` is toggled at
+most once, skips runs already marked `"complete"`, and prints a summary table).
 
 **Validation thresholds are not diagnosis rules.** `check-fault` uses fixed
 thresholds, for example `MIN_THROTTLED_FRACTION=0.20` and

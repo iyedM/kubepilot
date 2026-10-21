@@ -16,7 +16,7 @@ INHIBIT :=
 endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -99,6 +99,9 @@ baseline-stability: ## Latency spread over 5 quiet 300 s windows (loadgen only; 
 
 run-fault: ## One recorded run: SPLIT=dev FAULT=cpu-throttle VARIANT=limit-300m REP=1 (INHIBIT_SLEEP=1 keeps the machine awake)
 	$(INHIBIT) lab/faults/run.sh $(SPLIT) $(FAULT) $(VARIANT) $(REP)
+
+run-batch: ## Run or resume all runs of a split: SPLIT=dev (INHIBIT_SLEEP=1 holds one sleep lock for the whole batch)
+	INHIBIT_SLEEP=$(INHIBIT_SLEEP) lab/faults/run-batch.sh $(SPLIT)
 
 lab-hooks-on: ## Enable chat-api lab fault hooks (redeploys chat-api; between runs only)
 	lab/scripts/lab-hooks.sh on
