@@ -244,9 +244,35 @@ make fault-check FAULT=cpu-throttle                                     # is the
 make baseline-stability                                                 # 5 quiet windows
 ```
 
-A run takes about 12 minutes: precheck, 3 min baseline, injection, 5 min
-fault window with the per-fault check at its end, reset to the declared
+A run consists of: quiet-period wait, precheck, 3 min baseline, injection,
+5 min fault window with the per-fault check at its end, reset to the declared
 manifests, wait until chat-api answers again, 3 min recovery, export.
+
+**Measured duration** (`run_start` -> `export_done` of the 5 valid dev runs
+recorded with these fields, 2026-10-20/21):
+
+| Run | Total | Before the baseline (quiet wait + precheck) |
+|---|---|---|
+| readiness-fail/probe-path-404 | 721 s | 17 s |
+| unschedulable/cpu-request-64 | 718 s | 17 s |
+| cold-start/model-download-10mbs | 798 s | 45 s |
+| cpu-throttle/limit-500m | 813 s | 134 s |
+| unschedulable/nodeselector-gpu | 849 s | 178 s |
+| **Mean** | **780 s (13.0 min)** | 78 s |
+
+The fixed part is about 11.7 min (3 + 5 + 3 min of phases, plus reset and
+export); the variable part is the quiet-period wait, which depends on how
+recently `genai` changed. When a run starts right after another one, the
+previous reset created a pod 3 minutes earlier, so the next run waits about
+2.2 min more (134 s and 138 s observed on the two back-to-back starts), i.e.
+about 14 min per run in a chain; the worst case allowed by the wait limit is
+19 min. A clean chain of three runs could not be timed end to end: the first
+attempt stopped on the reset Conflict bug, the second one on a laptop
+suspend (both described below). The reset itself does not redeploy
+`loadgen` once the lab is in its declared state: 6 of the 7 dev run exports
+contain no loadgen event; the 9 loadgen events in the oomkill run export come
+from scaling loadgen to 0 and back by hand just before that run (the invalid
+run test), before the quiet-period precondition existed.
 
 **Lab fault hooks of chat-api.** `chat-api` has a lab-only endpoint
 `PUT /lab/delay {"ms": N}` that sleeps before the model call (used by the
@@ -316,6 +342,26 @@ check passes on the same injection. Both checks also fail when no fault is
 active. Limit: the oomkill check expects a new pod (all catalog variants
 change the Deployment); an OOM kill that restarts the container inside the
 same pod would not satisfy it.
+
+**Cross negative tests of all fault checks** (2026-10-21, manual injection,
+check run 150 s after injecting fault B; the check of B itself is the
+control):
+
+| Fault injected (B) | Check run (A) | A's signal criteria that failed | Control (B) |
+|---|---|---|---|
+| unschedulable | readiness-fail | container not started, no "Readiness probe failed", no ready value | PASS |
+| readiness-fail | unschedulable | pod Running and scheduled, no FailedScheduling, not unschedulable in kube-state-metrics | PASS |
+| oomkill | cpu-throttle | 0 throttled periods | PASS |
+| cpu-throttle | oomkill | no pod created after the injection | PASS |
+| readiness-fail | cold-start | pod not Ready | PASS |
+
+Every check A failed on its signal criteria, not only on "no injection of
+this fault recorded". One control first failed for a test-setup reason: the
+manual baseline is "the 3 minutes before the injection", and back-to-back
+manual tests put the previous test's reset (no successful request) in that
+window; redone after 5 quiet minutes, the cpu-throttle control passed
+(throttled fraction 0.973, `short-16` x6.34). Manual tests therefore need a
+quiet period before them, like recorded runs.
 
 ## Observations for P2
 
