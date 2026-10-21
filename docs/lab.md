@@ -334,18 +334,11 @@ contention x1.85-2.2, one inference thread x1.6-1.7). Limits: this is the
 p50 only (tails were not studied), on a quiet host, in one session; it does
 not say how stable the baseline is across days or under other host loads.
 
-**Cross negative tests of the checks** (2026-10-20, 150 s after injection):
-the cpu-throttle check fails during an oomkill fault (0 throttled periods, no
-successful `short-16` request), and the oomkill check fails during a
-cpu-throttle fault (no pod created after the injection); each fault's own
-check passes on the same injection. Both checks also fail when no fault is
-active. Limit: the oomkill check expects a new pod (all catalog variants
-change the Deployment); an OOM kill that restarts the container inside the
-same pod would not satisfy it.
-
-**Cross negative tests of all fault checks** (2026-10-21, manual injection,
-check run 150 s after injecting fault B; the check of B itself is the
-control):
+**Cross negative tests of the fault checks** (manual injection, check run
+150 s after injecting fault B; the check of B itself is the control). The
+cpu-throttle / oomkill pair was first run on 2026-10-20 with the same result;
+the table is the full run of 2026-10-21. Every check also fails when no fault
+is active.
 
 | Fault injected (B) | Check run (A) | A's signal criteria that failed | Control (B) |
 |---|---|---|---|
@@ -356,25 +349,20 @@ control):
 | readiness-fail | cold-start | pod not Ready | PASS |
 
 Every check A failed on its signal criteria, not only on "no injection of
-this fault recorded". One control first failed for a test-setup reason: the
-manual baseline is "the 3 minutes before the injection", and back-to-back
-manual tests put the previous test's reset (no successful request) in that
-window; redone after 5 quiet minutes, the cpu-throttle control passed
-(throttled fraction 0.973, `short-16` x6.34). Manual tests therefore need a
-quiet period before them, like recorded runs.
+this fault recorded". Limit of the oomkill check: it expects a pod created
+after the injection (all catalog variants change the Deployment); an OOM kill
+that restarts the container inside the same pod would not satisfy it. One
+control first failed for a test-setup reason: the manual baseline is "the 3
+minutes before the injection", and back-to-back manual tests put the previous
+test's reset (no successful request) in that window; redone after 5 quiet
+minutes, the cpu-throttle control passed (throttled fraction 0.973,
+`short-16` x6.34). Manual tests therefore need a quiet period before them,
+like recorded runs.
 
 ## Observations for P2
 
 Facts seen in the recorded runs that a diagnosis engine must not get wrong.
 
-- **"untolerated taint" without any injected taint.** In the
-  `unschedulable/nodeselector-gpu` run the FailedScheduling message was
-  `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 node(s)
-  didn't match Pod's node affinity/selector`. The taint is the standard
-  control-plane taint of the kind cluster. An engine that looks for the word
-  "taint" would blame a taint; it must read the **count of nodes per reason**
-  (here 1 control-plane taint + 2 selector mismatches, whereas the
-  `node-taint` variant should give 3 nodes with untolerated taints).
 - **Same cause, different FailedScheduling messages.** Both `unschedulable`
   dev runs left the new pod `Pending` with `PodScheduled=False/Unschedulable`
   and `kube_pod_status_unschedulable == 1`, but the scheduler message depends
@@ -385,14 +373,18 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
   | `dev--unschedulable--nodeselector-gpu--r1` | nodeSelector matching no node | `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 node(s) didn't match Pod's node affinity/selector. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.` |
   | `dev--unschedulable--cpu-request-64--r1` | CPU request of 64 cores | `0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 Insufficient cpu. preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.` |
 
-- **Rule for P2: one cause, several messages; the control-plane taint is not
-  the cause.** Both messages are the same cause (`unschedulable`); only the
-  reason given for the 2 workers differs (`didn't match Pod's node
+- **Rule for P2: one cause, several messages; "untolerated taint" without
+  any injected taint.** Both messages are the same cause (`unschedulable`);
+  only the reason given for the 2 workers differs (`didn't match Pod's node
   affinity/selector` vs `Insufficient cpu`). The `1 node(s) had untolerated
-  taint(s)` part is present in **both** messages: it is the control-plane
-  taint of the kind cluster, and it is the cause in neither run. An engine
-  must not key on one exact message text, and must not blame a taint unless
-  the taint accounts for the nodes that could otherwise run the pod.
+  taint(s)` part is present in **both** messages although no taint was
+  injected: it is the standard control-plane taint of the kind cluster, and
+  it is the cause in neither run. An engine must not key on one exact message
+  text, nor on the word "taint": it must read the **count of nodes per
+  reason** and blame a taint only if it accounts for the nodes that could
+  otherwise run the pod. For the `node-taint` test variant the expected
+  message is 3 nodes with untolerated taints (control-plane + 2 workers):
+  **expected, not measured**.
 - **The fault window contains the recovery events of the reset.** The window
   of an exported run (and `expected_causes[].active_to = reset_done`) also
   holds the events of the reset itself (ScalingReplicaSet, Killing,
