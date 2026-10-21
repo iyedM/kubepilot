@@ -454,9 +454,10 @@ does not describe their content (already pushed, not rewritten):
 | `74ed0dc` | 2026-10-21 00:18 | the 7 first dev runs and a docs section on FailedScheduling messages |
 | `019e2b9` | 2026-10-21 06:20 | three dev runs (oomkill noload-450mi, readiness-fail probe-wrong-port, cold-start model-download-20mbs) and a **partial** record of `dev--config-regression--threads-1--r1` taken while that run was in progress (`status: running`, no check, no exports) |
 | `611e3e1` | 2026-10-21 11:46 | the complete `dev--config-regression--threads-1--r1` run, and two fixes: `lab/faults/host-contention.sh` (busy loops stopped reliably through the `kubepilot-burn-<run_id>` command-line marker, with a check that none is left) and `lab/faults/lib.sh` (dirty-tree check limited to code: `lab/`, `eval/faults/`, `eval/schema/`, `Makefile`) |
+| `15a209a` | 2026-10-21 15:44 | two complete no-fault dev runs (`dev--nofault--quiet--r1`, `dev--nofault--quiet--r2`) and a **partial** record of `dev--nofault--decoy-same-node--r1` taken during its recovery phase (`status: running`, uncompressed `pods.json`, no `.gz` exports) |
 
-The run record of `dev--config-regression--threads-1--r1` carries a note
-about the partial copy.
+The run records of `dev--config-regression--threads-1--r1` and
+`dev--nofault--decoy-same-node--r1` carry a note about the partial copy.
 
 ## What `make lab-check` proves, and what it does not
 

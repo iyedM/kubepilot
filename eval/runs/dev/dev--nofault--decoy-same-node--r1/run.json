@@ -3,7 +3,7 @@
   "run_id": "dev--nofault--decoy-same-node--r1",
   "split": "dev",
   "kind": "nofault",
-  "status": "running",
+  "status": "complete",
   "catalog": {
     "file": "eval/faults/catalog.v1.json",
     "sha256": "8bad53282aa7688794b40349ad7e3ccbd70213a411e058eab1a6a8f81e893a10",
@@ -30,12 +30,25 @@
     "inject_done": "2026-10-21T15:38:56.367Z",
     "reset_start": "2026-10-21T15:43:56.763Z",
     "reset_done": "2026-10-21T15:43:58.391Z",
-    "lab_healthy_again": "2026-10-21T15:43:58.939Z"
+    "lab_healthy_again": "2026-10-21T15:43:58.939Z",
+    "end": "2026-10-21T15:46:58.967Z",
+    "export_done": "2026-10-21T15:48:02.857Z"
   },
   "target": {
     "namespace": "genai",
     "workload": "deployment/model-server",
     "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-xd8d4",
+        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://851181d53fad8a8fe17d90568887358c0121c62eea69037ec21ede8ea6b24387",
+        "restarts": 1,
+        "created": "2026-10-21T06:25:00Z"
+      }
+    ],
+    "pods_after": [
       {
         "name": "model-server-5bd4cc46f9-xd8d4",
         "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
@@ -78,19 +91,34 @@
     "mem_available_mib_start": 9952,
     "cpu_busy_pct": {
       "baseline": 26.0,
-      "fault": 26.5
-    }
+      "fault": 26.5,
+      "recovery": 28.2
+    },
+    "loadavg_end": [
+      5.41,
+      4.05,
+      3.63
+    ]
   },
   "loadgen": {
     "replicas": 1,
     "interval_s": 5
   },
-  "exports": {},
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
   "check": {
     "script": "lab/faults/check-fault.sh nofault",
     "result": "pass"
   },
-  "notes": [],
+  "notes": [
+    "a partial copy of this run record (status running, uncompressed pods.json, no exports) was committed by 15a209a at 2026-10-21T15:44:13Z while the run was in recovery, by an external IDE commit; this complete record replaces it in a later commit"
+  ],
   "phase_seconds": {
     "baseline": {
       "planned": 180,
@@ -99,6 +127,10 @@
     "fault": {
       "planned": 300,
       "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
     }
   }
 }
