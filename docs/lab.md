@@ -431,6 +431,16 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
     (9999 is not a port of the container);
   - the **time and repetition**: a few failures during the ~30 s
     termination of the old pod, or failures for the whole fault window.
+
+  The old-pod artifact, for comparison, from the same `probe-path-404` run:
+  `Readiness probe failed: Get "http://10.244.2.19:8080/health": dial tcp
+  10.244.2.19:8080: connect: connection refused` (x5 at 16:51:59 on
+  `model-server-5bd4cc46f9-gk8gm`, the pod being stopped by the Recreate
+  rollout, before the 404 failures of the new pod). It appears again during
+  the reset of later runs (e.g. x6 at 06:24:59 in
+  `dev--config-regression--threads-1--r1`). Same text family as the real
+  `probe-wrong-port` fault: **the event text alone is not enough** to tell a
+  readiness fault from a rollout artifact.
 - **CPU throttling also produces errors.** At 300m, `long-256` requests time
   out (502 after the 30 s client timeout): throttling is not only slowness.
 
