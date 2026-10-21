@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "name": "p2-v1",
+  "engine": {
+    "git_commit": "17291b1dd09daad2597f9831e6d926e15b1bdbe3",
+    "internal_tree": "10d3c43a7038bd17aeda385f06b86c9a1ed8722e",
+    "cmd_tree": "2012a5b57067065ab19d11dc36626da83886676c",
+    "rules_tree": "201576af596e12588aa27aa2e3586dd576af5fd8"
+  },
+  "catalog": {
+    "path": "eval/faults/catalog.v1.json",
+    "version": 1,
+    "sha256": "1830852182747200c9fb80421c149775155f1ecb207e81868de0a344c60b171e",
+    "repetitions": {
+      "test": 2,
+      "nofault_test": 7
+    },
+    "fault_test_variants": [
+      "cpu-throttle/rollout-limit-400m",
+      "cpu-throttle/limit-200m",
+      "oomkill/kv-cache-ctx32k",
+      "oomkill/app-oom-40mi",
+      "unschedulable/node-taint",
+      "unschedulable/pvc-unbound",
+      "readiness-fail/initial-delay-600",
+      "readiness-fail/server-wrong-port",
+      "cold-start/image-not-cached",
+      "cold-start/model-download-hf",
+      "host-contention/neighbor-pod-same-node",
+      "app-delay/intermittent-delay"
+    ],
+    "nofault_test_variants": [
+      "nofault/quiet",
+      "nofault/decoy-same-node-oom",
+      "nofault/decoy-other-node-crash"
+    ],
+    "planned_runs": {
+      "fault_injections": 24,
+      "nofault_windows": 21,
+      "total": 45
+    }
+  },
+  "scorer": {
+    "cmd_path": "cmd/eval-score/main.go",
+    "cmd_sha256": "512d88f33db886833d3e89c858f3ca9551af87e35f1b211418925ee8ebdcbcf9",
+    "pkg_path": "internal/evalscore/scorer.go",
+    "pkg_sha256": "948f3d6df382c0ac30109e5342ac02d1d9a67fa4101dcd3806bdee930eac73cb",
+    "reset_window_exclusion": "[timeline.reset_start, timeline.lab_healthy_again)"
+  },
+  "exit_criteria": {
+    "statement": ">= 70% correct cause in top-3 on >= 20 injected faults and <= 10% false positives on >= 20 no-fault windows",
+    "min_fault_runs": 20,
+    "min_top3_recall": 0.70,
+    "min_nofault_runs": 20,
+    "max_false_positive_rate_on_healthy": 0.10
+  }
+}
