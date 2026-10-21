@@ -57,6 +57,7 @@ inject() {
       ;;
     app-oom-*)
       kc -n "${GENAI_NAMESPACE}" patch deploy chat-api --type json -p "[
+        {\"op\":\"replace\",\"path\":\"/spec/strategy\",\"value\":{\"type\":\"Recreate\"}},
         {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/memory\",\"value\":\"${mem}\"},
         {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/memory\",\"value\":\"${mem}\"}]" >/dev/null
       ;;
