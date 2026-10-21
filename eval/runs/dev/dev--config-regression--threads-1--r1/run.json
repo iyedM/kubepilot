@@ -130,7 +130,9 @@
     "script": "lab/faults/check-fault.sh config-regression",
     "result": "pass"
   },
-  "notes": [],
+  "notes": [
+    "a partial copy of this run record (status running, no check, no exports) was committed by 019e2b9 at 2026-10-21T06:20:56Z while the run was in progress, by a commit made outside this session; this complete record replaces it in a later commit. Note on git_dirty: before the dirty check was limited to code paths (lab/, eval/faults/, eval/schema/, Makefile), a run could be marked git_dirty=true only because a committed run record under eval/runs/ had been modified; this run recorded git_dirty=false (code at 05a9197 unchanged)"
+  ],
   "phase_seconds": {
     "baseline": {
       "planned": 180,
