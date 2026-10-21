@@ -16,7 +16,7 @@ INHIBIT :=
 endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -78,6 +78,15 @@ fault-readiness-fail: ## Inject readiness-fail by hand (VARIANT=probe-path-404),
 
 fault-cold-start: ## Inject cold-start by hand (VARIANT=model-download-10mbs), split "manual"
 	lab/faults/manual.sh inject cold-start $(VARIANT)
+
+fault-config-regression: ## Inject config-regression by hand (VARIANT=threads-1), split "manual"
+	lab/faults/manual.sh inject config-regression $(VARIANT)
+
+fault-host-contention: ## Inject host-contention by hand (VARIANT=host-busy-loops-8), split "manual"
+	lab/faults/manual.sh inject host-contention $(VARIANT)
+
+fault-app-delay: ## Inject app-delay by hand (VARIANT=delay-2000ms; needs make lab-hooks-on), split "manual"
+	lab/faults/manual.sh inject app-delay $(VARIANT)
 
 fault-reset: ## Undo the active manual fault and export its record
 	lab/faults/manual.sh reset
