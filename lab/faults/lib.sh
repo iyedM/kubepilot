@@ -101,26 +101,30 @@ catalog_nofault() {
 # --- run record --------------------------------------------------------------
 # init_run DIR RUN_ID SPLIT KIND FAULT VARIANT: write the initial run.json.
 init_run() {
-  local dir="$1" run_id="$2" split="$3" kind="$4" fault="$5" variant="$6" entry="null" fault_json="null"
+  local dir="$1" run_id="$2" split="$3" kind="$4" fault="$5" variant="$6"
+  local entry="null" fault_json="null" workload="deployment/model-server" target_app
   mkdir -p "${dir}"
   if [[ "${kind}" == fault ]]; then
     entry="$(catalog_variant "${fault}" "${variant}")" || die "unknown catalog entry ${fault}/${variant}"
     fault_json="$(jq -c '{name: .fault.name, variant: .variant.id, cause: .fault.cause,
                           mechanism: .variant.mechanism, params: (.variant.params // {})}' <<<"${entry}")"
+    workload="$(jq -r '.variant.params.target // .fault.target // "deployment/model-server"' <<<"${entry}")"
   else
     catalog_nofault "${variant}" "${split}" >/dev/null || [[ "${split}" == manual || "${split}" == dryrun ]] \
       || die "unknown no-fault variant ${variant} for split ${split}"
   fi
+  target_app="${workload#deployment/}"
   jq -n --arg id "${run_id}" --arg split "${split}" --arg kind "${kind}" \
     --arg cat "eval/faults/catalog.v1.json" --arg sha "$(sha256sum "${CATALOG}" | cut -d' ' -f1)" \
     --arg entry_id "${fault}/${variant}" --argjson fault "${fault_json}" \
-    --argjson versions "$(versions_json)" --argjson before "$(pods_json model-server)" \
+    --arg workload "${workload}" \
+    --argjson versions "$(versions_json)" --argjson before "$(pods_json "${target_app}")" \
     --argjson load "$(loadavg_json)" --argjson mem "$(mem_available_mib)" \
     --argjson lg "$(kc -n "${GENAI_NAMESPACE}" get deploy loadgen -o jsonpath='{.spec.replicas}' 2>/dev/null || echo 0)" \
     '{schema_version: 1, run_id: $id, split: $split, kind: $kind, status: "running",
       catalog: {file: $cat, sha256: $sha, entry_id: $entry_id},
       fault: $fault, decoys: [], expected_causes: [],
-      timeline: {}, target: {namespace: "genai", workload: "deployment/model-server", pods_before: $before},
+      timeline: {}, target: {namespace: "genai", workload: $workload, pods_before: $before},
       versions: $versions,
       host: {nproc: ('"$(nproc)"'), loadavg_start: $load, mem_available_mib_start: $mem, cpu_busy_pct: {}},
       loadgen: {replicas: $lg, interval_s: 5},
@@ -174,6 +178,14 @@ events_since() {
 }
 
 # --- export ------------------------------------------------------------------
+# snapshot_pods DIR: capture pods of genai and noise at the end of the fault
+# window, before reset deletes decoys or replaces faulted pods.
+snapshot_pods() {
+  kc get pods -A -o json \
+    | jq '{items: [.items[] | select(.metadata.namespace == "genai" or .metadata.namespace == "noise")]}' \
+    > "$1/pods.json"
+}
+
 # export_run DIR: events, pods, loadgen lines, traces and metrics of the run
 # window, so the run can be re-scored offline after retention.
 export_run() {
@@ -190,7 +202,7 @@ export_run() {
              | select(((.lastTimestamp // .eventTime // .firstTimestamp) // "") as $t | $t >= $from and $t <= $to)]}' \
     > "${dir}/events.json"
 
-  kc get pods -n "${GENAI_NAMESPACE}" -o json > "${dir}/pods.json"
+  [[ -s "${dir}/pods.json" ]] || snapshot_pods "${dir}"
 
   kc -n "${GENAI_NAMESPACE}" logs deploy/loadgen --since-time="$(date -u -d "${start}" +%Y-%m-%dT%H:%M:%SZ)" 2>/dev/null \
     | jq -c --arg e "${end:0:19}" 'select(.ts <= $e)' > "${dir}/loadgen.jsonl" || true
@@ -206,15 +218,15 @@ export_run() {
   s="$(to_epoch "${from}")"
   e="$(to_epoch "${to}")"
   queries='{
-    "cpu_throttled_periods": "container_cpu_cfs_throttled_periods_total{namespace=\"genai\"}",
-    "cpu_periods": "container_cpu_cfs_periods_total{namespace=\"genai\"}",
-    "cpu_usage_seconds": "container_cpu_usage_seconds_total{namespace=\"genai\",container!=\"\"}",
-    "cpu_pressure_waiting_seconds": "container_pressure_cpu_waiting_seconds_total{namespace=\"genai\",container!=\"\"}",
-    "memory_working_set_bytes": "container_memory_working_set_bytes{namespace=\"genai\",container!=\"\"}",
-    "restarts": "kube_pod_container_status_restarts_total{namespace=\"genai\"}",
-    "last_terminated_reason": "kube_pod_container_status_last_terminated_reason{namespace=\"genai\"}",
-    "pod_ready": "kube_pod_status_ready{namespace=\"genai\",condition=\"true\"}",
-    "pod_phase": "kube_pod_status_phase{namespace=\"genai\"} == 1",
+    "cpu_throttled_periods": "container_cpu_cfs_throttled_periods_total{namespace=~\"genai|noise\"}",
+    "cpu_periods": "container_cpu_cfs_periods_total{namespace=~\"genai|noise\"}",
+    "cpu_usage_seconds": "container_cpu_usage_seconds_total{namespace=~\"genai|noise\",container!=\"\"}",
+    "cpu_pressure_waiting_seconds": "container_pressure_cpu_waiting_seconds_total{namespace=~\"genai|noise\",container!=\"\"}",
+    "memory_working_set_bytes": "container_memory_working_set_bytes{namespace=~\"genai|noise\",container!=\"\"}",
+    "restarts": "kube_pod_container_status_restarts_total{namespace=~\"genai|noise\"}",
+    "last_terminated_reason": "kube_pod_container_status_last_terminated_reason{namespace=~\"genai|noise\"}",
+    "pod_ready": "kube_pod_status_ready{namespace=~\"genai|noise\",condition=\"true\"}",
+    "pod_phase": "kube_pod_status_phase{namespace=~\"genai|noise\"} == 1",
     "genai_duration_count": "gen_ai_client_operation_duration_seconds_count",
     "genai_duration_sum": "gen_ai_client_operation_duration_seconds_sum",
     "llama_predicted_tokens_per_second": "llamacpp:predicted_tokens_seconds",

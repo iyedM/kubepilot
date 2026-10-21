@@ -165,16 +165,14 @@ phase_end "${dir}" baseline
 # --- fault -------------------------------------------------------------------------
 mark "${dir}" inject_start
 phase_begin "${dir}" fault
-if [[ "${kind}" == fault ]]; then
-  injected=true
-  log "inject ${fault}/${variant}"
-  if ! "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}" > "${dir}/inject.txt" 2>&1; then
-    cat "${dir}/inject.txt"
-    # Undo whatever part of the injection happened, then give up on the run.
-    "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
-    reapply_declared || true
-    finish_invalid "injection failed: $(tail -1 "${dir}/inject.txt")"
-  fi
+injected=true
+log "inject ${fault}/${variant}"
+if ! "${FAULTS_DIR}/${fault}.sh" inject "${dir}" "${variant}" > "${dir}/inject.txt" 2>&1; then
+  cat "${dir}/inject.txt"
+  # Undo whatever part of the injection happened, then give up on the run.
+  "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
+  reapply_declared || true
+  finish_invalid "injection failed: $(tail -1 "${dir}/inject.txt")"
 fi
 mark "${dir}" inject_done
 # The cause is active from the moment the change is applied (inject_start):
@@ -182,27 +180,25 @@ mark "${dir}" inject_done
 # later (oomkill waits until the OOM kill is observed).
 if [[ "${kind}" == fault ]]; then
   run_set "${dir}" '.expected_causes = [{cause: .fault.cause,
-    component: {namespace: "genai", kind: "Pod", workload: ("deployment/" + (.fault.applied.app // "model-server"))},
+    component: {namespace: "genai", kind: "Pod",
+                workload: (if .fault.applied.app then "deployment/" + .fault.applied.app else .target.workload end)},
     active_from: .timeline.inject_start, active_to: null}]'
 fi
 log "fault window ${FAULT_S}s"
 timed_phase fault "${FAULT_S}"
-if [[ "${kind}" == fault ]]; then
-  if "${FAULTS_DIR}/${fault}.sh" check "${dir}" > "${dir}/check.txt" 2>&1; then
-    run_set "${dir}" '.check = {script: $s, result: "pass"}' --arg s "lab/faults/check-fault.sh ${fault}"
-  else
-    run_set "${dir}" '.check = {script: $s, result: "fail"}' --arg s "lab/faults/check-fault.sh ${fault}"
-  fi
-  cat "${dir}/check.txt"
+if "${FAULTS_DIR}/${fault}.sh" check "${dir}" > "${dir}/check.txt" 2>&1; then
+  run_set "${dir}" '.check = {script: $s, result: "pass"}' --arg s "lab/faults/check-fault.sh ${fault}"
+else
+  run_set "${dir}" '.check = {script: $s, result: "fail"}' --arg s "lab/faults/check-fault.sh ${fault}"
 fi
+cat "${dir}/check.txt"
 phase_end "${dir}" fault
+snapshot_pods "${dir}"
 
 # --- reset -------------------------------------------------------------------------
 mark "${dir}" reset_start
-if [[ "${kind}" == fault ]]; then
-  log "reset ${fault}"
-  "${FAULTS_DIR}/${fault}.sh" reset "${dir}"
-fi
+log "reset ${fault}"
+"${FAULTS_DIR}/${fault}.sh" reset "${dir}"
 reapply_declared
 mark "${dir}" reset_done
 # A fault whose effect ends by itself (cold start: the pod becomes Ready)
@@ -222,13 +218,14 @@ timed_phase recovery "${RECOVERY_S}"
 phase_end "${dir}" recovery
 mark "${dir}" end
 
+target_app="$(run_get "${dir}" '.target.workload' | sed 's#^deployment/##')"
 run_set "${dir}" '.target.pods_after = $p | .host.loadavg_end = $l' \
-  --argjson p "$(pods_json model-server)" --argjson l "$(loadavg_json)"
+  --argjson p "$(pods_json "${target_app}")" --argjson l "$(loadavg_json)"
 log "export"
 export_run "${dir}"
 mark "${dir}" export_done
 
-if [[ "${kind}" == fault && "$(run_get "${dir}" '.check.result')" != pass ]]; then
+if [[ "$(run_get "${dir}" '.check.result')" != pass ]]; then
   finish_invalid "the per-fault check did not see the signal (see check.txt)"
 fi
 set_status "${dir}" complete

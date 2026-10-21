@@ -32,16 +32,18 @@ inject() {
   fi
   mark "${dir}" inject_done
   run_set "${dir}" '.expected_causes = [{cause: .fault.cause,
-    component: {namespace: "genai", kind: "Pod", workload: ("deployment/" + (.fault.applied.app // "model-server"))},
+    component: {namespace: "genai", kind: "Pod",
+                workload: (if .fault.applied.app then "deployment/" + .fault.applied.app else .target.workload end)},
     active_from: .timeline.inject_start, active_to: null}]'
   log "injected ${fault}/${variant}; record: ${dir#"${ROOT_DIR}/"}; undo with 'make fault-reset'"
 }
 
 reset() {
-  local dir fault
+  local dir fault target_app
   [[ -s "${ACTIVE_RUN}" ]] || { log "no active fault"; return 0; }
   dir="$(cat "${ACTIVE_RUN}")"
   fault="$(run_get "${dir}" '.fault.name')"
+  snapshot_pods "${dir}"
   mark "${dir}" reset_start
   "${FAULTS_DIR}/${fault}.sh" reset "${dir}"
   reapply_declared
@@ -49,8 +51,9 @@ reset() {
   run_set "${dir}" '(.expected_causes[]?.active_to) = .timeline.reset_done'
   if wait_chat_ok 300; then mark "${dir}" lab_healthy_again; else note "${dir}" "chat-api not healthy 300s after reset"; fi
   mark "${dir}" end
+  target_app="$(run_get "${dir}" '.target.workload' | sed 's#^deployment/##')"
   run_set "${dir}" '.target.pods_after = $p | .host.loadavg_end = $l' \
-    --argjson p "$(pods_json model-server)" --argjson l "$(loadavg_json)"
+    --argjson p "$(pods_json "${target_app}")" --argjson l "$(loadavg_json)"
   export_run "${dir}"
   set_status "${dir}" complete
   : > "${ACTIVE_RUN}"

@@ -17,7 +17,7 @@ eval/
   runs/<split>/<run_id>/     one directory per run (split: dev, test, dryrun, manual)
     run.json                 ground truth, written at injection, completed at reset/end
     events.json              Kubernetes events of the run window (+/- 5 min)
-    pods.json                pod snapshot at the end of the run
+    pods.json                pod snapshot at the end of the fault window, before reset (genai + noise)
     loadgen.jsonl            load generator lines of the window (gives the trace ids)
     traces/<trace_id>.json   Tempo traces of those requests
     metrics.json             key Prometheus series of the window
@@ -103,7 +103,7 @@ later from what it exported. For every scored run (`dev`, `test`) and every
 | `traces.jsonl.gz` | Tempo traces of the window (gone after 24 h) |
 | `metrics.json.gz` | Prometheus series of the window (gone after 2 days) |
 | `loadgen.jsonl.gz` | client view of every request, including requests without a trace (app down) |
-| `pods.json.gz` | pod specs at the end of the run (needed to see a configuration cause offline) |
+| `pods.json.gz` | pod specs/status at the end of the fault window, before reset (`genai` + `noise`) |
 
 `manual` runs, `*.prev-*` attempts and `eval/runs/invalid/` are never
 committed. A run that ends `invalid` (precondition or signal check failed)
