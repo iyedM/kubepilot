@@ -37,7 +37,7 @@ inject() {
       done
       sleep 1
       run_set "${dir}" '.fault.applied = {variant: $v, marker: $m, busy_loops: ($l | tonumber), running: ($n | tonumber)}' \
-        --arg v "${variant}" --arg m "${marker}" --arg l "${loops}" --arg n "$(pgrep -fc -- "sh -c : ${marker}" || true)"
+        --arg v "${variant}" --arg m "${marker}" --arg l "${loops}" --arg n "$(pgrep -fc -- "^sh -c : ${marker}" || true)"
       ;;
     neighbor-pod-same-node)
       node="$(kc -n "${GENAI_NAMESPACE}" get pods -l app.kubernetes.io/name=model-server \
@@ -139,7 +139,7 @@ check() {
   marker="$(run_get "${dir}" '.fault.applied.marker // empty')"
   if [[ -n "${marker}" ]]; then
     local running
-    running="$(pgrep -fc -- "sh -c : ${marker}" || true)"
+    running="$(pgrep -fc -- "^sh -c : ${marker}" || true)"
     if [[ "${running:-0}" -eq "$(run_get "${dir}" '.fault.applied.busy_loops')" ]]; then
       echo "PASS  ${running} host busy loops running (${marker})"
     else

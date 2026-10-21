@@ -73,6 +73,7 @@ echo "${dir}" > "${ACTIVE_RUN}"
 injected=false
 on_interrupt() {
   log "interrupted: resetting the lab"
+  note "${dir}" "interrupted by a signal at $(now_ms) (injected=${injected}); the lab was reset"
   set_status "${dir}" interrupted
   if [[ "${injected}" == true ]]; then
     "${FAULTS_DIR}/${fault}.sh" reset "${dir}" || true
