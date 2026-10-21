@@ -1,0 +1,2 @@
+PASS  load generator: 57 successful requests, 0 failed in the window
+PASS  quiet window: 0 pods in namespace noise

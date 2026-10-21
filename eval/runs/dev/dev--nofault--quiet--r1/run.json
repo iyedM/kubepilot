@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "run_id": "dev--nofault--quiet--r1",
+  "split": "dev",
+  "kind": "nofault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "8bad53282aa7688794b40349ad7e3ccbd70213a411e058eab1a6a8f81e893a10",
+    "entry_id": "nofault/quiet"
+  },
+  "fault": null,
+  "decoys": [],
+  "expected_causes": [],
+  "timeline": {
+    "run_start": "2026-10-21T15:11:48.348Z",
+    "quiet_since": "2026-10-21T15:06:48Z",
+    "baseline_start": "2026-10-21T15:12:05.129Z",
+    "inject_start": "2026-10-21T15:15:05.159Z",
+    "inject_done": "2026-10-21T15:15:05.181Z",
+    "reset_start": "2026-10-21T15:20:05.375Z",
+    "reset_done": "2026-10-21T15:20:06.183Z",
+    "lab_healthy_again": "2026-10-21T15:20:06.695Z",
+    "end": "2026-10-21T15:23:06.726Z",
+    "export_done": "2026-10-21T15:23:12.142Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-xd8d4",
+        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://851181d53fad8a8fe17d90568887358c0121c62eea69037ec21ede8ea6b24387",
+        "restarts": 1,
+        "created": "2026-10-21T06:25:00Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-xd8d4",
+        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://851181d53fad8a8fe17d90568887358c0121c62eea69037ec21ede8ea6b24387",
+        "restarts": 1,
+        "created": "2026-10-21T06:25:00Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "36ff20b8e5a43bea86beec636a05a11041328ff4",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:cdc52acae82d",
+        "image_id": "docker.io/library/import-2026-10-20@sha256:ea2857100a0f7e583a5a9c71054c7a9752779e43be9b3b348cdbe6cf1eadd0b7"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      2.85,
+      3.23,
+      3.59
+    ],
+    "mem_available_mib_start": 11228,
+    "cpu_busy_pct": {
+      "baseline": 26.4,
+      "fault": 24.3,
+      "recovery": 23.8
+    },
+    "loadavg_end": [
+      3.44,
+      3.16,
+      3.38
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh nofault",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}
