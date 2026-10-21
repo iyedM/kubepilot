@@ -92,6 +92,18 @@ func IsTokenUsageMetric(name string) bool {
 	return name == metricOTLPTokenUsage || strings.HasPrefix(name, promPrefixTokenUsage)
 }
 
+// PromQueryOperationDurationCount returns the Prometheus metric name for the
+// GenAI client operation duration count counter.
+func PromQueryOperationDurationCount() string {
+	return promPrefixOperationDuration + "_count"
+}
+
+// PromQueryOperationDurationSum returns the Prometheus metric name for the
+// GenAI client operation duration sum counter.
+func PromQueryOperationDurationSum() string {
+	return promPrefixOperationDuration + "_sum"
+}
+
 // PromSeriesLabels holds the normalized GenAI labels extracted from a
 // Prometheus series label map.
 type PromSeriesLabels struct {

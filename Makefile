@@ -16,7 +16,7 @@ INHIBIT :=
 endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test test-app lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test test-app eval-score lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -68,6 +68,9 @@ test-app: ## Run the chat-api pytest suite in the pinned Python image
 	  -e PYTHONDONTWRITEBYTECODE=1 -v "$(CURDIR):/src:ro" -w /src/lab/apps/chat-api \
 	  $(PYTHON_IMAGE) sh -c "pip install --user --quiet --no-cache-dir --disable-pip-version-check \
 	    --require-hashes --no-deps -r requirements-dev.txt && python -m pytest -p no:cacheprovider -v tests"
+
+eval-score: ## Score completed runs of a split: SPLIT=dev (or SPLIT=test)
+	go run ./cmd/eval-score --split $(if $(SPLIT),$(SPLIT),dev)
 
 # --- Fault injection (docs/lab.md, eval/README.md) ---------------------------
 fault-cpu-throttle: ## Inject cpu-throttle by hand (VARIANT=limit-300m), split "manual"

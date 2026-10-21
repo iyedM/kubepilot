@@ -278,9 +278,14 @@ func loadRequests(runDir string, win snapshot.Window) ([]snapshot.RequestSample,
 		return nil, err
 	}
 	defer func() { _ = rc.Close() }()
+	return ParseRequestsJSONL(rc, win)
+}
 
+// ParseRequestsJSONL parses newline-delimited JSON loadgen records and filters
+// them to win (analysis window + baseline, excluding reset ranges).
+func ParseRequestsJSONL(r io.Reader, win snapshot.Window) ([]snapshot.RequestSample, error) {
 	var out []snapshot.RequestSample
-	sc := bufio.NewScanner(rc)
+	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 64*1024), 2*1024*1024)
 	for sc.Scan() {
 		line := strings.TrimSpace(sc.Text())
@@ -475,9 +480,13 @@ func loadPods(runDir string) ([]snapshot.PodSnapshot, error) {
 		return nil, err
 	}
 	defer func() { _ = rc.Close() }()
+	return ParsePodsJSON(rc)
+}
 
+// ParsePodsJSON parses a Kubernetes PodList JSON payload into PodSnapshots.
+func ParsePodsJSON(r io.Reader) ([]snapshot.PodSnapshot, error) {
 	var list rawPodList
-	if err := json.NewDecoder(rc).Decode(&list); err != nil {
+	if err := json.NewDecoder(r).Decode(&list); err != nil {
 		return nil, fmt.Errorf("parse pods.json: %w", err)
 	}
 
@@ -678,9 +687,14 @@ func loadEvents(runDir string, win snapshot.Window) ([]snapshot.K8sEvent, error)
 		return nil, err
 	}
 	defer func() { _ = rc.Close() }()
+	return ParseEventsJSON(rc, win)
+}
 
+// ParseEventsJSON parses a Kubernetes EventList JSON payload and filters events
+// to the skew-adjusted analysis window.
+func ParseEventsJSON(r io.Reader, win snapshot.Window) ([]snapshot.K8sEvent, error) {
 	var list rawEventList
-	if err := json.NewDecoder(rc).Decode(&list); err != nil {
+	if err := json.NewDecoder(r).Decode(&list); err != nil {
 		return nil, fmt.Errorf("parse events.json: %w", err)
 	}
 
@@ -746,6 +760,13 @@ type rawMetricStream struct {
 	Values [][]any           `json:"values"`
 }
 
+type rawPromRangeEnvelope struct {
+	Status string `json:"status"`
+	Data   struct {
+		Result []rawMetricStream `json:"result"`
+	} `json:"data"`
+}
+
 func loadMetrics(runDir string, win snapshot.Window) (map[string]snapshot.Series, error) {
 	rc, err := openMaybeGzip(runDir, "metrics.json")
 	if err != nil {
@@ -763,40 +784,54 @@ func loadMetrics(runDir string, win snapshot.Window) (map[string]snapshot.Series
 
 	out := make(map[string]snapshot.Series, len(rawMap))
 	for name, entry := range rawMap {
-		s := snapshot.Series{Query: entry.Query}
-		for _, rs := range entry.Result {
-			var samples []snapshot.MetricSample
-			for _, pair := range rs.Values {
-				if len(pair) < 2 {
-					continue
-				}
-				sec, ok := toFloat64(pair[0])
-				if !ok {
-					continue
-				}
-				val, ok := toFloat64(pair[1])
-				if !ok {
-					continue
-				}
-				ts := time.Unix(int64(sec), 0).UTC()
-				if !keepTimestamp(win, ts) {
-					continue
-				}
-				samples = append(samples, snapshot.MetricSample{
-					Timestamp: ts,
-					Value:     val,
-				})
-			}
-			if len(samples) > 0 {
-				s.Streams = append(s.Streams, snapshot.MetricStream{
-					Labels:  rs.Metric,
-					Samples: samples,
-				})
-			}
-		}
-		out[name] = s
+		out[name] = convertMetricStreams(entry.Query, entry.Result, win)
 	}
 	return out, nil
+}
+
+// ParsePrometheusRangeResponse parses a Prometheus /api/v1/query_range JSON
+// response body into a snapshot.Series filtered to win.
+func ParsePrometheusRangeResponse(query string, raw []byte, win snapshot.Window) (snapshot.Series, error) {
+	var env rawPromRangeEnvelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return snapshot.Series{Query: query}, err
+	}
+	return convertMetricStreams(query, env.Data.Result, win), nil
+}
+
+func convertMetricStreams(query string, rawStreams []rawMetricStream, win snapshot.Window) snapshot.Series {
+	s := snapshot.Series{Query: query}
+	for _, rs := range rawStreams {
+		var samples []snapshot.MetricSample
+		for _, pair := range rs.Values {
+			if len(pair) < 2 {
+				continue
+			}
+			sec, ok := toFloat64(pair[0])
+			if !ok {
+				continue
+			}
+			val, ok := toFloat64(pair[1])
+			if !ok {
+				continue
+			}
+			ts := time.Unix(int64(sec), 0).UTC()
+			if !keepTimestamp(win, ts) {
+				continue
+			}
+			samples = append(samples, snapshot.MetricSample{
+				Timestamp: ts,
+				Value:     val,
+			})
+		}
+		if len(samples) > 0 {
+			s.Streams = append(s.Streams, snapshot.MetricStream{
+				Labels:  rs.Metric,
+				Samples: samples,
+			})
+		}
+	}
+	return s
 }
 
 // --- Kubernetes quantity & timestamp parsers ---------------------------------
