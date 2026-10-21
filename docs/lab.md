@@ -266,8 +266,12 @@ recently `genai` changed. When a run starts right after another one, the
 previous reset created a pod 3 minutes earlier, so the next run waits about
 2.2 min more (134 s and 138 s observed on the two back-to-back starts), i.e.
 about 14 min per run in a chain; the worst case allowed by the wait limit is
-19 min. A clean chain of three runs could not be timed end to end: the first
-attempt stopped on the reset Conflict bug, the second one on a laptop
+19 min. A clean chain of three runs was timed on 2026-10-21 (oomkill
+noload-450mi, readiness-fail probe-wrong-port, cold-start
+model-download-20mbs, under `INHIBIT_SLEEP=1`): **2 386 s in total, 13.3 min
+per run**, with quiet-period waits of 14 s, 137 s and 135 s; every phase
+lasted exactly its planned duration. Two earlier attempts could not be timed
+end to end: one stopped on the reset Conflict bug, the other on a laptop
 suspend (both described below). The reset itself does not redeploy
 `loadgen` once the lab is in its declared state: 6 of the 7 dev run exports
 contain no loadgen event; the 9 loadgen events in the oomkill run export come
@@ -415,13 +419,18 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
   favourable case; the unavailability caused by a Recreate rollout lasts up
   to the termination grace period (30 s by default).
 - **Rule for P2: a "Readiness probe failed ... connection refused" on the old
-  pod of a Recreate rollout is NOT `readiness_failing`.** An engine must
-  look at three things before blaming readiness: the **pod** (the old pod
-  that is being stopped, with a Killing event, or the new pod that should
-  serve), the **failure** (`connection refused` while the server shuts down
-  vs an HTTP status such as `statuscode: 404` from a running server) and the
-  **time** (during the termination of the old pod vs after the new pod has
-  started).
+  pod of a Recreate rollout is NOT `readiness_failing`.** The message alone
+  does not decide: the real readiness fault `readiness-fail/probe-wrong-port`
+  (run `dev--readiness-fail--probe-wrong-port--r1`) also gives
+  `Readiness probe failed: Get "http://10.244.2.39:9999/health": dial tcp
+  10.244.2.39:9999: connect: connection refused`, while `probe-path-404`
+  gives `HTTP probe failed with statuscode: 404`. An engine must look at:
+  - the **pod**: the old pod being stopped (it has a Killing event) or the
+    new pod that should serve (Running, no Killing);
+  - the **probed port**: the server's container port (8080) or another one
+    (9999 is not a port of the container);
+  - the **time and repetition**: a few failures during the ~30 s
+    termination of the old pod, or failures for the whole fault window.
 - **CPU throttling also produces errors.** At 300m, `long-256` requests time
   out (502 after the 30 s client timeout): throttling is not only slowness.
 
