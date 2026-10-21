@@ -1,0 +1,4 @@
+PASS  pod model-server-58dc78d5f6-7rmjw Ready at 2026-10-21T06:19:29Z with --threads 1 in its spec
+PASS  rollout event (ScalingReplicaSet on deployment/model-server) since the injection
+PASS  no CFS throttling: fraction 0.000 < 0.05 since Ready (0/2029.1666666666667 periods)
+PASS  short-16 p50 813.0 ms after Ready vs baseline 497.5 ms (x1.63 >= x1.3)

@@ -3,7 +3,7 @@
   "run_id": "dev--config-regression--threads-1--r1",
   "split": "dev",
   "kind": "fault",
-  "status": "running",
+  "status": "complete",
   "catalog": {
     "file": "eval/faults/catalog.v1.json",
     "sha256": "8bad53282aa7688794b40349ad7e3ccbd70213a411e058eab1a6a8f81e893a10",
@@ -33,7 +33,7 @@
         "workload": "deployment/model-server"
       },
       "active_from": "2026-10-21T06:19:26.155Z",
-      "active_to": null
+      "active_to": "2026-10-21T06:25:03.882Z"
     }
   ],
   "timeline": {
@@ -41,7 +41,12 @@
     "quiet_since": "2026-10-21T06:11:13Z",
     "baseline_start": "2026-10-21T06:16:26.123Z",
     "inject_start": "2026-10-21T06:19:26.155Z",
-    "inject_done": "2026-10-21T06:19:29.398Z"
+    "inject_done": "2026-10-21T06:19:29.398Z",
+    "reset_start": "2026-10-21T06:24:29.760Z",
+    "reset_done": "2026-10-21T06:25:03.882Z",
+    "lab_healthy_again": "2026-10-21T06:25:04.423Z",
+    "end": "2026-10-21T06:28:04.449Z",
+    "export_done": "2026-10-21T06:28:10.566Z"
   },
   "target": {
     "namespace": "genai",
@@ -55,6 +60,17 @@
         "container_id": "containerd://4e916b4be6d6eb78cc1d04a733152b34186c8a51b156a1ddf0126e9e78729556",
         "restarts": 0,
         "created": "2026-10-21T06:11:11Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-xd8d4",
+        "uid": "a3f8c99f-0a68-4f96-b2c8-384ad68c22af",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://3d292e995af4a4713f5f158fccd1d0d417f52a040d7fb17909dafad52875f8e9",
+        "restarts": 0,
+        "created": "2026-10-21T06:25:00Z"
       }
     ]
   },
@@ -88,18 +104,43 @@
     ],
     "mem_available_mib_start": 8055,
     "cpu_busy_pct": {
-      "baseline": 23.8
-    }
+      "baseline": 23.8,
+      "fault": 21.4,
+      "recovery": 23.1
+    },
+    "loadavg_end": [
+      3.13,
+      2.82,
+      2.93
+    ]
   },
   "loadgen": {
     "replicas": 1,
     "interval_s": 5
   },
-  "exports": {},
-  "check": null,
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh config-regression",
+    "result": "pass"
+  },
   "notes": [],
   "phase_seconds": {
     "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
       "planned": 180,
       "real": 180
     }

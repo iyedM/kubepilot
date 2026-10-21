@@ -22,19 +22,22 @@ MAX_THROTTLED_FRACTION="0.05"
 MIN_LATENCY_RATIO="1.3"        # measured x1.85-2.2; quiet spread <= x1.05
 
 inject() {
-  local dir="$1" variant="$2" loops node pgid
+  local dir="$1" variant="$2" loops node marker
   loops="$(run_get "${dir}" '.fault.params.busy_loops')"
   case "${variant}" in
     host-busy-loops-*)
-      # Busy loops on the host, outside the cluster, in their own process
-      # group (setsid) so that reset can stop all of them; each one also
-      # stops by itself after SAFETY_S in case the run dies.
-      setsid bash -c "for i in \$(seq 1 ${loops}); do timeout ${SAFETY_S} sh -c 'while :; do :; done' & done; wait" \
-        </dev/null >/dev/null 2>&1 &
-      pgid=$!
+      # Busy loops on the host, outside the cluster. Each command line carries
+      # a marker unique to the run, so reset can find and stop every loop
+      # (killing a process group is not enough: timeout(1) puts its command
+      # in a group of its own). Each loop also stops by itself after SAFETY_S
+      # in case the run dies.
+      marker="kubepilot-burn-$(basename "${dir}")"
+      for _ in $(seq 1 "${loops}"); do
+        timeout "${SAFETY_S}" sh -c ": ${marker}; while :; do :; done" </dev/null >/dev/null 2>&1 &
+      done
       sleep 1
-      run_set "${dir}" '.fault.applied = {variant: $v, host_pgid: ($g | tonumber), busy_loops: ($l | tonumber)}' \
-        --arg v "${variant}" --arg g "${pgid}" --arg l "${loops}"
+      run_set "${dir}" '.fault.applied = {variant: $v, marker: $m, busy_loops: ($l | tonumber), running: ($n | tonumber)}' \
+        --arg v "${variant}" --arg m "${marker}" --arg l "${loops}" --arg n "$(pgrep -fc -- "sh -c : ${marker}" || true)"
       ;;
     neighbor-pod-same-node)
       node="$(kc -n "${GENAI_NAMESPACE}" get pods -l app.kubernetes.io/name=model-server \
@@ -67,10 +70,20 @@ EOF
 }
 
 reset() {
-  local dir="$1" pgid
-  pgid="$(run_get "${dir}" '.fault.applied.host_pgid // empty')"
-  if [[ -n "${pgid}" ]]; then
-    kill -TERM -- "-${pgid}" 2>/dev/null || true
+  local dir="$1" marker left
+  marker="$(run_get "${dir}" '.fault.applied.marker // empty')"
+  if [[ -n "${marker}" ]]; then
+    pkill -TERM -f -- "${marker}" || true
+    for _ in $(seq 1 10); do
+      pgrep -f -- "${marker}" >/dev/null || break
+      sleep 1
+    done
+    if pgrep -f -- "${marker}" >/dev/null; then
+      pkill -KILL -f -- "${marker}" || true
+      sleep 1
+    fi
+    left="$(pgrep -fc -- "${marker}" || true)"
+    [[ "${left:-0}" -eq 0 ]] || die "host-contention reset: ${left} busy loop(s) still running (${marker})"
   fi
   if [[ "$(run_get "${dir}" '.fault.variant')" == neighbor-pod-same-node ]]; then
     kc -n "${NOISE_NS}" delete pod "${NEIGHBOR}" --ignore-not-found --wait=false >/dev/null
@@ -121,6 +134,18 @@ check() {
   else
     echo "FAIL  not enough successful short-16 requests (baseline '${base}', fault '${slow}')"
     rc=1
+  fi
+  local marker
+  marker="$(run_get "${dir}" '.fault.applied.marker // empty')"
+  if [[ -n "${marker}" ]]; then
+    local running
+    running="$(pgrep -fc -- "sh -c : ${marker}" || true)"
+    if [[ "${running:-0}" -eq "$(run_get "${dir}" '.fault.applied.busy_loops')" ]]; then
+      echo "PASS  ${running} host busy loops running (${marker})"
+    else
+      echo "FAIL  ${running:-0} host busy loops running, expected $(run_get "${dir}" '.fault.applied.busy_loops')"
+      rc=1
+    fi
   fi
   if [[ "$(run_get "${dir}" '.fault.variant // empty')" == neighbor-pod-same-node ]]; then
     local node nnode usage
