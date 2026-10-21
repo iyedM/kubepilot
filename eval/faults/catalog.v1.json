@@ -9,7 +9,8 @@
     "readiness_failing": "The model-server pod runs but is not Ready, so the Service has no endpoint for it.",
     "cold_start": "Requests fail or wait while a new model-server pod is still starting (image pull, model download or model load).",
     "config_change": "A recent rollout of model-server changed its configuration and the change degrades serving, without any resource-pressure signal.",
-    "unknown_no_infrastructure_cause": "The request was slow or failed but no Kubernetes event, resource metric or configuration change in the cluster explains it."
+    "host_cpu_contention": "Other processes on the same host compete for CPU with the model-server container: CPU pressure (PSI waiting) rises without CFS throttling, and inference slows down.",
+    "unknown_no_infrastructure_cause": "The request is slow or fails, and the trace may show where the time goes (for example inside the application), but no Kubernetes event, no resource metric and no configuration change in the cluster explains it."
   },
   "_causes_note": "Closed list. expected_causes[].cause in run.json must be one of these names. A no-fault window has expected_causes = [] (nothing abnormal to report).",
   "repetitions": {
@@ -173,7 +174,7 @@
             "taint": "kubepilot.dev/maintenance=true:NoSchedule"
           },
           "why_differs_from_dev": "the cause is on the nodes (taint), not in the pod spec",
-          "signal": "expected: FailedScheduling '... untolerated taint(s)'; no event for the taint itself",
+          "signal": "expected: FailedScheduling '0/3 nodes are available: 3 node(s) had untolerated taint(s)' (control-plane taint + kubepilot.dev/maintenance on both workers); no event for the taint itself. Note: the dev variants also mention 'untolerated taint(s)' because of the control-plane taint (measured in nodeselector-gpu: 1 taint + 2 selector), so the node count per reason, not the word 'taint', identifies this variant",
           "signal_identical_to_dev": false
         },
         {
@@ -278,11 +279,13 @@
           "split": "test",
           "status": "planned",
           "measured": true,
-          "mechanism": "llama.cpp image removed from the nodes (crictl rmi), then the model-server pod is recreated",
+          "mechanism": "model-server scaled to 0, llama.cpp image removed from the kind nodes (crictl rmi, nodes where it succeeded are recorded), then scaled back to 1: the new pod must pull the image",
           "params": {},
           "why_differs_from_dev": "the delay comes from pulling the image, not from fetching the model",
           "signal": "measured once on a probe pod: Pulling -> Pulled after ~80 s; expected: no initContainer, connection errors, then 200",
-          "signal_identical_to_dev": false
+          "signal_identical_to_dev": false,
+          "cause_window": "the cold_start cause starts at the scale to 0 (inject_start, start of the unavailability) and ends when the new pod is Ready (effect_end)",
+          "invalid_if": "crictl rmi removed the image on no node"
         },
         {
           "id": "model-download-hf",
@@ -318,6 +321,76 @@
           "signal": "measured: 0 CFS throttled periods; 0.49 CPU core used of 2; 31 vs 55 tokens/s; latency x1.6-1.8; no errors; only rollout events before the slowdown"
         }
       ]
+    },
+    {
+      "name": "host-contention",
+      "cause": "host_cpu_contention",
+      "target": "deployment/model-server",
+      "variants": [
+        {
+          "id": "host-busy-loops-8",
+          "split": "dev",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "8 busy loops run directly on the host (outside the cluster) for the fault window",
+          "params": {
+            "busy_loops": 8
+          },
+          "signal": "measured: PSI cpu waiting of model-server 0.18 s -> 10.3 s per 3 min, ~2.7 CFS throttled periods, tokens/s 50 -> 32, latency x1.85-2.2, no errors, no events; host CPU busy 89%"
+        },
+        {
+          "id": "neighbor-pod-same-node",
+          "split": "test",
+          "status": "planned",
+          "measured": false,
+          "mechanism": "CPU-hungry pod without CPU limit in namespace noise, pinned to the model-server node",
+          "params": {
+            "busy_loops": 8,
+            "namespace": "noise"
+          },
+          "why_differs_from_dev": "the competitor is a pod inside the cluster (visible with its own CPU usage on the same node), not a host process",
+          "signal": "expected: PSI cpu waiting of model-server up, no CFS throttling, a neighbor pod with high CPU usage on the same node",
+          "signal_identical_to_dev": false
+        }
+      ],
+      "test_set": "excluded until its test variant is measured (measured: true) and dry-run; not counted in the 20 test injections"
+    },
+    {
+      "name": "app-delay",
+      "cause": "unknown_no_infrastructure_cause",
+      "target": "deployment/chat-api",
+      "_status_note": "expected answer: unknown_no_infrastructure_cause, citing the trace gap as the only evidence; this is not a fault without any signal",
+      "variants": [
+        {
+          "id": "delay-2000ms",
+          "split": "dev",
+          "status": "planned",
+          "measured": true,
+          "mechanism": "lab hook PUT /lab/delay on chat-api, set through kubectl exec (no Kubernetes object change during the run): sleep before the model call",
+          "params": {
+            "delay_ms": 2000
+          },
+          "signal": "measured: latency +~2 s on every prompt, 2001 ms gap between the HTTP span start and the GenAI span start, GenAI span unchanged; CPU, memory, PSI, throttling unchanged; no events"
+        },
+        {
+          "id": "intermittent-delay",
+          "split": "test",
+          "status": "proposed",
+          "measured": false,
+          "mechanism": "lab hook delaying 1 request in 3 by 2000 ms (requires extending the hook)",
+          "params": {
+            "delay_ms": 2000,
+            "every_n": 3
+          },
+          "why_differs_from_dev": "intermittent instead of constant: the p50 moves little, the tail moves a lot",
+          "signal": "expected: no infrastructure signal; gap in one trace in three",
+          "signal_identical_to_dev": false
+        }
+      ],
+      "description": "slow in the application, visible as a gap between the HTTP span and the GenAI span in the trace, but with no Kubernetes event, no resource metric and no configuration change explaining it",
+      "preconditions": "LAB_FAULT_HOOKS=1 on chat-api, switched with make lab-hooks-on before the runs and make lab-hooks-off after (redeploys chat-api, between runs only)",
+      "test_set": "excluded until its test variant is measured (measured: true) and dry-run; not counted in the 20 test injections",
+      "expected_answer": "unknown_no_infrastructure_cause, with the trace gap (HTTP span start -> GenAI span start) as the only cited evidence; an invented infrastructure cause is an error"
     }
   ],
   "nofault": {
