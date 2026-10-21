@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "run_id": "dryrun--host-contention--neighbor-pod-same-node--r1",
+  "split": "dryrun",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "3c1fb8d5ea2efc59809cb345b71fe83c755c261dcf60ae9eb5bb8df0e1e57bf0",
+    "entry_id": "host-contention/neighbor-pod-same-node"
+  },
+  "fault": {
+    "name": "host-contention",
+    "variant": "neighbor-pod-same-node",
+    "cause": "host_cpu_contention",
+    "mechanism": "CPU-hungry pod without CPU limit in namespace noise, pinned to the model-server node",
+    "params": {
+      "busy_loops": 8,
+      "namespace": "noise"
+    },
+    "applied": {
+      "variant": "neighbor-pod-same-node",
+      "neighbor": "noise/cpu-neighbor",
+      "node": "kubepilot-lab-worker2",
+      "busy_loops": 8
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "host_cpu_contention",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-21T21:32:42.981Z",
+      "active_to": "2026-10-21T21:37:45.808Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-21T21:27:58.239Z",
+    "quiet_since": "2026-10-21T21:24:28Z",
+    "baseline_start": "2026-10-21T21:29:42.953Z",
+    "inject_start": "2026-10-21T21:32:42.981Z",
+    "inject_done": "2026-10-21T21:32:43.757Z",
+    "reset_start": "2026-10-21T21:37:44.504Z",
+    "reset_done": "2026-10-21T21:37:45.808Z",
+    "lab_healthy_again": "2026-10-21T21:37:48.201Z",
+    "end": "2026-10-21T21:40:48.233Z",
+    "export_done": "2026-10-21T21:40:52.925Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-69v7d",
+        "uid": "a8d2f627-827b-48a6-8d30-a945dac4f283",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://fe1ba2635c30059e82876f50feca304d4e62b8bf3c1c2b8fd14bb871b27b7082",
+        "restarts": 0,
+        "created": "2026-10-21T21:24:24Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-69v7d",
+        "uid": "a8d2f627-827b-48a6-8d30-a945dac4f283",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://fe1ba2635c30059e82876f50feca304d4e62b8bf3c1c2b8fd14bb871b27b7082",
+        "restarts": 0,
+        "created": "2026-10-21T21:24:24Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "e3db8a6e8436bc0cf9804450a0fbf881e3fb970c",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      2.67,
+      3.13,
+      3.27
+    ],
+    "mem_available_mib_start": 10770,
+    "cpu_busy_pct": {
+      "baseline": 20.5,
+      "fault": 89.0,
+      "recovery": 21.5
+    },
+    "loadavg_end": [
+      2.68,
+      5.79,
+      5.01
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh host-contention",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}

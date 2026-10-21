@@ -213,6 +213,7 @@ cgroup v2, then confirmed in the cluster:
 | E1 | 300 MB | mmap (default) | runs and answers; anon ≈ 110 MB, file-mapped 15 MB in one run and 0 MB in another |
 | E2 | 300 MB | `--load-mode none` | **OOMKilled** (exit 137) while loading |
 | E3 | 1 GB | `--load-mode none` | runs; anon ≈ 547 MB, peak ≈ 555 MB |
+| E4 | 768 MiB | mmap (default), `-c 32768` | runs; anon = 467.9 MiB (vs 107.6 MiB at `-c 2048`): a 400Mi limit OOM-kills deterministically on the KV cache alone |
 
 With mmap, what is charged to the container depends on which cgroup first
 read the model file (15 MB vs 0 MB above), so an mmap-based OOM fault would
@@ -386,9 +387,10 @@ Facts seen in the recorded runs that a diagnosis engine must not get wrong.
   it is the cause in neither run. An engine must not key on one exact message
   text, nor on the word "taint": it must read the **count of nodes per
   reason** and blame a taint only if it accounts for the nodes that could
-  otherwise run the pod. For the `node-taint` test variant the expected
-  message is 3 nodes with untolerated taints (control-plane + 2 workers):
-  **expected, not measured**.
+  otherwise run the pod. For the `node-taint` test variant the message is 3
+  nodes with untolerated taints (control-plane + 2 workers), confirmed by the
+  dry-run (`dryrun--unschedulable--node-taint--r1`):
+  `0/3 nodes are available: 3 node(s) had untolerated taint(s). preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.`
 - **The fault window contains the recovery events of the reset.** The window
   of an exported run (and `expected_causes[].active_to = reset_done`) also
   holds the events of the reset itself (ScalingReplicaSet, Killing,

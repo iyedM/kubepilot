@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "run_id": "dryrun--app-delay--intermittent-delay--r1",
+  "split": "dryrun",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "3c1fb8d5ea2efc59809cb345b71fe83c755c261dcf60ae9eb5bb8df0e1e57bf0",
+    "entry_id": "app-delay/intermittent-delay"
+  },
+  "fault": {
+    "name": "app-delay",
+    "variant": "intermittent-delay",
+    "cause": "unknown_no_infrastructure_cause",
+    "mechanism": "lab hook delaying 1 request in 3 by 2000 ms (PUT /lab/delay {\"ms\": 2000, \"every_n\": 3})",
+    "params": {
+      "delay_ms": 2000,
+      "every_n": 3
+    },
+    "applied": {
+      "variant": "intermittent-delay",
+      "delay_ms": 2000,
+      "every_n": 3
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "unknown_no_infrastructure_cause",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/chat-api"
+      },
+      "active_from": "2026-10-21T21:49:46.166Z",
+      "active_to": "2026-10-21T21:54:48.454Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-21T21:41:59.348Z",
+    "quiet_since": "2026-10-21T21:41:31Z",
+    "baseline_start": "2026-10-21T21:46:46.133Z",
+    "inject_start": "2026-10-21T21:49:46.166Z",
+    "inject_done": "2026-10-21T21:49:46.538Z",
+    "reset_start": "2026-10-21T21:54:47.242Z",
+    "reset_done": "2026-10-21T21:54:48.454Z",
+    "lab_healthy_again": "2026-10-21T21:54:49.413Z",
+    "end": "2026-10-21T21:57:49.445Z",
+    "export_done": "2026-10-21T21:57:54.684Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/chat-api",
+    "pods_before": [
+      {
+        "name": "chat-api-5f9b9d87b9-ghw8z",
+        "uid": "35dacd33-d729-4e97-9953-028c5e765851",
+        "node": "kubepilot-lab-worker",
+        "phase": "Running",
+        "container_id": "containerd://8487e4f6f8711192b923967f9932f59e39f9c8d8afd0538f7246860f519c6193",
+        "restarts": 0,
+        "created": "2026-10-21T21:41:22Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "chat-api-5f9b9d87b9-ghw8z",
+        "uid": "35dacd33-d729-4e97-9953-028c5e765851",
+        "node": "kubepilot-lab-worker",
+        "phase": "Running",
+        "container_id": "containerd://8487e4f6f8711192b923967f9932f59e39f9c8d8afd0538f7246860f519c6193",
+        "restarts": 0,
+        "created": "2026-10-21T21:41:22Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "e3db8a6e8436bc0cf9804450a0fbf881e3fb970c",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      2.30,
+      5.02,
+      4.80
+    ],
+    "mem_available_mib_start": 10898,
+    "cpu_busy_pct": {
+      "baseline": 32.2,
+      "fault": 26.0,
+      "recovery": 21.4
+    },
+    "loadavg_end": [
+      2.58,
+      3.03,
+      3.89
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh app-delay",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}

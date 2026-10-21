@@ -349,11 +349,11 @@
             "namespace": "noise"
           },
           "why_differs_from_dev": "the competitor is a pod inside the cluster (visible with its own CPU usage on the same node), not a host process",
-          "signal": "measured: PSI cpu waiting of model-server 0.11 s -> 10.5 s over 120 s, 0 CFS throttled periods, short-16 p50 x2.54, neighbor pod noise/cpu-neighbor using ~7.4 CPU cores on the same node",
+          "signal": "measured: PSI cpu waiting of model-server 0.13 s -> 18.3 s over 300 s, 0.001 CFS throttled fraction, short-16 p50 x1.77, neighbor pod noise/cpu-neighbor using ~7.5 CPU cores on the same node",
           "signal_identical_to_dev": false
         }
       ],
-      "test_set": "measured; excluded from the test split until dry-run; not counted in the 20 test injections"
+      "test_set": "measured and dry-run validated (dryrun--host-contention--neighbor-pod-same-node--r1)"
     },
     {
       "name": "app-delay",
@@ -383,13 +383,13 @@
             "every_n": 3
           },
           "why_differs_from_dev": "intermittent instead of constant: the p50 moves little, the tail moves a lot",
-          "signal": "measured: 4/12 traces with ~2000 ms gap before the GenAI span, 8/12 fast (median gap 0 ms); no CFS throttling, no Kubernetes event",
+          "signal": "measured: ~1/3 traces with ~2000 ms gap before the GenAI span, ~2/3 fast (median gap 0 ms); no CFS throttling, no Kubernetes event",
           "signal_identical_to_dev": false
         }
       ],
       "description": "slow in the application, visible as a gap between the HTTP span and the GenAI span in the trace, but with no Kubernetes event, no resource metric and no configuration change explaining it",
       "preconditions": "LAB_FAULT_HOOKS=1 on chat-api, switched with make lab-hooks-on before the runs and make lab-hooks-off after (redeploys chat-api, between runs only)",
-      "test_set": "measured; excluded from the test split until dry-run; not counted in the 20 test injections",
+      "test_set": "measured and dry-run validated (dryrun--app-delay--intermittent-delay--r1)",
       "expected_answer": "unknown_no_infrastructure_cause, with the trace gap (HTTP span start -> GenAI span start) as the only cited evidence; an invented infrastructure cause is an error"
     }
   ],

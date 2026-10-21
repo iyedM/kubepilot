@@ -1,0 +1,4 @@
+PASS  pod chat-api-6f86945d96-fmcwp: last termination OOMKilled, 5 restarts
+PASS  kube-state-metrics: last_terminated_reason{reason="OOMKilled",pod="chat-api-6f86945d96-fmcwp"} == 1
+PASS  BackOff event present for chat-api-6f86945d96-fmcwp
+PASS  load generator saw 60 failed requests in the fault window

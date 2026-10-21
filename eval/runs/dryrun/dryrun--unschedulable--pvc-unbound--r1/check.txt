@@ -1,0 +1,4 @@
+PASS  pod model-server-f489596bd-vlvn5: Pending, PodScheduled=False/Unschedulable
+PASS  FailedScheduling event: 0/3 nodes are available: pod has unbound immediate PersistentVolumeClaims. not found
+PASS  kube-state-metrics: kube_pod_status_unschedulable{pod="model-server-f489596bd-vlvn5"} == 1
+PASS  load generator saw 60 failed requests in the fault window

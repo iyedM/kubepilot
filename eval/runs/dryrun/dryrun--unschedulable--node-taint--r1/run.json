@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "run_id": "dryrun--unschedulable--node-taint--r1",
+  "split": "dryrun",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "3c1fb8d5ea2efc59809cb345b71fe83c755c261dcf60ae9eb5bb8df0e1e57bf0",
+    "entry_id": "unschedulable/node-taint"
+  },
+  "fault": {
+    "name": "unschedulable",
+    "variant": "node-taint",
+    "cause": "unschedulable",
+    "mechanism": "NoSchedule taint added to both worker nodes, then the model-server pod is recreated; the pod spec is unchanged",
+    "params": {
+      "taint": "kubepilot.dev/maintenance=true:NoSchedule"
+    },
+    "applied": {
+      "variant": "node-taint"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "unschedulable",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/model-server"
+      },
+      "active_from": "2026-10-21T20:51:38.837Z",
+      "active_to": "2026-10-21T20:56:42.074Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-21T20:47:07.366Z",
+    "quiet_since": "2026-10-21T20:43:22Z",
+    "baseline_start": "2026-10-21T20:48:38.806Z",
+    "inject_start": "2026-10-21T20:51:38.837Z",
+    "inject_done": "2026-10-21T20:51:39.115Z",
+    "reset_start": "2026-10-21T20:56:39.426Z",
+    "reset_done": "2026-10-21T20:56:42.074Z",
+    "lab_healthy_again": "2026-10-21T20:56:42.606Z",
+    "end": "2026-10-21T20:59:42.636Z",
+    "export_done": "2026-10-21T20:59:48.095Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/model-server",
+    "pods_before": [
+      {
+        "name": "model-server-5bd4cc46f9-zrngv",
+        "uid": "84e9715e-17af-41f4-a32f-133ae25df292",
+        "node": "kubepilot-lab-worker2",
+        "phase": "Running",
+        "container_id": "containerd://b795d90f9d16b3c8172fdf8b9f91a48427d80ed1fe4d6d9b0de86f71dffc5cc4",
+        "restarts": 0,
+        "created": "2026-10-21T19:52:22Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "model-server-5bd4cc46f9-llzwf",
+        "uid": "bc13853f-7f6a-4335-b104-13322e56a09e",
+        "node": "kubepilot-lab-worker",
+        "phase": "Running",
+        "container_id": "containerd://68c55baa9831d598b7d090a991f90837c60a01a094474543bf16ed5285a97d84",
+        "restarts": 0,
+        "created": "2026-10-21T20:51:39Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "e3db8a6e8436bc0cf9804450a0fbf881e3fb970c",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      3.45,
+      2.93,
+      2.75
+    ],
+    "mem_available_mib_start": 10149,
+    "cpu_busy_pct": {
+      "baseline": 22.0,
+      "fault": 13.8,
+      "recovery": 23.2
+    },
+    "loadavg_end": [
+      3.24,
+      2.82,
+      2.71
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh unschedulable",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}
