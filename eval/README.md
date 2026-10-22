@@ -201,3 +201,48 @@ test-run data.
 - **Shared host.** The laptop also runs other workloads; each run records
   the host CPU load per phase so that disturbed runs can be identified and
   excluded or re-run, but the noise is not controlled.
+
+## Published Results (P2 — 2026-10-22)
+
+- **Pre-registration record:** [`eval/preregistration/2026-10-22-p2-v1.json`](preregistration/2026-10-22-p2-v1.json) (committed at `bb69699` before the first `SPLIT=test` run; engine commit `17291b1`, `internal` tree `10d3c43a7038`, `internal/rules` tree `201576af596e`).
+- **Reproduce offline from committed exports:**
+  ```sh
+  make eval-score SPLIT=test
+  make eval-score SPLIT=dev
+  ```
+- **Methodological disclaimers:**
+  1. **Local lab only:** All results below are measured on faults injected into a single-cluster local `kind` lab with one CPU-served model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`), one application (`chat-api`) and synthetic traffic (`loadgen`), **not on real production incidents**.
+  2. **Correlated cases:** The evaluation runs are correlated (multiple variants and repetitions of the same fault classes executed under the same lab conditions), so the **95% Wilson confidence intervals are optimistic**.
+
+### Held-out `test` split (45 complete runs: 24 fault injections + 21 no-fault windows)
+
+| Metric | `k / n` | Percentage | 95% Wilson CI (optimistic) | P2 Exit Criterion |
+|---|---|---|---|---|
+| `top1_accuracy` | `24 / 24` | `100.0%` | `[86.2%, 100.0%]` | — |
+| `top3_recall` | `24 / 24` | `100.0%` | `[86.2%, 100.0%]` | `>= 70%` on `>= 20` faults |
+| `evidence_precision` | `93 / 96` | `96.9%` | `[91.2%, 98.9%]` | — |
+| `false_positive_rate_on_healthy` | `0 / 21` | `0.0%` | `[0.0%, 15.5%]` | `<= 10%` on `>= 20` no-fault windows |
+
+#### Per-cause breakdown on `SPLIT=test`
+
+| Cause class | Test variants (`rep=2` each) | Top-1 accuracy | Top-3 recall | 95% Wilson CI |
+|---|---|---|---|---|
+| `cpu_throttling` | `rollout-limit-400m`, `limit-200m` | `4 / 4` (`100.0%`) | `4 / 4` (`100.0%`) | `[51.0%, 100.0%]` |
+| `oom_killed` | `kv-cache-ctx32k`, `app-oom-40mi` | `4 / 4` (`100.0%`) | `4 / 4` (`100.0%`) | `[51.0%, 100.0%]` |
+| `unschedulable` | `node-taint`, `pvc-unbound` | `4 / 4` (`100.0%`) | `4 / 4` (`100.0%`) | `[51.0%, 100.0%]` |
+| `readiness_failing` | `initial-delay-600`, `server-wrong-port` | `4 / 4` (`100.0%`) | `4 / 4` (`100.0%`) | `[51.0%, 100.0%]` |
+| `cold_start` | `image-not-cached`, `model-download-hf` | `4 / 4` (`100.0%`) | `4 / 4` (`100.0%`) | `[51.0%, 100.0%]` |
+| `host_cpu_contention` | `neighbor-pod-same-node` | `2 / 2` (`100.0%`) | `2 / 2` (`100.0%`) | `[34.2%, 100.0%]` |
+| `unknown_no_infrastructure_cause` | `intermittent-delay` | `2 / 2` (`100.0%`) | `2 / 2` (`100.0%`) | `[34.2%, 100.0%]` |
+| No-fault (`quiet`, `decoy-same-node-oom`, `decoy-other-node-crash`, `rep=7` each) | 21 windows | `0 / 21` false positives (`0.0%`) | — | `[0.0%, 15.5%]` |
+
+*(Note: `config_change` has a `dev` variant only in `catalog.v1.json` and is excluded from the `test` split until a test variant of a different nature is defined.)*
+
+### Development `dev` split (19 complete runs: 13 fault injections + 6 no-fault windows)
+
+| Metric | `k / n` | Percentage | 95% Wilson CI (optimistic) |
+|---|---|---|---|
+| `top1_accuracy` | `13 / 13` | `100.0%` | `[77.2%, 100.0%]` |
+| `top3_recall` | `13 / 13` | `100.0%` | `[77.2%, 100.0%]` |
+| `evidence_precision` | `45 / 45` | `100.0%` | `[92.1%, 100.0%]` |
+| `false_positive_rate_on_healthy` | `0 / 6` | `0.0%` | `[0.0%, 39.0%]` |
