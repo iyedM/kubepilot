@@ -1,0 +1,5 @@
+PASS  pod model-server-59b5d46b96-52nj5: container running, Ready=False
+PASS  Service model-server has no ready endpoint
+PASS  Unhealthy event: Readiness probe failed: Get "http://10.244.2.37:8080/health": dial tcp 10.244.2.37:8080: connect: connection refused
+PASS  kube-state-metrics: kube_pod_status_ready{condition="true",pod="model-server-59b5d46b96-52nj5"} == 0
+PASS  load generator saw 56 failed requests in the fault window

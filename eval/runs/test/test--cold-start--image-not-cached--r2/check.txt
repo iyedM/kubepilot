@@ -1,0 +1,3 @@
+PASS  pod model-server-5bd4cc46f9-kxcqv became Ready at 2026-10-22T12:14:27Z (203 s after the injection)
+PASS  image pulled in 169 s (Pulling -> Pulled, >= 30 s)
+PASS  load generator: 36 failed requests while starting, 60 successful after Ready

@@ -1,0 +1,4 @@
+PASS  load generator: 58 successful requests, 0 failed in the window
+PASS  decoy noise/decoy-crash on node kubepilot-lab-worker (model-server on kubepilot-lab-worker2)
+PASS  decoy noise/decoy-crash: last termination Error, 5 restarts
+PASS  BackOff event present for noise/decoy-crash

@@ -1,0 +1,4 @@
+PASS  pod model-server-d7f8c5cc-tgj8c: last termination OOMKilled, 5 restarts
+PASS  kube-state-metrics: last_terminated_reason{reason="OOMKilled",pod="model-server-d7f8c5cc-tgj8c"} == 1
+PASS  BackOff event present for model-server-d7f8c5cc-tgj8c
+PASS  load generator saw 60 failed requests in the fault window

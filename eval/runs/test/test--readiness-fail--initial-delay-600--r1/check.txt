@@ -1,0 +1,5 @@
+PASS  pod model-server-68b49878bf-fwqxk: container running, Ready=False
+PASS  Service model-server has no ready endpoint
+PASS  readiness probe initialDelaySeconds=600 in the pod spec
+PASS  kube-state-metrics: kube_pod_status_ready{condition="true",pod="model-server-68b49878bf-fwqxk"} == 0
+PASS  load generator saw 60 failed requests in the fault window

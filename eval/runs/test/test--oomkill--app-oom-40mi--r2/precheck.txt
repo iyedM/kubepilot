@@ -1,0 +1,14 @@
+PASS  chat-api pod is Ready
+PASS  loadgen pod is Ready
+PASS  POST /chat returned 200, 2 tokens, trace 653432cdb52db5c4391397bd9d8a775f
+PASS  trace 653432cdb52db5c4391397bd9d8a775f: HTTP server span -> chat qwen2.5-0.5b-instruct output_tokens=2
+PASS  trace resource k8s.pod.uid/name match the running pod (chat-api-7f9456fbd4-2n2td)
+PASS  collector k8sattributes added k8s.deployment.name=chat-api
+PASS  privacy: no content key and no marker in trace cbb920358fdd1ff698f11d4bc5a94363
+PASS  privacy: marker absent from the collector logs (last 10m)
+PASS  GenAI duration histogram for chat-api-7f9456fbd4-2n2td: 1 series for {__name__=~"gen_ai_client_(operation|inference)_duration_seconds_count", k8s_pod_name="chat-api-7f9456fbd4-2n2td"}
+PASS  GenAI token usage histogram for chat-api-7f9456fbd4-2n2td: 2 series for gen_ai_client_token_usage_count{k8s_pod_name="chat-api-7f9456fbd4-2n2td"}
+PASS  loadgen: 12 successful requests in the last 60s
+PASS  lab fault hooks are off on chat-api (LAB_FAULT_HOOKS=0)
+
+check-genai: 12 passed, 0 failed

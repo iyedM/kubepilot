@@ -1,0 +1,3 @@
+PASS  throttled fraction 0.919 >= 0.20 for model-server-5657487785-ftf94 over the fault window (300s, 2629.2307880358385/2860.251066482502 periods)
+PASS  short-16 p50 2384.4 ms vs baseline 493.1 ms (x4.84 >= x2.0)
+PASS  rollout: pod model-server-5657487785-ftf94 created after injection with CPU limit 400m

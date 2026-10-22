@@ -1,0 +1,4 @@
+PASS  pod model-server-5bd4cc46f9-rrr48: Pending, PodScheduled=False/Unschedulable
+PASS  FailedScheduling event: 0/3 nodes are available: 3 node(s) had untolerated taint(s). preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+PASS  kube-state-metrics: kube_pod_status_unschedulable{pod="model-server-5bd4cc46f9-rrr48"} == 1
+PASS  load generator saw 60 failed requests in the fault window

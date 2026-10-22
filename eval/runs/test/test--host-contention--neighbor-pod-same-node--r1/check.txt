@@ -1,0 +1,4 @@
+PASS  CPU pressure (PSI waiting) of model-server-5bd4cc46f9-5zf76: 14.330902178099722 s over 300 s vs 0.12900072950545613 s over 180 s of baseline
+PASS  no CFS throttling: fraction 0.001 < 0.05
+PASS  short-16 p50 811.9 ms vs baseline 493.9 ms (x1.64 >= x1.3)
+PASS  neighbor noise/cpu-neighbor on the model-server node kubepilot-lab-worker2, using 7.587047700791466 CPU

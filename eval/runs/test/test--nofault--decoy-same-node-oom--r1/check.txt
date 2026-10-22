@@ -1,0 +1,5 @@
+PASS  load generator: 57 successful requests, 0 failed in the window
+PASS  decoy noise/decoy-oom on model-server node kubepilot-lab-worker2
+PASS  decoy noise/decoy-oom: last termination OOMKilled, 5 restarts
+PASS  kube-state-metrics: last_terminated_reason{namespace="noise",pod="decoy-oom",reason="OOMKilled"} == 1
+PASS  BackOff event present for noise/decoy-oom

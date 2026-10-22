@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "run_id": "test--oomkill--app-oom-40mi--r1",
+  "split": "test",
+  "kind": "fault",
+  "status": "complete",
+  "catalog": {
+    "file": "eval/faults/catalog.v1.json",
+    "sha256": "1830852182747200c9fb80421c149775155f1ecb207e81868de0a344c60b171e",
+    "entry_id": "oomkill/app-oom-40mi"
+  },
+  "fault": {
+    "name": "oomkill",
+    "variant": "app-oom-40mi",
+    "cause": "oom_killed",
+    "mechanism": "Deployment change on chat-api (not the model server): memory limit 40Mi, below the ~70 MiB the app needs",
+    "params": {
+      "target": "deployment/chat-api",
+      "memory_limit": "40Mi"
+    },
+    "applied": {
+      "app": "chat-api",
+      "memory_limit": "40Mi"
+    }
+  },
+  "decoys": [],
+  "expected_causes": [
+    {
+      "cause": "oom_killed",
+      "component": {
+        "namespace": "genai",
+        "kind": "Pod",
+        "workload": "deployment/chat-api"
+      },
+      "active_from": "2026-10-22T01:18:01.543Z",
+      "active_to": "2026-10-22T01:23:11.574Z"
+    }
+  ],
+  "timeline": {
+    "run_start": "2026-10-22T01:12:38.677Z",
+    "quiet_since": "2026-10-22T01:09:39Z",
+    "baseline_start": "2026-10-22T01:15:01.514Z",
+    "inject_start": "2026-10-22T01:18:01.543Z",
+    "inject_done": "2026-10-22T01:18:04.701Z",
+    "reset_start": "2026-10-22T01:23:05.059Z",
+    "reset_done": "2026-10-22T01:23:11.574Z",
+    "lab_healthy_again": "2026-10-22T01:23:12.122Z",
+    "end": "2026-10-22T01:26:12.150Z",
+    "export_done": "2026-10-22T01:26:15.254Z"
+  },
+  "target": {
+    "namespace": "genai",
+    "workload": "deployment/chat-api",
+    "pods_before": [
+      {
+        "name": "chat-api-7f9456fbd4-dz9mf",
+        "uid": "dff33feb-b3b3-4d2b-b849-da65110c9dd7",
+        "node": "kubepilot-lab-worker",
+        "phase": "Running",
+        "container_id": "containerd://63728bdc3b812b5d716714be77bde5f9f3bfe6f869e755d6cebf5748893cef0a",
+        "restarts": 0,
+        "created": "2026-10-21T21:58:10Z"
+      }
+    ],
+    "pods_after": [
+      {
+        "name": "chat-api-7f9456fbd4-2n2td",
+        "uid": "cedfb05f-088f-49df-b6a4-3e47ee85bef9",
+        "node": "kubepilot-lab-worker",
+        "phase": "Running",
+        "container_id": "containerd://436d3df7c5ff0c06e43bc20caaa6b6b4871adb8546fd5388d99c25f3f2702f6e",
+        "restarts": 0,
+        "created": "2026-10-22T01:23:05Z"
+      }
+    ]
+  },
+  "versions": {
+    "git_commit": "bb69699bf6e0bfba6ff03ab6fed9df26de9afbf2",
+    "git_dirty": false,
+    "versions_env_sha256": "75978672f2743dab2e0d0617502750a782305183465e4b0aa0fd2d1410b18641",
+    "kubernetes": "v1.37.0",
+    "images": {
+      "model-server": {
+        "image": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07",
+        "image_id": "ghcr.io/ggml-org/llama.cpp@sha256:143926008cbbbab8fae8fd87809875af3e42d3d676c30c11c55c0f3f683a5a07"
+      },
+      "chat-api": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      },
+      "loadgen": {
+        "image": "kubepilot/chat-api:d8299e496c0a",
+        "image_id": "docker.io/library/import-2026-10-21@sha256:9d8199920dc8cb504b280231e966248637ef1b6df797ac69f316c0b5dc88131c"
+      }
+    },
+    "llama_server_version": "version: 0.7.0-dev (build 11723, commit 31288c9c6)"
+  },
+  "host": {
+    "nproc": 12,
+    "loadavg_start": [
+      4.59,
+      3.64,
+      3.34
+    ],
+    "mem_available_mib_start": 8298,
+    "cpu_busy_pct": {
+      "baseline": 20.6,
+      "fault": 13.2,
+      "recovery": 20.5
+    },
+    "loadavg_end": [
+      1.91,
+      2.19,
+      2.74
+    ]
+  },
+  "loadgen": {
+    "replicas": 1,
+    "interval_s": 5
+  },
+  "exports": {
+    "events": "events.json.gz",
+    "pods": "pods.json.gz",
+    "loadgen": "loadgen.jsonl.gz",
+    "traces": "traces.jsonl.gz",
+    "metrics": "metrics.json.gz",
+    "check": "check.txt"
+  },
+  "check": {
+    "script": "lab/faults/check-fault.sh oomkill",
+    "result": "pass"
+  },
+  "notes": [],
+  "phase_seconds": {
+    "baseline": {
+      "planned": 180,
+      "real": 180
+    },
+    "fault": {
+      "planned": 300,
+      "real": 300
+    },
+    "recovery": {
+      "planned": 180,
+      "real": 180
+    }
+  }
+}
