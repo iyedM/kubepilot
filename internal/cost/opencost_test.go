@@ -69,6 +69,12 @@ func TestOpenCostAPIEstimation(t *testing.T) {
 	if summary.TotalWindowCost != 0.100 || summary.EstimatedWasteCost != 0.100 {
 		t.Fatalf("unexpected cost summary: %+v", summary)
 	}
+	if summary.MonthlyProjectedCost <= 0 || summary.MonthlyProjectedWaste <= 0 {
+		t.Fatalf("expected positive monthly FinOps projections, got %+v", summary)
+	}
+	if summary.PatchMonthlyDeltaUSD <= 0 || summary.FinOpsRecommendation == "" {
+		t.Fatalf("expected FinOps patch delta and recommendation, got %+v", summary)
+	}
 }
 
 func TestResourceModelFallbackEstimation(t *testing.T) {

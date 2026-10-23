@@ -28,19 +28,25 @@ import (
 // CollectFunc abstracts live or mock snapshot collection for testability.
 type CollectFunc func(ctx context.Context, cfg live.Config) (*snapshot.Snapshot, error)
 
-// CostSummary represents the optional OpenCost incident cost estimate (P8)
-// attached to a diagnosed incident window.
+// CostSummary represents the OpenCost incident cost estimate (P8) and
+// operational FinOps unit-economics / monthly projection attached to a window.
 type CostSummary struct {
-	Currency           string  `json:"currency"`
-	Workload           string  `json:"workload"`
-	Namespace          string  `json:"namespace"`
-	WindowDurationSec  float64 `json:"windowDurationSec"`
-	TotalWindowCost    float64 `json:"totalWindowCost"`
-	EstimatedWasteCost float64 `json:"estimatedWasteCost"`
-	CPUCost            float64 `json:"cpuCost"`
-	RAMCost            float64 `json:"ramCost"`
-	Source             string  `json:"source"`
-	Explanation        string  `json:"explanation"`
+	Currency              string  `json:"currency"`
+	Workload              string  `json:"workload"`
+	Namespace             string  `json:"namespace"`
+	WindowDurationSec     float64 `json:"windowDurationSec"`
+	TotalWindowCost       float64 `json:"totalWindowCost"`
+	EstimatedWasteCost    float64 `json:"estimatedWasteCost"`
+	CPUCost               float64 `json:"cpuCost"`
+	RAMCost               float64 `json:"ramCost"`
+	MonthlyProjectedCost  float64 `json:"monthlyProjectedCost"`
+	MonthlyProjectedWaste float64 `json:"monthlyProjectedWaste"`
+	CostPer1kRequestsUSD  float64 `json:"costPer1kRequestsUsd"`
+	CostPer1MTokensUSD    float64 `json:"costPer1mTokensUsd"`
+	PatchMonthlyDeltaUSD  float64 `json:"patchMonthlyDeltaUsd"`
+	FinOpsRecommendation  string  `json:"finopsRecommendation,omitempty"`
+	Source                string  `json:"source"`
+	Explanation           string  `json:"explanation"`
 }
 
 // CostEstimator computes an optional cost estimate for a diagnosed snapshot and report.
@@ -81,8 +87,8 @@ type TelemetryOverview struct {
 }
 
 // IncidentRecord wraps a snapshot.Report with metadata, trace/event counts,
-// optional cost estimation, read-only GitOps patch suggestion, and rich telemetry
-// overview for the API, Web UI (P6), and Operator (P7).
+// OpenCost FinOps estimation, DevSecOps posture audit, controlled SRE runbook
+// synthesis, read-only GitOps patch suggestion, and rich telemetry overview.
 type IncidentRecord struct {
 	ID             string              `json:"id"`
 	CreatedAt      time.Time           `json:"createdAt"`
@@ -97,6 +103,8 @@ type IncidentRecord struct {
 	Cost           *CostSummary        `json:"cost,omitempty"`
 	SuggestedPatch string              `json:"suggestedPatch,omitempty"`
 	Comparison     *BaselineComparison `json:"comparison,omitempty"`
+	Security       *SecurityAudit      `json:"security,omitempty"`
+	Runbook        *RunbookSynthesis   `json:"runbook,omitempty"`
 	Telemetry      *TelemetryOverview  `json:"telemetry,omitempty"`
 }
 
@@ -310,6 +318,8 @@ func (s *Server) buildRecord(ctx context.Context, source, runID string, snap *sn
 	}
 	comp := BuildBaselineComparison(rec)
 	rec.Comparison = &comp
+	rec.Security = BuildSecurityAudit(snap, rep, rec.SuggestedPatch, ns)
+	rec.Runbook = BuildRunbookSynthesis(snap, rec)
 	return rec
 }
 
@@ -577,6 +587,12 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(rel, "/bundle"):
 		subAction = "bundle"
 		rel = strings.TrimSuffix(rel, "/bundle")
+	case strings.HasSuffix(rel, "/security"):
+		subAction = "security"
+		rel = strings.TrimSuffix(rel, "/security")
+	case strings.HasSuffix(rel, "/runbook"):
+		subAction = "runbook"
+		rel = strings.TrimSuffix(rel, "/runbook")
 	}
 
 	inc, ok := s.GetIncident(rel)
@@ -614,6 +630,12 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		return
 	case "compare":
 		writeJSON(w, http.StatusOK, BuildBaselineComparison(inc))
+		return
+	case "security":
+		writeJSON(w, http.StatusOK, inc.Security)
+		return
+	case "runbook":
+		writeJSON(w, http.StatusOK, inc.Runbook)
 		return
 	case "bundle":
 		tgz, err := BuildIncidentBundleTarGz(inc)
@@ -1436,11 +1458,22 @@ func BuildPostMortemMarkdown(inc IncidentRecord) string {
 	b.WriteString("\n")
 
 	if inc.Cost != nil {
-		b.WriteString("## 3. OpenCost Resource & Financial Waste Estimate\n\n")
+		b.WriteString("## 3. OpenCost Resource & Operational FinOps 2.0 Analysis\n\n")
 		fmt.Fprintf(&b, "- **Total Window Resource Cost**: `$%.4f %s` (CPU: `$%.4f`, RAM: `$%.4f`)\n",
 			inc.Cost.TotalWindowCost, inc.Cost.Currency, inc.Cost.CPUCost, inc.Cost.RAMCost)
-		fmt.Fprintf(&b, "- **Estimated Incident Waste**: **`$%.4f %s`** (Source: `%s`)\n",
+		fmt.Fprintf(&b, "- **Estimated Incident Waste (Window)**: **`$%.4f %s`** (Source: `%s`)\n",
 			inc.Cost.EstimatedWasteCost, inc.Cost.Currency, inc.Cost.Source)
+		fmt.Fprintf(&b, "- **30-Day Monthly Projected Cost / Waste**: `$%.2f / mo` total (`$%.2f / mo` projected waste if unmitigated)\n",
+			inc.Cost.MonthlyProjectedCost, inc.Cost.MonthlyProjectedWaste)
+		if inc.Cost.CostPer1kRequestsUSD > 0 || inc.Cost.CostPer1MTokensUSD > 0 {
+			fmt.Fprintf(&b, "- **GenAI Unit Economics**: `$%.4f / 1k requests` | `$%.4f / 1M output tokens`\n",
+				inc.Cost.CostPer1kRequestsUSD, inc.Cost.CostPer1MTokensUSD)
+		}
+		fmt.Fprintf(&b, "- **Suggested Patch Monthly Cost Delta**: `%+.2f %s / mo`\n",
+			inc.Cost.PatchMonthlyDeltaUSD, inc.Cost.Currency)
+		if inc.Cost.FinOpsRecommendation != "" {
+			fmt.Fprintf(&b, "- **FinOps Trade-Off Decision**: %s\n", inc.Cost.FinOpsRecommendation)
+		}
 		fmt.Fprintf(&b, "- **Model Explanation**: %s\n\n", inc.Cost.Explanation)
 	}
 
@@ -1451,7 +1484,41 @@ func BuildPostMortemMarkdown(inc IncidentRecord) string {
 		b.WriteString("\n```\n\n")
 	}
 
-	b.WriteString("## 5. CLI Reproduction\n\n")
+	if inc.Security != nil {
+		b.WriteString("## 5. DevSecOps & Pod Security Standards (PSS) Audit\n\n")
+		fmt.Fprintf(&b, "- **Security Posture Score**: **%d/100** (`%s`)\n", inc.Security.Score, inc.Security.Profile)
+		fmt.Fprintf(&b, "- **Patch Governance**: %s\n\n", inc.Security.PatchApprovalNote)
+		b.WriteString("| Check ID | Category | Status | Detail |\n")
+		b.WriteString("| :--- | :--- | :--- | :--- |\n")
+		for _, c := range inc.Security.Checks {
+			fmt.Fprintf(&b, "| `%s` | %s | `%s` | %s |\n", c.ID, c.Category, c.Status, c.Detail)
+		}
+		b.WriteString("\n")
+	}
+
+	if inc.Runbook != nil {
+		b.WriteString("## 6. Multi-Signal Coverage & Controlled SRE Runbook\n\n")
+		fmt.Fprintf(&b, "- **Signal Coverage**: **%d%%** (`%s`)\n", inc.Runbook.SignalCoveragePct, inc.Runbook.EngineMode)
+		fmt.Fprintf(&b, "- **Executive Brief**: %s\n", inc.Runbook.ExecutiveBrief)
+		if len(inc.Runbook.AlternativeHypotheses) > 0 {
+			b.WriteString("- **Ruled-Out Alternative Hypotheses**:\n")
+			for _, h := range inc.Runbook.AlternativeHypotheses {
+				fmt.Fprintf(&b, "  - %s\n", h)
+			}
+		}
+		b.WriteString("\n### Controlled Remediation Steps (Human-in-the-Loop)\n\n")
+		for _, s := range inc.Runbook.Steps {
+			approval := "Read-Only Safe"
+			if s.RequiresApproval {
+				approval = "Requires Human GitOps Approval"
+			}
+			fmt.Fprintf(&b, "%d. **[%s — %s]** %s\n   - Command: `%s`\n   - Rationale: %s\n",
+				s.Step, s.Phase, approval, s.Title, s.Command, s.Rationale)
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("## 7. CLI Reproduction\n\n")
 	b.WriteString("```bash\n")
 	if inc.RunID != "" {
 		split := "dev"

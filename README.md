@@ -60,7 +60,9 @@ make build
 | `/api/v1/simulate` | `POST` | Interactive What-If Chaos Simulator against the unmodified deterministic Go rule engine |
 | `/api/v1/alerts/alertmanager` | `POST` | Zero-touch Prometheus Alertmanager v4 webhook receiver for automatic incident triage |
 | `/api/v1/incidents/{id}/compare` | `GET` | Side-by-side metric comparison between the incident window and its healthy baseline |
-| `/api/v1/incidents/{id}/postmortem` | `GET` | Download a complete SRE Post-Mortem Markdown report with GitOps remediation YAML patch |
+| `/api/v1/incidents/{id}/security` | `GET` | DevSecOps & Pod Security Standards (PSS-Restricted) posture audit + GitOps patch safety check |
+| `/api/v1/incidents/{id}/runbook` | `GET` | 5-channel signal coverage resilience matrix + controlled SRE runbook with human-approval gates |
+| `/api/v1/incidents/{id}/postmortem` | `GET` | Download a complete SRE Post-Mortem Markdown report with FinOps 2.0 ROI & GitOps remediation patch |
 | `/api/v1/incidents/{id}/bundle` | `GET` | Export a portable `.tar.gz` bundle (`incident.json`, `postmortem.md`, `patch.yaml`, `genaiincident.yaml`) |
 | `/api/v1/incidents/bundle` | `POST` | Import a portable `.tar.gz` or `.json` incident bundle into the store |
 

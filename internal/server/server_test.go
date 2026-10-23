@@ -324,4 +324,34 @@ func TestSSECompareAlertmanagerBundleAndSimulate(t *testing.T) {
 	if simFRec.Code != http.StatusOK || !strings.Contains(simFRec.Body.String(), "\"cause\": \"cpu_throttling\"") {
 		t.Fatalf("expected cpu_throttling diagnosis on simulated fault, got: %s", simFRec.Body.String())
 	}
+
+	// Brick 2: DevSecOps & PSS Posture Audit endpoint (/security)
+	secReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/security", nil)
+	secRec := httptest.NewRecorder()
+	srv.ServeHTTP(secRec, secReq)
+	if secRec.Code != http.StatusOK {
+		t.Fatalf("GET /security status=%d body=%s", secRec.Code, secRec.Body.String())
+	}
+	var sec SecurityAudit
+	if err := json.Unmarshal(secRec.Body.Bytes(), &sec); err != nil {
+		t.Fatalf("unmarshal SecurityAudit: %v", err)
+	}
+	if sec.Score < 80 || len(sec.Checks) < 5 {
+		t.Fatalf("unexpected SecurityAudit: %+v", sec)
+	}
+
+	// Brick 3: Signal Coverage Resilience & Controlled SRE Runbook endpoint (/runbook)
+	rbReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/runbook", nil)
+	rbRec := httptest.NewRecorder()
+	srv.ServeHTTP(rbRec, rbReq)
+	if rbRec.Code != http.StatusOK {
+		t.Fatalf("GET /runbook status=%d body=%s", rbRec.Code, rbRec.Body.String())
+	}
+	var rb RunbookSynthesis
+	if err := json.Unmarshal(rbRec.Body.Bytes(), &rb); err != nil {
+		t.Fatalf("unmarshal RunbookSynthesis: %v", err)
+	}
+	if rb.SignalCoveragePct < 80 || len(rb.Signals) != 5 || len(rb.Steps) < 4 {
+		t.Fatalf("unexpected RunbookSynthesis: %+v", rb)
+	}
 }

@@ -1717,6 +1717,175 @@
     );
   }
 
+  // Brick 2 & Brick 3: DevSecOps Posture Audit, Signal Coverage Matrix & Controlled SRE Runbook
+  function buildGovernanceAndRunbookTabHTML(inc) {
+    const sec = inc.security || {};
+    const rb = inc.runbook || {};
+    const checks = sec.checks || [];
+    const signals = rb.signals || [];
+    const steps = rb.steps || [];
+    const alts = rb.alternativeHypotheses || [];
+
+    const checkRows = checks
+      .map(function (c) {
+        const badgeClass =
+          c.status === "pass" ? "status-unknown" : "status-diagnosed";
+        return (
+          "<tr>" +
+          "<td><code>" +
+          escapeHTML(c.id) +
+          "</code></td>" +
+          "<td><strong>" +
+          escapeHTML(c.title) +
+          '</strong><div style="font-size:0.7rem;color:var(--muted)">' +
+          escapeHTML(c.category) +
+          "</div></td>" +
+          '<td><span class="status-tag ' +
+          badgeClass +
+          '">' +
+          escapeHTML((c.status || "pass").toUpperCase()) +
+          "</span></td>" +
+          "<td>" +
+          escapeHTML(c.detail) +
+          (c.remediation
+            ? '<div style="margin-top:0.25rem;font-size:0.72rem;color:var(--amber)">Remediation: ' +
+              escapeHTML(c.remediation) +
+              "</div>"
+            : "") +
+          "</td>" +
+          "</tr>"
+        );
+      })
+      .join("");
+
+    const sigRows = signals
+      .map(function (s) {
+        const badgeClass =
+          s.status === "healthy" ? "status-unknown" : "status-diagnosed";
+        return (
+          "<tr>" +
+          "<td><strong>" +
+          escapeHTML(s.signal || s.name || "") +
+          "</strong></td>" +
+          '<td><span class="status-tag ' +
+          badgeClass +
+          '">' +
+          escapeHTML((s.status || "").toUpperCase()) +
+          "</span></td>" +
+          "<td><code>" +
+          escapeHTML(s.samples != null ? s.samples : s.sampleCount || 0) +
+          "</code></td>" +
+          "<td>" +
+          escapeHTML(s.fallbackBehavior) +
+          "</td>" +
+          "</tr>"
+        );
+      })
+      .join("");
+
+    const stepCards = steps
+      .map(function (st) {
+        const approvalBadge = st.requiresApproval
+          ? '<span class="status-tag status-diagnosed">Human GitOps Approval Required</span>'
+          : '<span class="status-tag status-unknown">Read-Only Safe</span>';
+        return (
+          '<div class="pod-card" style="margin-bottom:0.65rem">' +
+          '<div class="pod-card-top">' +
+          '<span class="pod-name">Step ' +
+          escapeHTML(st.step != null ? st.step : st.stepNumber) +
+          " · [" +
+          escapeHTML(st.phase) +
+          "] " +
+          escapeHTML(st.title) +
+          "</span>" +
+          approvalBadge +
+          "</div>" +
+          '<pre class="code-block" style="margin:0.45rem 0;padding:0.5rem 0.65rem;font-size:0.74rem">' +
+          escapeHTML(st.command) +
+          "</pre>" +
+          '<div style="font-size:0.73rem;color:var(--text-secondary)"><strong>Rationale:</strong> ' +
+          escapeHTML(st.rationale || st.expectedOutcome || "") +
+          "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    const altList = alts
+      .map(function (h) {
+        return '<li style="margin-bottom:0.28rem">' + escapeHTML(h) + "</li>";
+      })
+      .join("");
+
+    return (
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">DevSecOps &amp; Pod Security Standards (PSS) Posture Audit</h3>' +
+      '<div style="display:flex;gap:0.45rem;align-items:center">' +
+      '<span class="pill">Score: ' +
+      escapeHTML(sec.score != null ? sec.score : 100) +
+      "/100 · " +
+      escapeHTML(sec.profile || "PSS-Restricted Ready") +
+      "</span>" +
+      '<span class="pill">GET /api/v1/incidents/' +
+      escapeHTML(inc.id) +
+      "/security</span>" +
+      "</div>" +
+      "</div>" +
+      '<div class="remediation-box" style="margin-bottom:0.75rem"><strong>GitOps Patch Governance:</strong> ' +
+      escapeHTML(sec.patchApprovalNote || "") +
+      "</div>" +
+      '<table class="evidence-table">' +
+      '<thead><tr><th style="width:180px">Check ID</th><th style="width:220px">Control</th><th style="width:95px">Status</th><th>Verification Detail</th></tr></thead>' +
+      "<tbody>" +
+      (checkRows || '<tr><td colspan="4" class="empty-state">No security checks recorded.</td></tr>') +
+      "</tbody></table>" +
+      "</div>" +
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">5-Channel Signal Coverage &amp; Graceful Degradation Resilience</h3>' +
+      '<div style="display:flex;gap:0.45rem;align-items:center">' +
+      '<span class="pill">Coverage: ' +
+      escapeHTML(rb.signalCoveragePct != null ? rb.signalCoveragePct : 100) +
+      "% (" +
+      escapeHTML(rb.engineMode || "deterministic-go") +
+      ")</span>" +
+      '<span class="pill">GET /api/v1/incidents/' +
+      escapeHTML(inc.id) +
+      "/runbook</span>" +
+      "</div>" +
+      "</div>" +
+      '<table class="evidence-table">' +
+      '<thead><tr><th style="width:220px">Telemetry Channel</th><th style="width:110px">Health</th><th style="width:95px">Samples</th><th>Graceful Degradation / Fallback Behavior</th></tr></thead>' +
+      "<tbody>" +
+      (sigRows || '<tr><td colspan="4" class="empty-state">No signal matrix available.</td></tr>') +
+      "</tbody></table>" +
+      "</div>" +
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Controlled SRE Copilot Runbook (Deterministic Grounded, Zero Hallucination)</h3>' +
+      '<span class="pill">Human-in-the-Loop Enforced</span>' +
+      "</div>" +
+      '<div class="cause-summary" style="margin-bottom:0.75rem"><strong>Executive Brief:</strong> ' +
+      escapeHTML(rb.executiveBrief || "") +
+      "</div>" +
+      (altList
+        ? '<div class="remediation-box" style="margin-bottom:0.75rem"><strong>Ruled-Out Alternative Hypotheses:</strong><ul style="margin:0.35rem 0 0 1.1rem;padding:0">' +
+          altList +
+          "</ul></div>"
+        : "") +
+      "<div>" +
+      stepCards +
+      "</div>" +
+      (rb.scopeAndLimitations
+        ? '<div style="margin-top:0.65rem;font-size:0.72rem;color:var(--muted);border-top:1px solid var(--border-subtle);padding-top:0.5rem"><strong>Empirical Scope &amp; Limitations:</strong> ' +
+          escapeHTML(rb.scopeAndLimitations) +
+          "</div>"
+        : "") +
+      "</div>"
+    );
+  }
+
   function renderIncidentDetail(inc) {
     const rep = inc.report || {};
     const win = rep.window || {};
@@ -1904,17 +2073,26 @@
         .join("");
     }
 
-    // 3. OpenCost Card
+    // 3. OpenCost & Operational FinOps 2.0 Card
     let costHTML = "";
     if (inc.cost) {
       const totalC = Number(inc.cost.totalWindowCost || 0);
       const wasteC = Number(inc.cost.estimatedWasteCost || 0);
+      const moCost = Number(inc.cost.monthlyProjectedCost || 0);
+      const moWaste = Number(inc.cost.monthlyProjectedWaste || 0);
+      const per1kReq = Number(inc.cost.costPer1kRequestsUsd || 0);
+      const per1mTok = Number(inc.cost.costPer1mTokensUsd || 0);
+      const patchDelta = Number(inc.cost.patchMonthlyDeltaUsd || 0);
+      const patchDeltaStr =
+        (patchDelta >= 0 ? "+$" : "-$") +
+        Math.abs(patchDelta).toFixed(2) +
+        "/mo";
       const wastePct =
         totalC > 0 ? Math.min(100, Math.round((wasteC / totalC) * 100)) : 0;
       costHTML =
         '<div class="cause-card">' +
         '<div class="cause-header">' +
-        '<span class="cause-rank">OpenCost Incident Resource &amp; Waste Estimate</span>' +
+        '<span class="cause-rank">OpenCost Resource &amp; Operational FinOps 2.0 Decision Card</span>' +
         '<div class="confidence-wrap">' +
         '<div class="progress-bar"><div class="progress-fill" style="width:' +
         wastePct +
@@ -1925,22 +2103,30 @@
         escapeHTML(inc.cost.source || "opencost") +
         ")</span></div></div>" +
         '<div class="meta-grid">' +
-        '<div class="meta-box"><div class="label">Total Window Cost</div><div class="value">$' +
+        '<div class="meta-box"><div class="label">Window Cost / Waste</div><div class="value">$' +
         totalC.toFixed(4) +
-        " " +
-        escapeHTML(inc.cost.currency || "USD") +
-        "</div></div>" +
-        '<div class="meta-box"><div class="label">Estimated Waste</div><div class="value text-amber">$' +
+        ' · <span class="text-amber">$' +
         wasteC.toFixed(4) +
-        " " +
-        escapeHTML(inc.cost.currency || "USD") +
-        "</div></div>" +
-        '<div class="meta-box"><div class="label">CPU vs RAM Split</div><div class="value">CPU $' +
-        Number(inc.cost.cpuCost || 0).toFixed(4) +
-        " · RAM $" +
-        Number(inc.cost.ramCost || 0).toFixed(4) +
+        " waste</span></div></div>" +
+        '<div class="meta-box"><div class="label">30-Day Projected Waste</div><div class="value text-amber">$' +
+        moWaste.toFixed(2) +
+        "/mo <span style=\"font-size:0.72rem;color:var(--muted)\">(of $" +
+        moCost.toFixed(2) +
+        "/mo)</span></div></div>" +
+        '<div class="meta-box"><div class="label">GenAI Unit Economics</div><div class="value">$' +
+        per1kReq.toFixed(4) +
+        "/1k req · $" +
+        per1mTok.toFixed(2) +
+        "/1M tok</div></div>" +
+        '<div class="meta-box"><div class="label">Patch Monthly Delta</div><div class="value">' +
+        escapeHTML(patchDeltaStr) +
         "</div></div>" +
         "</div>" +
+        (inc.cost.finOpsRecommendation
+          ? '<div class="cause-summary" style="margin-top:0.55rem"><strong>FinOps Trade-Off &amp; ROI Decision:</strong> ' +
+            escapeHTML(inc.cost.finOpsRecommendation) +
+            "</div>"
+          : "") +
         '<div class="remediation-box">' +
         escapeHTML(inc.cost.explanation || "") +
         "</div>" +
@@ -1951,6 +2137,9 @@
       ((tel.charts && tel.charts.length) || 0) +
       (tel.requests && tel.requests.length > 0 ? 1 : 0) +
       (tel.traces && tel.traces.length > 0 ? 1 : 0);
+
+    const secScore =
+      inc.security && inc.security.score != null ? inc.security.score : 100;
 
     const tabsNavHTML =
       '<div class="tabs-bar" role="tablist">' +
@@ -1972,6 +2161,11 @@
       '" data-tab="k8s">Kubernetes State <span class="pill">' +
       ((inc.podCount || 0) + (inc.eventCount || 0)) +
       "</span></button>" +
+      '<button type="button" class="tab-btn' +
+      (activeTab === "runbook" ? " active" : "") +
+      '" data-tab="runbook">DevSecOps &amp; Runbook <span class="pill">' +
+      secScore +
+      "/100</span></button>" +
       '<button type="button" class="tab-btn' +
       (activeTab === "export" ? " active" : "") +
       '" data-tab="export">Patch, Webhook &amp; Export</button>' +
@@ -2009,6 +2203,13 @@
       buildPodsAndEventsTabHTML(inc) +
       "</div>";
 
+    const runbookPanel =
+      '<div class="tab-panel' +
+      (activeTab === "runbook" ? " active" : "") +
+      '" data-panel="runbook">' +
+      buildGovernanceAndRunbookTabHTML(inc) +
+      "</div>";
+
     const exportPanel =
       '<div class="tab-panel' +
       (activeTab === "export" ? " active" : "") +
@@ -2023,6 +2224,7 @@
       chartsPanel +
       tracesPanel +
       k8sPanel +
+      runbookPanel +
       exportPanel;
 
     Array.from(detailEl.querySelectorAll(".tab-btn")).forEach(function (btn) {
