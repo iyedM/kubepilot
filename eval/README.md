@@ -254,3 +254,11 @@ KubePilot (`why-slow`), **Coroot Community Edition** (`v1.28.1`), and **HolmesGP
 - Protocol and scoring rubric: [`eval/baselines/README.md`](baselines/README.md)
 - Recorded outputs: [`eval/baselines/coroot/`](baselines/coroot/) and [`eval/baselines/holmesgpt/`](baselines/holmesgpt/)
 - Full comparison report (including where Coroot CE and HolmesGPT win): [`docs/p3-comparison.md`](../docs/p3-comparison.md)
+
+## eBPF Evidence Source Evaluation (P4 — 2026-10-23)
+
+We evaluated **Grafana Beyla `v3.39.1`** (OpenTelemetry eBPF Instrumentation) in both SDK+eBPF (`mode-a-sdk-plus-beyla`) and zero-code eBPF-only (`mode-b-beyla-only`) modes across `nofault--quiet`, `cpu-throttle--limit-300m`, and `app-delay--delay-2000ms`:
+
+- Runner script: [`lab/ebpf/beyla.sh`](../lab/ebpf/beyla.sh)
+- Recorded telemetry and diagnosis outputs: [`eval/ebpf/summary.json`](ebpf/summary.json)
+- Full evaluation report and architecture decision (why eBPF is dropped from `internal/` per the `CLAUDE.md` exit criterion): [`docs/p4-ebpf-evaluation.md`](../docs/p4-ebpf-evaluation.md)

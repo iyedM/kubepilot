@@ -40,13 +40,11 @@ and a **confidence score**. When the evidence is ambiguous, it answers
 ## Roadmap
 
 1. Landscape check: [`docs/landscape.md`](docs/landscape.md)
-2. Local lab with five reproducible faults ([`lab/`](lab/))
-3. Diagnosis engine and `why-slow` command, with an accuracy target measured on
-   injected faults and no-fault windows
-4. Comparison against existing tools on the same cases (HolmesGPT, Coroot
-   Community Edition)
-5. In-cluster service, Helm chart, UI, operator; an eBPF evidence source
-   (reusing OpenTelemetry eBPF Instrumentation) only if it measurably helps
+2. Local lab with reproducible faults ([`lab/`](lab/), [`docs/lab.md`](docs/lab.md))
+3. Diagnosis engine and `why-slow` command, with pre-registered benchmark results on injected faults and no-fault windows ([`eval/README.md`](eval/README.md))
+4. Comparison against existing tools on the same cases (HolmesGPT, Coroot Community Edition): [`docs/p3-comparison.md`](docs/p3-comparison.md)
+5. eBPF evidence evaluation (Grafana Beyla / OpenTelemetry eBPF Instrumentation): [`docs/p4-ebpf-evaluation.md`](docs/p4-ebpf-evaluation.md)
+6. In-cluster service, Helm chart, Web UI, read-only operator (`GenAIIncident` CRD), and OpenCost estimation
 
 ## Related project
 
