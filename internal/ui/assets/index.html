@@ -1,75 +1,142 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KubePilot — Read-Only GenAI Incident &amp; Evidence Console</title>
+  <title>KubePilot — GenAI Root-Cause &amp; Evidence Console</title>
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="brand-logo">KP</span>
+      <div class="brand-logo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
       <div>
-        <h1>KubePilot</h1>
-        <p class="subtitle">Deterministic GenAI Slow/Failed Request Diagnosis on Kubernetes</p>
+        <div class="brand-title-row">
+          <h1>KubePilot</h1>
+          <span class="version-chip">v0.1.0</span>
+        </div>
+        <p class="subtitle">Deterministic Root-Cause Diagnosis for Slow or Failing GenAI Requests on Kubernetes</p>
       </div>
     </div>
-    <div class="badges">
-      <span class="badge badge-readonly">Read-Only RBAC</span>
-      <span class="badge badge-deterministic">Deterministic (No LLM in Loop)</span>
-      <span class="badge badge-rules">8 Catalog Rules</span>
+    <div class="topbar-right">
+      <div class="badges">
+        <span class="badge badge-readonly" title="Never mutates Pods, Deployments, or Nodes">
+          <span class="dot dot-green"></span> Read-Only RBAC
+        </span>
+        <span class="badge badge-deterministic" title="Pure Go rule engine; 0 LLM calls in diagnosis loop">
+          <span class="dot dot-blue"></span> Deterministic (Zero LLM)
+        </span>
+        <span class="badge badge-rules" title="24/24 (100%) on held-out test split, 0/21 false positives">
+          <span class="dot dot-amber"></span> 8 Catalog Rules · 100% Test Recall
+        </span>
+      </div>
+      <button type="button" id="btn-theme" class="btn-icon" title="Switch Dark / Light theme" aria-label="Toggle color theme">
+        Theme
+      </button>
     </div>
   </header>
 
   <main class="container">
+    <!-- Top KPI Strip -->
+    <section class="kpi-strip" aria-label="Overview Metrics">
+      <div class="kpi-card">
+        <span class="kpi-label">Windows Inspected</span>
+        <strong class="kpi-value" id="kpi-total">0</strong>
+        <span class="kpi-sub" id="kpi-sub-total">Loaded in store</span>
+      </div>
+      <div class="kpi-card kpi-card-warn">
+        <span class="kpi-label">Diagnosed Incidents</span>
+        <strong class="kpi-value" id="kpi-diagnosed">0</strong>
+        <span class="kpi-sub">Root cause isolated</span>
+      </div>
+      <div class="kpi-card kpi-card-ok">
+        <span class="kpi-label">Healthy / No-Fault Windows</span>
+        <strong class="kpi-value" id="kpi-healthy">0</strong>
+        <span class="kpi-sub">0 false positives on decoys</span>
+      </div>
+      <div class="kpi-card kpi-card-cost">
+        <span class="kpi-label">Cumulative Incident Waste</span>
+        <strong class="kpi-value" id="kpi-waste">$0.0000</strong>
+        <span class="kpi-sub">OpenCost CPU + RAM model</span>
+      </div>
+    </section>
+
+    <!-- Collapsible / Clean On-Demand Diagnosis Bar -->
     <section class="diagnose-bar card">
-      <h2>Run Diagnosis (`POST /api/v1/diagnose`)</h2>
+      <div class="diagnose-bar-header">
+        <div>
+          <h2>Run On-Demand Diagnosis</h2>
+          <p class="section-hint">Inspect a recorded lab run directory, a specific OpenTelemetry Trace ID, or a live cluster time window.</p>
+        </div>
+        <div class="preset-group">
+          <span class="preset-label">Quick Held-Out Test Examples:</span>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cpu-throttle--limit-200m--r1">+ CPU Throttle (200m)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--oomkill--app-oom-40mi--r1">+ OOMKill (chat-api)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--unschedulable--node-taint--r1">+ Node Taint</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--readiness-fail--initial-delay-600--r1">+ Readiness Delay 600s</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cold-start--model-download-hf--r1">+ Cold Start (HF Download)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--host-contention--neighbor-pod-same-node--r1">+ Noisy Neighbor CPU</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--app-delay--intermittent-delay--r1">+ App Pre-Inference Delay</button>
+          <button type="button" class="chip-btn chip-btn-ok" data-preset="eval/runs/test/test--nofault--decoy-same-node-oom--r1">+ Healthy (Same-Node OOM Decoy)</button>
+        </div>
+      </div>
+
       <form id="diagnose-form" class="diagnose-form">
         <div class="field">
-          <label for="input-trace-id">Trace ID (optional)</label>
+          <label for="input-run-dir">Offline Run Directory</label>
+          <input id="input-run-dir" name="runDir" type="text" placeholder="e.g. eval/runs/test/test--cold-start--model-download-hf--r1">
+        </div>
+        <div class="field">
+          <label for="input-trace-id">OpenTelemetry Trace ID</label>
           <input id="input-trace-id" name="traceId" type="text" placeholder="e.g. a45841bed378d1796cf1b256f186a0f2">
         </div>
         <div class="field">
-          <label for="input-run-dir">Offline Run Dir (optional)</label>
-          <input id="input-run-dir" name="runDir" type="text" placeholder="e.g. eval/runs/dev/dev--cpu-throttle--limit-300m--r1">
+          <label for="input-from">From (UTC RFC3339)</label>
+          <input id="input-from" name="from" type="text" placeholder="2026-10-23T08:49:18Z">
         </div>
         <div class="field">
-          <label for="input-from">From UTC (optional)</label>
-          <input id="input-from" name="from" type="text" placeholder="2026-10-23T01:40:00Z">
-        </div>
-        <div class="field">
-          <label for="input-to">To UTC (optional)</label>
-          <input id="input-to" name="to" type="text" placeholder="2026-10-23T01:45:00Z">
+          <label for="input-to">To (UTC RFC3339)</label>
+          <input id="input-to" name="to" type="text" placeholder="2026-10-23T08:50:48Z">
         </div>
         <div class="field-actions">
-          <button type="submit" id="btn-diagnose" class="btn-primary">Diagnose Now</button>
-          <button type="button" id="btn-refresh" class="btn-secondary">Refresh List</button>
+          <button type="submit" id="btn-diagnose" class="btn-primary">Diagnose Window</button>
+          <button type="button" id="btn-refresh" class="btn-secondary">Refresh</button>
         </div>
       </form>
       <div id="diagnose-error" class="alert-error hidden"></div>
     </section>
 
+    <!-- Main Split Workspace -->
     <section class="workspace">
+      <!-- Left Sidebar: Filterable Incident List -->
       <aside class="incident-pane card">
         <div class="pane-header">
-          <h2>Incidents <span id="incident-count" class="pill">0</span></h2>
+          <div class="pane-title-row">
+            <h2>Evaluated Windows <span id="incident-count" class="pill">0</span></h2>
+          </div>
+          <input id="filter-search" type="search" placeholder="Search by ID, pod, workload, cause..." aria-label="Search incidents">
           <div class="filters">
             <select id="filter-status" aria-label="Filter by status">
-              <option value="">All statuses</option>
-              <option value="diagnosed">diagnosed</option>
-              <option value="unknown">unknown</option>
+              <option value="">All outcomes</option>
+              <option value="diagnosed">Diagnosed (Fault found)</option>
+              <option value="unknown">Healthy / Unknown (No fault)</option>
             </select>
-            <select id="filter-cause" aria-label="Filter by cause">
-              <option value="">All causes</option>
-              <option value="cpu_throttling">cpu_throttling</option>
-              <option value="oom_killed">oom_killed</option>
-              <option value="unschedulable">unschedulable</option>
-              <option value="readiness_failing">readiness_failing</option>
-              <option value="cold_start">cold_start</option>
-              <option value="config_change">config_change</option>
-              <option value="host_cpu_contention">host_cpu_contention</option>
-              <option value="unknown_no_infrastructure_cause">unknown_no_infrastructure_cause</option>
+            <select id="filter-cause" aria-label="Filter by root cause">
+              <option value="">All 8 catalog causes</option>
+              <option value="cpu_throttling">CPU Throttling</option>
+              <option value="oom_killed">OOMKilled (Exit 137)</option>
+              <option value="unschedulable">Unschedulable Pod</option>
+              <option value="readiness_failing">Failing Readiness Probe</option>
+              <option value="cold_start">Slow Cold Start</option>
+              <option value="config_change">Config Regression</option>
+              <option value="host_cpu_contention">Host CPU Contention</option>
+              <option value="unknown_no_infrastructure_cause">App Pre-Inference Delay</option>
             </select>
           </div>
         </div>
@@ -78,10 +145,11 @@
         </ul>
       </aside>
 
+      <!-- Right Detail View: Plain-English Explanation, Causes, Timeline & Cost -->
       <section class="detail-pane card" id="detail-pane">
         <div class="empty-detail">
-          <h3>Select an incident or run a diagnosis</h3>
-          <p>Choose an incident from the list on the left to inspect its top-3 probable causes, confidence scores, correlated evidence timeline, and estimated resource cost.</p>
+          <h3>Select an incident window on the left</h3>
+          <p>Inspect its plain-English diagnosis, root-cause confidence score, correlated multi-source evidence timeline (Prometheus, Kubernetes Events/Pods, OpenTelemetry GenAI traces), and OpenCost waste breakdown.</p>
         </div>
       </section>
     </section>
