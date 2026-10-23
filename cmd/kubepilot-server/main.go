@@ -16,6 +16,7 @@ import (
 
 	"github.com/iyedM/kubepilot/internal/collector/live"
 	"github.com/iyedM/kubepilot/internal/collector/offline"
+	"github.com/iyedM/kubepilot/internal/cost"
 	"github.com/iyedM/kubepilot/internal/operator"
 	"github.com/iyedM/kubepilot/internal/server"
 	"github.com/iyedM/kubepilot/internal/ui"
@@ -37,6 +38,7 @@ func run(args []string) error {
 	obsNamespace := fs.String("obs-namespace", "observability", "Observability stack Kubernetes namespace")
 	promURL := fs.String("prometheus-url", "", "Direct Prometheus base URL (optional)")
 	tempoURL := fs.String("tempo-url", "", "Direct Tempo base URL (optional)")
+	openCostURL := fs.String("opencost-url", "", "Optional OpenCost base URL for /allocation/compute queries")
 	skew := fs.Duration("skew-tolerance", offline.DefaultSkewTolerance, "Clock-skew tolerance when correlating telemetry sources")
 	pollInterval := fs.Duration("poll-interval", 0, "Optional background diagnosis poll interval (0 disables polling)")
 	enableOperator := fs.Bool("enable-operator", false, "Enable read-only GenAIIncident CRD reconciliation loop")
@@ -57,9 +59,14 @@ func run(args []string) error {
 		SkewTolerance: *skew,
 	}
 
+	costEst := cost.NewEstimator(cost.Config{
+		OpenCostURL: *openCostURL,
+	})
+
 	srv := server.New(server.Config{
-		LiveConfig: liveCfg,
-		UIHandler:  ui.NewHandler(),
+		LiveConfig:    liveCfg,
+		CostEstimator: costEst,
+		UIHandler:     ui.NewHandler(),
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -81,9 +88,10 @@ func run(args []string) error {
 			apiURL = "https://" + os.Getenv("KUBERNETES_SERVICE_HOST") + ":" + os.Getenv("KUBERNETES_SERVICE_PORT")
 		}
 		opCtrl = operator.NewController(operator.Config{
-			KubeAPIURL: apiURL,
-			Namespace:  *namespace,
-			LiveConfig: liveCfg,
+			KubeAPIURL:    apiURL,
+			Namespace:     *namespace,
+			LiveConfig:    liveCfg,
+			CostEstimator: costEst,
 		})
 	}
 
