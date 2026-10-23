@@ -3,195 +3,299 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KubePilot — GenAI Kubernetes Root-Cause &amp; Telemetry Console</title>
+  <title>KubePilot — GenAI Kubernetes Root-Cause Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-logo" aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
-        </svg>
-      </div>
-      <div>
-        <div class="brand-title-row">
-          <h1>KubePilot</h1>
-          <span class="version-chip">v1.0 · SRE Console</span>
-          <span class="badge badge-readonly" title="Strictly Read-Only RBAC: never mutates Pods, Deployments, or Nodes">
-            <span class="dot dot-green"></span> Read-Only RBAC
-          </span>
-          <span class="badge badge-deterministic" title="Pure Go rule engine; 0 LLM calls in the diagnosis loop">
-            <span class="dot dot-blue"></span> Deterministic (Zero LLM)
-          </span>
-          <span class="badge badge-rules" title="Preregistered held-out test split: 24/24 (100%) top-1 accuracy, 0/21 false positives">
-            <span class="dot dot-amber"></span> 100% Test Recall · 0% FP
-          </span>
-        </div>
-        <p class="subtitle">Correlating OpenTelemetry GenAI Traces, Kubernetes Events &amp; Pods, Prometheus Cgroup/PSI Metrics, and OpenCost Waste</p>
-      </div>
-    </div>
-
-    <div class="topbar-right">
-      <div class="dataset-switcher" role="group" aria-label="Dataset Switcher">
-        <span class="switcher-label">Dataset:</span>
-        <button type="button" class="btn-chip" id="btn-seed-dev" title="Load the 19 development evaluation runs">Dev Split (19)</button>
-        <button type="button" class="btn-chip btn-chip-accent" id="btn-seed-test" title="Load the 45 held-out preregistered test runs">Test Split (45)</button>
-        <button type="button" class="btn-chip" id="btn-seed-all" title="Load all 64 evaluation runs (dev + test)">All 64 Runs</button>
-      </div>
-      <button type="button" id="btn-toggle-drawer" class="btn-primary-sm" title="Run on-demand diagnosis or pick a preset scenario">
-        + Diagnose / Presets
-      </button>
-      <button type="button" id="btn-theme" class="btn-icon" title="Switch Dark / Light theme" aria-label="Toggle color theme">
-        Light Mode
-      </button>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- Top KPI Strip -->
-    <section class="kpi-strip" aria-label="Overview Metrics">
-      <div class="kpi-card">
-        <div class="kpi-top">
-          <span class="kpi-label">Windows Inspected</span>
-          <span class="kpi-icon kpi-icon-blue">WIN</span>
-        </div>
-        <strong class="kpi-value" id="kpi-total">0</strong>
-        <span class="kpi-sub" id="kpi-sub-total">Loaded in memory store</span>
-      </div>
-      <div class="kpi-card kpi-card-warn">
-        <div class="kpi-top">
-          <span class="kpi-label">Diagnosed Incidents</span>
-          <span class="kpi-icon kpi-icon-red">RCA</span>
-        </div>
-        <strong class="kpi-value" id="kpi-diagnosed">0</strong>
-        <span class="kpi-sub" id="kpi-sub-diagnosed">Multi-signal root cause isolated</span>
-      </div>
-      <div class="kpi-card kpi-card-ok">
-        <div class="kpi-top">
-          <span class="kpi-label">Healthy / Decoy Windows</span>
-          <span class="kpi-icon kpi-icon-green">0 FP</span>
-        </div>
-        <strong class="kpi-value" id="kpi-healthy">0</strong>
-        <span class="kpi-sub">Abstained cleanly on decoys</span>
-      </div>
-      <div class="kpi-card kpi-card-telemetry">
-        <div class="kpi-top">
-          <span class="kpi-label">Correlated Signals</span>
-          <span class="kpi-icon kpi-icon-purple">OTEL</span>
-        </div>
-        <strong class="kpi-value" id="kpi-signals">0</strong>
-        <span class="kpi-sub" id="kpi-sub-signals">Traces · K8s events · Pods</span>
-      </div>
-      <div class="kpi-card kpi-card-cost">
-        <div class="kpi-top">
-          <span class="kpi-label">Cumulative Incident Waste</span>
-          <span class="kpi-icon kpi-icon-amber">COST</span>
-        </div>
-        <strong class="kpi-value" id="kpi-waste">$0.0000</strong>
-        <span class="kpi-sub" id="kpi-sub-waste">OpenCost CPU + RAM model</span>
-      </div>
-    </section>
-
-    <!-- Interactive Root-Cause Distribution Bar -->
-    <section class="distribution-card card" aria-label="Root Cause Distribution">
-      <div class="dist-header">
-        <span class="dist-title">Catalog Root-Cause Breakdown (click any category to filter)</span>
-        <button type="button" id="btn-clear-cause" class="link-btn hidden">Reset filter</button>
-      </div>
-      <div id="dist-bar" class="dist-bar"></div>
-      <div id="dist-legend" class="dist-legend"></div>
-    </section>
-
-    <!-- On-Demand Diagnosis & Quick Held-Out Scenarios Drawer -->
-    <section id="diagnose-drawer" class="diagnose-bar card">
-      <div class="diagnose-bar-header">
-        <div>
-          <h2>On-Demand Diagnosis &amp; Held-Out Test Scenarios</h2>
-          <p class="section-hint">Click any held-out test preset below to run the Go rule engine and inspect its full telemetry, or query a custom run directory / live cluster window.</p>
-        </div>
-        <div class="preset-group">
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cpu-throttle--limit-200m--r1">CPU Throttle (200m)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--oomkill--app-oom-40mi--r1">OOMKill (chat-api Exit 137)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--unschedulable--node-taint--r1">Unschedulable (Node Taint)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--readiness-fail--initial-delay-600--r1">Readiness Delay (600s)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cold-start--model-download-hf--r1">Cold Start (HF Download)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--config-change--threads-1--r1">Config Regression (--threads 1)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--host-contention--neighbor-pod-same-node--r1">Host CPU Contention (PSI)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--app-delay--intermittent-delay--r1">App Pre-Inference Delay</button>
-          <button type="button" class="chip-btn chip-btn-ok" data-preset="eval/runs/test/test--nofault--decoy-same-node-oom--r1">Healthy + Same-Node OOM Decoy</button>
-        </div>
-      </div>
-
-      <form id="diagnose-form" class="diagnose-form">
-        <div class="field">
-          <label for="input-run-dir">Offline Run Directory</label>
-          <input id="input-run-dir" name="runDir" type="text" placeholder="e.g. eval/runs/test/test--cold-start--model-download-hf--r1">
-        </div>
-        <div class="field">
-          <label for="input-trace-id">OpenTelemetry Trace ID</label>
-          <input id="input-trace-id" name="traceId" type="text" placeholder="e.g. a45841bed378d1796cf1b256f186a0f2">
-        </div>
-        <div class="field">
-          <label for="input-from">From (UTC RFC3339)</label>
-          <input id="input-from" name="from" type="text" placeholder="2026-10-23T08:49:18Z">
-        </div>
-        <div class="field">
-          <label for="input-to">To (UTC RFC3339)</label>
-          <input id="input-to" name="to" type="text" placeholder="2026-10-23T08:50:48Z">
-        </div>
-        <div class="field-actions">
-          <button type="submit" id="btn-diagnose" class="btn-primary">Diagnose Window</button>
-          <button type="button" id="btn-refresh" class="btn-secondary">Refresh</button>
-        </div>
-      </form>
-      <div id="diagnose-error" class="alert-error hidden"></div>
-    </section>
-
-    <!-- Main Split Workspace -->
-    <section class="workspace">
-      <!-- Left Sidebar: Filterable Incident Explorer -->
-      <aside class="incident-pane card">
-        <div class="pane-header">
-          <div class="pane-title-row">
-            <h2>Incident Windows <span id="incident-count" class="pill">0</span></h2>
+  <div class="app-shell">
+    <!-- Sleek Top Command Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand">
+          <div class="brand-logo" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
           </div>
-          <input id="filter-search" type="search" placeholder="Search ID, pod, workload, cause..." aria-label="Search incidents">
-          <div class="filters">
+          <span class="brand-name">KubePilot</span>
+          <span class="version-badge">v1.0</span>
+        </div>
+
+        <div class="topbar-divider"></div>
+
+        <div class="trust-pills">
+          <span class="trust-pill" title="Strictly Read-Only RBAC: never mutates Pods, Deployments, or Nodes">
+            <span class="status-dot dot-emerald"></span>Read-Only RBAC
+          </span>
+          <span class="trust-pill" title="Pure Go rule engine; 0 LLM calls in the diagnosis loop">
+            <span class="status-dot dot-sky"></span>Deterministic · 0 LLM
+          </span>
+          <span class="trust-pill" title="Held-out preregistered test split: 24/24 (100%) accuracy, 0/21 false positives">
+            <span class="status-dot dot-violet"></span>24/24 Test Recall · 0 FP
+          </span>
+        </div>
+      </div>
+
+      <!-- Center Compact KPI Strip -->
+      <div class="topbar-kpis" aria-label="Live Store Metrics">
+        <div class="mini-kpi">
+          <span class="mini-kpi-label">Windows</span>
+          <strong class="mini-kpi-val" id="kpi-total">0</strong>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi-label">Faults</span>
+          <strong class="mini-kpi-val text-rose" id="kpi-diagnosed">0</strong>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi-label">Healthy</span>
+          <strong class="mini-kpi-val text-emerald" id="kpi-healthy">0</strong>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi-label">Signals</span>
+          <strong class="mini-kpi-val text-sky" id="kpi-signals">0</strong>
+        </div>
+        <div class="mini-kpi">
+          <span class="mini-kpi-label">Waste</span>
+          <strong class="mini-kpi-val text-amber" id="kpi-waste">$0.0000</strong>
+        </div>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="topbar-right">
+        <div class="seg-group" role="group" aria-label="Dataset Switcher">
+          <button type="button" class="seg-btn active" id="btn-seed-dev" title="Load 19 Dev runs">Dev · 19</button>
+          <button type="button" class="seg-btn" id="btn-seed-test" title="Load 45 Held-Out Test runs">Test · 45</button>
+          <button type="button" class="seg-btn" id="btn-seed-all" title="Load all 64 runs">All · 64</button>
+        </div>
+
+        <button type="button" id="btn-open-modal" class="btn-diagnose-trigger" title="Run on-demand diagnosis or launch a test scenario (Ctrl+K)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <span>Diagnose</span>
+          <kbd class="kbd-hint">⌘K</kbd>
+        </button>
+
+        <button type="button" id="btn-refresh" class="icon-btn" title="Refresh incidents" aria-label="Refresh incidents">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
+        <button type="button" id="btn-theme" class="icon-btn" title="Toggle Dark / Light appearance" aria-label="Toggle color theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Full-Height Master-Detail Workspace -->
+    <div class="workspace">
+      <!-- Left Sidebar: Incident Explorer -->
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <!-- Search Box with Icon -->
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input id="filter-search" type="search" placeholder="Filter by pod, workload, cause, ID..." aria-label="Search incidents">
+          </div>
+
+          <!-- Modern Segmented Outcome Filter -->
+          <div class="outcome-Bar">
+            <div class="seg-filter" id="outcome-tabs">
+              <button type="button" class="seg-filter-btn active" data-status="">
+                All <span id="incident-count" class="count-badge">0</span>
+              </button>
+              <button type="button" class="seg-filter-btn" data-status="diagnosed">
+                <span class="status-dot dot-rose"></span>Faults
+              </button>
+              <button type="button" class="seg-filter-btn" data-status="unknown">
+                <span class="status-dot dot-emerald"></span>Healthy
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Proportional Mini Distribution Bar + Cause Chips -->
+          <div class="cause-filter-strip">
+            <div id="dist-bar" class="dist-bar" title="Distribution across catalog causes"></div>
+            <div id="dist-legend" class="cause-chips-scroll"></div>
+          </div>
+
+          <!-- Hidden native selects kept synced for accessibility/API compatibility -->
+          <div class="sr-only">
             <select id="filter-status" aria-label="Filter by status">
-              <option value="">All outcomes</option>
-              <option value="diagnosed">Diagnosed (Fault found)</option>
-              <option value="unknown">Healthy / Unknown (0 FP)</option>
+              <option value="">All</option>
+              <option value="diagnosed">Diagnosed</option>
+              <option value="unknown">Healthy</option>
             </select>
             <select id="filter-cause" aria-label="Filter by root cause">
-              <option value="">All 8 catalog causes</option>
+              <option value="">All</option>
               <option value="cpu_throttling">CPU Throttling</option>
-              <option value="oom_killed">OOMKilled (Exit 137)</option>
-              <option value="unschedulable">Unschedulable Pod</option>
-              <option value="readiness_failing">Failing Readiness Probe</option>
-              <option value="cold_start">Slow Cold Start</option>
-              <option value="config_change">Config Regression</option>
-              <option value="host_cpu_contention">Host CPU Contention</option>
-              <option value="unknown_no_infrastructure_cause">App Pre-Inference Delay</option>
+              <option value="oom_killed">OOMKilled</option>
+              <option value="unschedulable">Unschedulable</option>
+              <option value="readiness_failing">Readiness Probe</option>
+              <option value="cold_start">Cold Start</option>
+              <option value="config_change">Config Change</option>
+              <option value="host_cpu_contention">Host Contention</option>
+              <option value="unknown_no_infrastructure_cause">App Delay</option>
             </select>
           </div>
         </div>
+
         <ul id="incident-list" class="incident-list">
           <li class="empty-state">Loading incidents...</li>
         </ul>
       </aside>
 
-      <!-- Right Detail View: Multi-Tab Visual Inspector -->
-      <section class="detail-pane card" id="detail-pane">
+      <!-- Right Main Canvas -->
+      <main class="canvas" id="detail-pane">
         <div class="empty-detail">
-          <h3>Select an incident window on the left</h3>
-          <p>Explore its interactive service topology map, multi-signal swimlane timeline, Prometheus &amp; latency charts, OpenTelemetry trace waterfall, Kubernetes pod specs, and OpenCost waste breakdown.</p>
+          <div class="empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <h3>Select an incident window</h3>
+          <p>Inspect its interactive blast-radius topology, synchronized multi-signal swimlanes, Prometheus &amp; OTel latency charts, trace waterfall, and OpenCost waste analysis.</p>
         </div>
-      </section>
-    </section>
-  </main>
+      </main>
+    </div>
+  </div>
+
+  <!-- Glassmorphic Command Modal for On-Demand Diagnosis & Test Scenarios -->
+  <div id="diagnose-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title">Run On-Demand Diagnosis</h2>
+          <p class="modal-subtitle">Launch a 1-click held-out test scenario or inspect any recorded run directory / live cluster window.</p>
+        </div>
+        <button type="button" id="btn-close-modal" class="icon-btn" aria-label="Close modal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-section-label">One-Click Held-Out Test Scenarios (SPLIT=test)</div>
+        <div class="scenario-grid">
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--cpu-throttle--limit-200m--r1">
+            <span class="scenario-dot" style="background:#f43f5e"></span>
+            <div>
+              <div class="scenario-title">CPU Throttling (200m)</div>
+              <div class="scenario-sub">CFS quota saturation on model-server</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--oomkill--app-oom-40mi--r1">
+            <span class="scenario-dot" style="background:#e11d48"></span>
+            <div>
+              <div class="scenario-title">OOMKilled · Exit 137</div>
+              <div class="scenario-sub">Container memory limit exceeded on chat-api</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--unschedulable--node-taint--r1">
+            <span class="scenario-dot" style="background:#f59e0b"></span>
+            <div>
+              <div class="scenario-title">Unschedulable (Node Taint)</div>
+              <div class="scenario-sub">Pending pod blocked by untolerated taint</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--readiness-fail--initial-delay-600--r1">
+            <span class="scenario-dot" style="background:#eab308"></span>
+            <div>
+              <div class="scenario-title">Readiness Delay (600s)</div>
+              <div class="scenario-sub">Running pod excluded from Service endpoints</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--cold-start--model-download-hf--r1">
+            <span class="scenario-dot" style="background:#a855f7"></span>
+            <div>
+              <div class="scenario-title">Slow Cold Start (HF Fetch)</div>
+              <div class="scenario-sub">117s initContainer weight download stall</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--config-change--threads-1--r1">
+            <span class="scenario-dot" style="background:#38bdf8"></span>
+            <div>
+              <div class="scenario-title">Config Regression</div>
+              <div class="scenario-sub">--threads 1 rollout degrades tok/s</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--host-contention--neighbor-pod-same-node--r1">
+            <span class="scenario-dot" style="background:#fb923c"></span>
+            <div>
+              <div class="scenario-title">Host CPU Contention</div>
+              <div class="scenario-sub">Linux PSI runqueue wait from noisy neighbor</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--app-delay--intermittent-delay--r1">
+            <span class="scenario-dot" style="background:#6366f1"></span>
+            <div>
+              <div class="scenario-title">App Pre-Inference Delay</div>
+              <div class="scenario-sub">Gap before GenAI client span inside chat-api</div>
+            </div>
+          </button>
+          <button type="button" class="scenario-card" data-preset="eval/runs/test/test--nofault--decoy-same-node-oom--r1">
+            <span class="scenario-dot" style="background:#10b981"></span>
+            <div>
+              <div class="scenario-title">Healthy + OOM Decoy</div>
+              <div class="scenario-sub">Ignores unrelated OOM in noise namespace</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="modal-section-label" style="margin-top:1.1rem">Custom Run Directory or Live Cluster Window</div>
+        <form id="diagnose-form" class="diagnose-form">
+          <div class="field">
+            <label for="input-run-dir">Offline Run Directory</label>
+            <input id="input-run-dir" name="runDir" type="text" placeholder="eval/runs/test/test--cold-start--model-download-hf--r1">
+          </div>
+          <div class="field">
+            <label for="input-trace-id">OpenTelemetry Trace ID</label>
+            <input id="input-trace-id" name="traceId" type="text" placeholder="a45841bed378d1796cf1b256f186a0f2">
+          </div>
+          <div class="field">
+            <label for="input-from">From (UTC RFC3339)</label>
+            <input id="input-from" name="from" type="text" placeholder="2026-10-23T08:49:18Z">
+          </div>
+          <div class="field">
+            <label for="input-to">To (UTC RFC3339)</label>
+            <input id="input-to" name="to" type="text" placeholder="2026-10-23T08:50:48Z">
+          </div>
+          <div class="modal-actions">
+            <button type="submit" id="btn-diagnose" class="btn-primary">Run Diagnosis</button>
+          </div>
+        </form>
+        <div id="diagnose-error" class="alert-error hidden"></div>
+      </div>
+    </div>
+  </div>
 
   <script src="/assets/app.js"></script>
 </body>

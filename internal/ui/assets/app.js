@@ -7,12 +7,15 @@
   const filterStatus = document.getElementById("filter-status");
   const filterCause = document.getElementById("filter-cause");
   const filterSearch = document.getElementById("filter-search");
+  const outcomeTabs = document.getElementById("outcome-tabs");
   const form = document.getElementById("diagnose-form");
   const errEl = document.getElementById("diagnose-error");
   const btnRefresh = document.getElementById("btn-refresh");
   const btnTheme = document.getElementById("btn-theme");
-  const btnToggleDrawer = document.getElementById("btn-toggle-drawer");
-  const drawerEl = document.getElementById("diagnose-drawer");
+
+  const modalEl = document.getElementById("diagnose-modal");
+  const btnOpenModal = document.getElementById("btn-open-modal");
+  const btnCloseModal = document.getElementById("btn-close-modal");
 
   const btnSeedDev = document.getElementById("btn-seed-dev");
   const btnSeedTest = document.getElementById("btn-seed-test");
@@ -20,15 +23,11 @@
 
   const distBar = document.getElementById("dist-bar");
   const distLegend = document.getElementById("dist-legend");
-  const btnClearCause = document.getElementById("btn-clear-cause");
 
   const kpiTotal = document.getElementById("kpi-total");
-  const kpiSubTotal = document.getElementById("kpi-sub-total");
   const kpiDiagnosed = document.getElementById("kpi-diagnosed");
-  const kpiSubDiagnosed = document.getElementById("kpi-sub-diagnosed");
   const kpiHealthy = document.getElementById("kpi-healthy");
   const kpiSignals = document.getElementById("kpi-signals");
-  const kpiSubSignals = document.getElementById("kpi-sub-signals");
   const kpiWaste = document.getElementById("kpi-waste");
 
   let activeID = null;
@@ -38,7 +37,7 @@
   const CAUSE_META = {
     cpu_throttling: {
       title: "CPU Throttling (CFS Quota Saturation)",
-      short: "CPU Throttling",
+      short: "CPU Throttle",
       color: "#f43f5e",
       stage: "model-server",
       layer: "Container Cgroup CPU Limit",
@@ -49,7 +48,7 @@
     },
     oom_killed: {
       title: "Container Out-of-Memory (OOMKilled · Exit 137)",
-      short: "OOMKilled (137)",
+      short: "OOMKilled",
       color: "#e11d48",
       stage: "workload",
       layer: "Container Memory Limit / KV Cache",
@@ -71,7 +70,7 @@
     },
     readiness_failing: {
       title: "Failing or Delayed Readiness Probe",
-      short: "Readiness Fail",
+      short: "Readiness Probe",
       color: "#eab308",
       stage: "model-server",
       layer: "Kubernetes Kubelet Probe / Service Endpoint",
@@ -115,7 +114,7 @@
     },
     unknown_no_infrastructure_cause: {
       title: "Application Pre-Inference Delay (Code / Hook Inside App)",
-      short: "App Code Delay",
+      short: "App Delay",
       color: "#6366f1",
       stage: "chat-api",
       layer: "Application Code (Before LLM Client Span)",
@@ -130,12 +129,12 @@
     return (
       CAUSE_META[cause] || {
         title: cause || "Healthy Window (No Fault Detected)",
-        short: "Healthy (0 FP)",
+        short: "Healthy",
         color: "#10b981",
         stage: "none",
-        layer: "Abstention Guard (No Fault Detected)",
+        layer: "Abstention Guard · Zero False Positives",
         explain:
-          "No deterministic rule matched the telemetry snapshot. Kubernetes pods, events, Prometheus metrics, and GenAI traces in the target namespace show no infrastructure or application fault (any unrelated noise in other namespaces was ignored).",
+          "No deterministic rule matched the telemetry snapshot. Kubernetes pods, events, Prometheus metrics, and GenAI traces in the target namespace show no infrastructure or application fault.",
         verify: "No action required; workload is operating normally.",
       }
     );
@@ -174,22 +173,42 @@
   // Theme toggle
   const savedTheme = localStorage.getItem("kp-theme") || "dark";
   document.documentElement.setAttribute("data-theme", savedTheme);
-  btnTheme.textContent = savedTheme === "dark" ? "Light Mode" : "Dark Mode";
   btnTheme.addEventListener("click", function () {
     const current = document.documentElement.getAttribute("data-theme") || "dark";
     const next = current === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("kp-theme", next);
-    btnTheme.textContent = next === "dark" ? "Light Mode" : "Dark Mode";
   });
 
-  if (btnToggleDrawer && drawerEl) {
-    btnToggleDrawer.addEventListener("click", function () {
-      drawerEl.classList.toggle("hidden");
+  // Command Modal (⌘K / Ctrl+K)
+  function openModal() {
+    if (modalEl) modalEl.classList.remove("hidden");
+  }
+  function closeModal() {
+    if (modalEl) modalEl.classList.add("hidden");
+  }
+  if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
+  if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
+  if (modalEl) {
+    modalEl.addEventListener("click", function (ev) {
+      if (ev.target === modalEl) closeModal();
     });
   }
+  document.addEventListener("keydown", function (ev) {
+    if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "k") {
+      ev.preventDefault();
+      if (modalEl && modalEl.classList.contains("hidden")) openModal();
+      else closeModal();
+    } else if (ev.key === "Escape") {
+      closeModal();
+    }
+  });
 
-  async function seedDataset(dir, label) {
+  // Dataset switcher
+  async function seedDataset(dir, activeBtn) {
+    [btnSeedDev, btnSeedTest, btnSeedAll].forEach(function (b) {
+      if (b) b.classList.toggle("active", b === activeBtn);
+    });
     try {
       const resp = await fetch("/api/v1/seed", {
         method: "POST",
@@ -198,27 +217,40 @@
       });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       activeID = null;
-      kpiSubTotal.textContent = label;
       await fetchIncidents();
     } catch (e) {
-      errEl.textContent = "Failed to seed dataset: " + e.message;
-      errEl.classList.remove("hidden");
+      console.error("Failed to seed dataset:", e);
     }
   }
 
   if (btnSeedDev) {
     btnSeedDev.addEventListener("click", function () {
-      seedDataset("eval/runs/dev", "Dev split (19 runs)");
+      seedDataset("eval/runs/dev", btnSeedDev);
     });
   }
   if (btnSeedTest) {
     btnSeedTest.addEventListener("click", function () {
-      seedDataset("eval/runs/test", "Held-out Test split (45 runs)");
+      seedDataset("eval/runs/test", btnSeedTest);
     });
   }
   if (btnSeedAll) {
     btnSeedAll.addEventListener("click", function () {
-      seedDataset("all", "All 64 evaluation runs (Dev + Test)");
+      seedDataset("all", btnSeedAll);
+    });
+  }
+
+  // Segmented Outcome Filter
+  if (outcomeTabs) {
+    Array.from(outcomeTabs.querySelectorAll(".seg-filter-btn")).forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const st = btn.getAttribute("data-status") || "";
+        filterStatus.value = st;
+        Array.from(outcomeTabs.querySelectorAll(".seg-filter-btn")).forEach(function (b) {
+          b.classList.toggle("active", b === btn);
+        });
+        activeID = null;
+        fetchIncidents();
+      });
     });
   }
 
@@ -241,10 +273,8 @@
     let diag = 0;
     let healthy = 0;
     let waste = 0;
-    let confSum = 0;
     let totalTraces = 0;
     let totalEvents = 0;
-    let totalPods = 0;
     const causeCounts = {};
 
     incidents.forEach(function (inc) {
@@ -255,7 +285,6 @@
           : null;
       if (st === "diagnosed" && top) {
         diag++;
-        confSum += Number(top.confidence) || 0;
         causeCounts[top.cause] = (causeCounts[top.cause] || 0) + 1;
       } else {
         healthy++;
@@ -266,24 +295,12 @@
       }
       totalTraces += Number(inc.traceCount) || 0;
       totalEvents += Number(inc.eventCount) || 0;
-      totalPods += Number(inc.podCount) || 0;
     });
 
     kpiTotal.textContent = String(incidents.length);
     kpiDiagnosed.textContent = String(diag);
-    if (kpiSubDiagnosed) {
-      const avgConf = diag > 0 ? Math.round((confSum / diag) * 100) : 0;
-      kpiSubDiagnosed.textContent =
-        diag > 0 ? "Avg confidence " + avgConf + "% across faults" : "No active fault";
-    }
     kpiHealthy.textContent = String(healthy);
-    if (kpiSignals) {
-      kpiSignals.textContent = String(totalTraces + totalEvents);
-    }
-    if (kpiSubSignals) {
-      kpiSubSignals.textContent =
-        totalTraces + " traces · " + totalEvents + " K8s events · " + totalPods + " pods";
-    }
+    if (kpiSignals) kpiSignals.textContent = String(totalTraces + totalEvents);
     kpiWaste.textContent = "$" + waste.toFixed(4);
 
     renderDistributionBar(incidents.length, causeCounts);
@@ -328,7 +345,7 @@
           "%;background:" +
           meta.color +
           '" title="' +
-          escapeHTML(meta.short + ": " + cnt + " (" + pct + "%)") +
+          escapeHTML(meta.short + ": " + cnt) +
           '"></div>'
       );
 
@@ -354,10 +371,6 @@
     distBar.innerHTML = segs.join("");
     distLegend.innerHTML = pills.join("");
 
-    if (btnClearCause) {
-      btnClearCause.classList.toggle("hidden", !filterCause.value && !filterStatus.value);
-    }
-
     function handleFilterClick(key) {
       if (key === "__healthy__") {
         filterCause.value = "";
@@ -365,6 +378,11 @@
       } else {
         filterStatus.value = "";
         filterCause.value = filterCause.value === key ? "" : key;
+      }
+      if (outcomeTabs) {
+        Array.from(outcomeTabs.querySelectorAll(".seg-filter-btn")).forEach(function (b) {
+          b.classList.toggle("active", (b.getAttribute("data-status") || "") === filterStatus.value);
+        });
       }
       activeID = null;
       fetchIncidents();
@@ -379,15 +397,6 @@
       el.addEventListener("click", function () {
         handleFilterClick(el.getAttribute("data-cause"));
       });
-    });
-  }
-
-  if (btnClearCause) {
-    btnClearCause.addEventListener("click", function () {
-      filterCause.value = "";
-      filterStatus.value = "";
-      activeID = null;
-      fetchIncidents();
     });
   }
 
@@ -433,12 +442,12 @@
             ? inc.report.topCauses[0]
             : null;
         const meta = top ? getCauseMeta(top.cause) : getCauseMeta("");
-        const humanTitle = top ? meta.title : "Healthy Window (No Fault Blamed)";
+        const humanTitle = top ? meta.title : "Healthy Window (No Fault)";
         const confBadge = top
-          ? Math.round(top.confidence * 100) + "% conf"
-          : "Healthy · 0 FP";
+          ? Math.round(top.confidence * 100) + "%"
+          : "0 FP";
         const activeClass = inc.id === activeID ? " active" : "";
-        const borderClass = status === "diagnosed" ? " is-diagnosed" : " is-healthy";
+        const dotClass = status === "diagnosed" ? "dot-rose" : "dot-emerald";
         const statusClass =
           status === "diagnosed" ? "status-diagnosed" : "status-unknown";
         const workload =
@@ -449,14 +458,18 @@
         return (
           '<li class="incident-item' +
           activeClass +
-          borderClass +
           '" data-id="' +
           escapeHTML(inc.id) +
           '">' +
           '<div class="incident-item-top">' +
+          '<div class="incident-title-wrap">' +
+          '<span class="status-dot ' +
+          dotClass +
+          '"></span>' +
           '<span class="incident-human-title">' +
           escapeHTML(humanTitle) +
           "</span>" +
+          "</div>" +
           '<span class="status-tag ' +
           statusClass +
           '">' +
@@ -514,25 +527,42 @@
     const label = isDiagnosed ? pct + "%" : "0 FP";
     return (
       '<div class="gauge-box">' +
-      '<svg width="64" height="64" viewBox="0 0 64 64">' +
+      '<svg width="58" height="58" viewBox="0 0 64 64">' +
       '<circle cx="32" cy="32" r="' +
       r +
-      '" fill="none" stroke="rgba(148,163,184,0.2)" stroke-width="6"/>' +
+      '" fill="none" stroke="rgba(148,163,184,0.16)" stroke-width="5.5"/>' +
       '<circle cx="32" cy="32" r="' +
       r +
       '" fill="none" stroke="' +
       strokeColor +
-      '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' +
+      '" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="' +
       c.toFixed(1) +
       '" stroke-dashoffset="' +
       offset.toFixed(1) +
       '" transform="rotate(-90 32 32)"/>' +
-      '<text x="32" y="36" text-anchor="middle" fill="currentColor" font-size="12" font-weight="800" font-family="monospace">' +
+      '<text x="32" y="36" text-anchor="middle" fill="currentColor" font-size="12" font-weight="700" font-family="JetBrains Mono, monospace">' +
       escapeHTML(label) +
       "</text>" +
       "</svg>" +
       '<span class="gauge-label">' +
-      (isDiagnosed ? "Confidence" : "Healthy") +
+      (isDiagnosed ? "Confidence" : "Abstention") +
+      "</span>" +
+      "</div>"
+    );
+  }
+
+  function renderConnectorSVG(labelTop, labelBottom) {
+    return (
+      '<div class="topo-connector">' +
+      "<span>" +
+      escapeHTML(labelTop) +
+      "</span>" +
+      '<svg width="48" height="14" viewBox="0 0 48 14">' +
+      '<line class="flow-line" x1="2" y1="7" x2="40" y2="7" stroke="#6366f1" stroke-width="1.8"/>' +
+      '<polygon points="40,3.5 47,7 40,10.5" fill="#6366f1"/>' +
+      "</svg>" +
+      "<span>" +
+      escapeHTML(labelBottom) +
       "</span>" +
       "</div>"
     );
@@ -544,7 +574,6 @@
     const traces = tel.traces || [];
     const pods = tel.pods || [];
 
-    // Compute Request / Loadgen stats
     let errReqs = 0;
     let latencies = [];
     reqs.forEach(function (r) {
@@ -560,7 +589,6 @@
         : 0;
     const errRatePct = reqs.length > 0 ? Math.round((errReqs / reqs.length) * 100) : 0;
 
-    // Compute chat-api & model-server pod stats
     let chatPod = null;
     let modelPod = null;
     pods.forEach(function (p) {
@@ -576,7 +604,6 @@
       if (t.inferenceMs > maxInfMs) maxInfMs = Math.round(t.inferenceMs);
     });
 
-    // Determine which node in the 4-stage pipeline is faulted
     let faultStage = "none";
     if (topCause) {
       const compWorkload = (topCause.component && topCause.component.workload) || "";
@@ -602,15 +629,21 @@
       return "topo-node node-ok";
     }
 
-    function stageBadge(stage, labelOk) {
+    function stagePill(stage, labelOk) {
       if (faultStage === stage && topCause) {
         return (
-          '<div class="topo-fault-badge">FAULT: ' +
-          escapeHTML(topMeta.short.toUpperCase()) +
+          '<div class="topo-status-pill topo-status-fault">' +
+          '<span class="status-dot dot-rose"></span>' +
+          escapeHTML("Root Cause: " + topMeta.short) +
           "</div>"
         );
       }
-      return '<div class="topo-ok-badge">' + escapeHTML(labelOk) + "</div>";
+      return (
+        '<div class="topo-status-pill topo-status-ok">' +
+        '<span class="status-dot dot-emerald"></span>' +
+        escapeHTML(labelOk) +
+        "</div>"
+      );
     }
 
     const chatCont =
@@ -635,11 +668,20 @@
         ? Math.round(modelCont.limitsMemoryBytes / (1024 * 1024)) + " MiB"
         : "1536 MiB";
 
+    const iconGlobe =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+    const iconCode =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+    const iconCpu =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>';
+    const iconServer =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>';
+
     return (
       '<div class="section-card">' +
       '<div class="section-card-header">' +
-      '<h3 class="section-card-title">Interactive GenAI Service &amp; Infrastructure Blast-Radius Map</h3>' +
-      '<span class="pill">Live Telemetry Correlation</span>' +
+      '<h3 class="section-card-title">Service Architecture &amp; Blast-Radius Topology</h3>' +
+      '<span class="pill">Live Multi-Layer Telemetry</span>' +
       "</div>" +
       '<div class="topology-grid">' +
       // Stage 1: LoadGen Client
@@ -647,102 +689,103 @@
       stageClass("client") +
       '">' +
       '<div class="topo-node-header">' +
-      '<div><div class="topo-node-kind">1. Client Traffic</div><div class="topo-node-name">loadgen</div></div>' +
-      '<span class="pill">' +
-      reqs.length +
-      " reqs</span>" +
+      '<div class="topo-icon-box">' +
+      iconGlobe +
+      "</div>" +
+      '<div><div class="topo-node-kind">Client Traffic</div><div class="topo-node-name">loadgen</div></div>' +
       "</div>" +
       '<div class="topo-metrics">' +
-      '<div class="topo-metric-row"><span>HTTP Error Rate:</span><strong>' +
+      '<div class="topo-metric-row"><span>Requests</span><strong>' +
+      reqs.length +
+      " (" +
       errRatePct +
-      "%</strong></div>" +
-      '<div class="topo-metric-row"><span>P95 Client Latency:</span><strong>' +
+      "% err)</strong></div>" +
+      '<div class="topo-metric-row"><span>P95 Latency</span><strong>' +
       p95ReqMs +
       " ms</strong></div>" +
-      '<div class="topo-metric-row"><span>Exported Traces:</span><strong>' +
+      '<div class="topo-metric-row"><span>OTel Traces</span><strong>' +
       traces.length +
       "</strong></div>" +
       "</div>" +
       (errRatePct > 0
-        ? '<div class="topo-fault-badge" style="background:var(--amber)">SYMPTOM: ' +
+        ? '<div class="topo-status-pill topo-status-warn"><span class="status-dot" style="background:var(--amber)"></span>Symptom: ' +
           errRatePct +
-          "% ERRORS / SLOW</div>"
-        : '<div class="topo-ok-badge">200 OK STREAM</div>') +
+          "% Errors</div>"
+        : '<div class="topo-status-pill topo-status-ok"><span class="status-dot dot-emerald"></span>HTTP 200 Stream</div>') +
       "</div>" +
-      // Arrow 1->2
-      '<div class="topo-arrow"><span>HTTP POST</span><strong>/chat</strong><span>&rarr;</span></div>' +
+      renderConnectorSVG("HTTP", "/chat") +
       // Stage 2: chat-api
       '<div class="' +
       stageClass("chat-api") +
       '">' +
       '<div class="topo-node-header">' +
-      '<div><div class="topo-node-kind">2. Gateway Pod</div><div class="topo-node-name">deployment/chat-api</div></div>' +
-      '<span class="pill">' +
-      escapeHTML(chatPod ? chatPod.phase : "Running") +
-      "</span>" +
+      '<div class="topo-icon-box">' +
+      iconCode +
+      "</div>" +
+      '<div><div class="topo-node-kind">API Gateway Pod</div><div class="topo-node-name">chat-api</div></div>' +
       "</div>" +
       '<div class="topo-metrics">' +
-      '<div class="topo-metric-row"><span>Max Pre-Inference Gap:</span><strong>' +
+      '<div class="topo-metric-row"><span>Max App Gap</span><strong>' +
       maxGapMs +
       " ms</strong></div>" +
-      '<div class="topo-metric-row"><span>Memory Limit:</span><strong>' +
+      '<div class="topo-metric-row"><span>Memory Limit</span><strong>' +
       escapeHTML(chatMemLim) +
       "</strong></div>" +
-      '<div class="topo-metric-row"><span>Restarts:</span><strong>' +
+      '<div class="topo-metric-row"><span>Restarts</span><strong>' +
       (chatCont ? chatCont.restartCount : 0) +
       "</strong></div>" +
       "</div>" +
-      stageBadge("chat-api", "OTEL SPAN HEALTHY") +
+      stagePill("chat-api", "Gateway Healthy") +
       "</div>" +
-      // Arrow 2->3
-      '<div class="topo-arrow"><span>GenAI OTel</span><strong>/v1/chat</strong><span>&rarr;</span></div>' +
+      renderConnectorSVG("OTel", "GenAI") +
       // Stage 3: model-server
       '<div class="' +
       stageClass("model-server") +
       '">' +
       '<div class="topo-node-header">' +
-      '<div><div class="topo-node-kind">3. LLM Inference Pod</div><div class="topo-node-name">deployment/model-server</div></div>' +
-      '<span class="pill">' +
-      escapeHTML(modelPod ? modelPod.phase : "Running") +
-      "</span>" +
+      '<div class="topo-icon-box">' +
+      iconCpu +
+      "</div>" +
+      '<div><div class="topo-node-kind">LLM Inference Pod</div><div class="topo-node-name">model-server</div></div>' +
       "</div>" +
       '<div class="topo-metrics">' +
-      '<div class="topo-metric-row"><span>Max LLM Inference:</span><strong>' +
+      '<div class="topo-metric-row"><span>Max Inference</span><strong>' +
       maxInfMs +
       " ms</strong></div>" +
-      '<div class="topo-metric-row"><span>CPU / RAM Limit:</span><strong>' +
-      escapeHTML(modelCpuLim + " / " + modelMemLim) +
+      '<div class="topo-metric-row"><span>CPU / RAM</span><strong>' +
+      escapeHTML(modelCpuLim + " · " + modelMemLim) +
       "</strong></div>" +
-      '<div class="topo-metric-row"><span>Container Ready:</span><strong>' +
-      (modelCont ? (modelCont.ready ? "true" : "false") : "true") +
+      '<div class="topo-metric-row"><span>Phase / Ready</span><strong>' +
+      escapeHTML((modelPod ? modelPod.phase : "Running") + " / " + (modelCont && modelCont.ready ? "Ready" : "NotReady")) +
       "</strong></div>" +
       "</div>" +
-      stageBadge("model-server", "INFERENCE HEALTHY") +
+      stagePill("model-server", "Inference Healthy") +
       "</div>" +
-      // Arrow 3->4
-      '<div class="topo-arrow"><span>Scheduled</span><strong>Kubelet</strong><span>&rarr;</span></div>' +
+      renderConnectorSVG("Kubelet", "Cgroup") +
       // Stage 4: Worker Node / Scheduler
       '<div class="' +
       stageClass("node") +
       '">' +
       '<div class="topo-node-header">' +
-      '<div><div class="topo-node-kind">4. K8s Node &amp; Kernel</div><div class="topo-node-name">' +
+      '<div class="topo-icon-box">' +
+      iconServer +
+      "</div>" +
+      '<div><div class="topo-node-kind">Kubernetes Node</div><div class="topo-node-name">' +
       escapeHTML((modelPod && modelPod.nodeName) || "kind-worker") +
       "</div></div>" +
-      '<span class="pill">Linux PSI</span>' +
       "</div>" +
       '<div class="topo-metrics">' +
-      '<div class="topo-metric-row"><span>Namespace:</span><strong>' +
+      '<div class="topo-metric-row"><span>Namespace</span><strong>' +
       escapeHTML(inc.namespace || "genai") +
       "</strong></div>" +
-      '<div class="topo-metric-row"><span>K8s Events in Window:</span><strong>' +
+      '<div class="topo-metric-row"><span>K8s Events</span><strong>' +
       escapeHTML(inc.eventCount || 0) +
       "</strong></div>" +
-      '<div class="topo-metric-row"><span>Pods Evaluated:</span><strong>' +
+      '<div class="topo-metric-row"><span>Pods Sampled</span><strong>' +
       escapeHTML(inc.podCount || 0) +
       "</strong></div>" +
       "</div>" +
-      stageBadge("node", "NODE & SCHEDULER OK") +
+      stagePill("node", "Node & Scheduler OK") +
       "</div>" +
       "</div>" +
       "</div>"
@@ -765,7 +808,6 @@
       return Math.max(2, Math.min(98, p));
     }
 
-    // Lane 1: Client HTTP Requests
     const reqPins = (tel.requests || [])
       .map(function (r) {
         const isErr = r.status >= 400 || r.status === 0 || r.error;
@@ -788,7 +830,6 @@
       })
       .join("");
 
-    // Lane 2: OTel GenAI Traces
     const tracePins = (tel.traces || [])
       .map(function (t) {
         const isSlow =
@@ -810,7 +851,6 @@
       })
       .join("");
 
-    // Lane 3: Rule Correlated Evidence Pins
     const evPins = [];
     (rep.topCauses || []).forEach(function (c) {
       (c.evidence || []).forEach(function (ev) {
@@ -818,7 +858,7 @@
         evPins.push(
           '<div class="swimlane-pin" style="left:' +
             pctPos(ev.timestamp).toFixed(1) +
-            '%;background:#a855f7;width:10px" title="[' +
+            '%;background:#a855f7;width:8px" title="[' +
             escapeHTML(ev.source) +
             " @ " +
             escapeHTML(formatHMS(ev.timestamp)) +
@@ -829,7 +869,6 @@
       });
     });
 
-    // Lane 4: Kubernetes Events
     const k8sPins = (tel.events || [])
       .map(function (e) {
         const col = e.type === "Warning" ? "#f43f5e" : "#38bdf8";
@@ -849,26 +888,26 @@
     return (
       '<div class="section-card">' +
       '<div class="section-card-header">' +
-      '<h3 class="section-card-title">Synchronized Multi-Signal Timeline Swimlanes</h3>' +
+      '<h3 class="section-card-title">Synchronized Multi-Signal Timeline</h3>' +
       '<span class="pill">' +
       escapeHTML(formatHMS(win.from)) +
       " &rarr; " +
       escapeHTML(formatHMS(win.to)) +
       " (" +
       durSec +
-      "s window)</span>" +
+      "s)</span>" +
       "</div>" +
       '<div class="swimlane-wrap">' +
-      '<div class="swimlane-row"><div class="swimlane-label"><span class="dot dot-green"></span> 1. HTTP Requests</div><div class="swimlane-track">' +
+      '<div class="swimlane-row"><div class="swimlane-label"><span class="status-dot dot-emerald"></span> HTTP Requests</div><div class="swimlane-track">' +
       reqPins +
       "</div></div>" +
-      '<div class="swimlane-row"><div class="swimlane-label"><span class="dot dot-blue"></span> 2. OTel GenAI Spans</div><div class="swimlane-track">' +
+      '<div class="swimlane-row"><div class="swimlane-label"><span class="status-dot dot-sky"></span> OTel GenAI Spans</div><div class="swimlane-track">' +
       tracePins +
       "</div></div>" +
-      '<div class="swimlane-row"><div class="swimlane-label"><span class="dot" style="background:var(--purple)"></span> 3. Rule Proof Pins</div><div class="swimlane-track">' +
+      '<div class="swimlane-row"><div class="swimlane-label"><span class="status-dot dot-violet"></span> Rule Evidence</div><div class="swimlane-track">' +
       evPins.join("") +
       "</div></div>" +
-      '<div class="swimlane-row"><div class="swimlane-label"><span class="dot dot-amber"></span> 4. K8s Events</div><div class="swimlane-track">' +
+      '<div class="swimlane-row"><div class="swimlane-label"><span class="status-dot dot-rose"></span> K8s Events</div><div class="swimlane-track">' +
       k8sPins +
       "</div></div>" +
       "</div>" +
@@ -909,7 +948,6 @@
     let minT = Infinity;
     let maxT = -Infinity;
     let maxV = 0;
-    let minV = Infinity;
 
     (chart.series || []).forEach(function (s) {
       (s.points || []).forEach(function (pt) {
@@ -919,7 +957,6 @@
           if (t > maxT) maxT = t;
         }
         if (pt.value > maxV) maxV = pt.value;
-        if (pt.value < minV) minV = pt.value;
       });
     });
 
@@ -927,7 +964,6 @@
     const topV = maxV * 1.12;
     const spanT = Math.max(1000, maxT - minT);
 
-    // Horizontal grid lines
     const gridLines = [0, 0.5, 1].map(function (frac) {
       const y = padT + plotH * (1 - frac);
       const val = (topV * frac).toFixed(topV >= 10 ? 0 : 2);
@@ -940,42 +976,77 @@
         (W - padR) +
         '" y2="' +
         y.toFixed(1) +
-        '" stroke="rgba(148,163,184,0.16)" stroke-dasharray="3 3"/>' +
+        '" stroke="rgba(148,163,184,0.12)" stroke-dasharray="3 3"/>' +
         '<text x="' +
         (padL - 6) +
         '" y="' +
         (y + 4).toFixed(1) +
-        '" text-anchor="end" font-size="10" fill="#8b9bb4" font-family="monospace">' +
+        '" text-anchor="end" font-size="10" fill="#8e929f" font-family="JetBrains Mono, monospace">' +
         val +
         "</text>"
       );
     });
 
+    const defs = [];
     const paths = [];
     const legends = [];
 
     (chart.series || []).slice(0, 5).forEach(function (s, idx) {
       const col = palette[idx % palette.length];
+      const gradId = "grad-" + chart.id + "-" + idx;
+      defs.push(
+        '<linearGradient id="' +
+          gradId +
+          '" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="' +
+          col +
+          '" stop-opacity="0.26"/>' +
+          '<stop offset="100%" stop-color="' +
+          col +
+          '" stop-opacity="0.0"/>' +
+          "</linearGradient>"
+      );
+
       const pts = s.points || [];
       if (pts.length === 0) return;
 
-      const coords = pts.map(function (pt, i) {
+      const xy = pts.map(function (pt) {
         const t = new Date(pt.ts).getTime();
         const x =
           pts.length === 1
             ? padL + plotW / 2
             : padL + ((t - minT) / spanT) * plotW;
         const y = padT + plotH * (1 - Math.min(1, Math.max(0, pt.value / topV)));
-        return (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1);
+        return { x: x, y: y };
       });
 
-      const lineD = coords.join(" ");
+      const lineD = xy
+        .map(function (p, i) {
+          return (i === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1);
+        })
+        .join(" ");
+
+      if (xy.length > 1) {
+        const areaD =
+          lineD +
+          " L" +
+          xy[xy.length - 1].x.toFixed(1) +
+          "," +
+          (padT + plotH).toFixed(1) +
+          " L" +
+          xy[0].x.toFixed(1) +
+          "," +
+          (padT + plotH).toFixed(1) +
+          " Z";
+        paths.push('<path d="' + areaD + '" fill="url(#' + gradId + ')"/>');
+      }
+
       paths.push(
         '<path d="' +
           lineD +
           '" fill="none" stroke="' +
           col +
-          '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+          '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
       );
 
       let sMax = 0;
@@ -987,7 +1058,7 @@
           col +
           '"></span>' +
           escapeHTML(s.label) +
-          " (peak: " +
+          " (" +
           sMax.toFixed(sMax >= 10 ? 1 : 2) +
           " " +
           escapeHTML(chart.unit) +
@@ -1001,7 +1072,7 @@
       '<div class="chart-title">' +
       escapeHTML(chart.title) +
       "</div>" +
-      '<div class="chart-stats">Peak: ' +
+      '<div class="chart-stats">Peak ' +
       maxV.toFixed(maxV >= 10 ? 1 : 2) +
       " " +
       escapeHTML(chart.unit) +
@@ -1013,6 +1084,9 @@
       " " +
       H +
       '" preserveAspectRatio="none">' +
+      "<defs>" +
+      defs.join("") +
+      "</defs>" +
       gridLines.join("") +
       paths.join("") +
       "</svg>" +
@@ -1042,7 +1116,7 @@
       if (r.status >= 400 || r.status === 0 || r.error) errCnt++;
     });
 
-    const barW = Math.max(4, Math.min(18, plotW / reqs.length - 2));
+    const barW = Math.max(4, Math.min(16, plotW / reqs.length - 2));
     const bars = reqs.map(function (r, idx) {
       const x =
         padL +
@@ -1062,7 +1136,7 @@
         barW.toFixed(1) +
         '" height="' +
         h.toFixed(1) +
-        '" rx="2" fill="' +
+        '" rx="2.5" fill="' +
         col +
         '">' +
         "<title>" +
@@ -1081,10 +1155,10 @@
     return (
       '<div class="chart-card">' +
       '<div class="chart-header">' +
-      '<div class="chart-title">Client HTTP Request Latency &amp; Status Over Window</div>' +
-      '<div class="chart-stats">Max: ' +
+      '<div class="chart-title">Client HTTP Request Latency &amp; Status</div>' +
+      '<div class="chart-stats">Max ' +
       Math.round(maxLat) +
-      " ms · Errors: " +
+      " ms · Errors " +
       errCnt +
       "/" +
       reqs.length +
@@ -1104,12 +1178,12 @@
       (W - padR) +
       '" y2="' +
       padT +
-      '" stroke="rgba(148,163,184,0.16)" stroke-dasharray="3 3"/>' +
+      '" stroke="rgba(148,163,184,0.12)" stroke-dasharray="3 3"/>' +
       '<text x="' +
       (padL - 5) +
       '" y="' +
       (padT + 4) +
-      '" text-anchor="end" font-size="10" fill="#8b9bb4" font-family="monospace">' +
+      '" text-anchor="end" font-size="10" fill="#8e929f" font-family="JetBrains Mono, monospace">' +
       Math.round(maxLat) +
       "ms</text>" +
       bars.join("") +
@@ -1140,7 +1214,7 @@
       if (tot > maxTot) maxTot = tot;
     });
 
-    const barW = Math.max(5, Math.min(20, plotW / traces.length - 3));
+    const barW = Math.max(5, Math.min(18, plotW / traces.length - 3));
     const bars = traces.map(function (t, idx) {
       const x =
         padL +
@@ -1167,7 +1241,7 @@
         barW.toFixed(1) +
         '" height="' +
         Math.max(2, infH).toFixed(1) +
-        '" fill="#38bdf8"/>' +
+        '" rx="2" fill="#38bdf8"/>' +
         '<rect x="' +
         x.toFixed(1) +
         '" y="' +
@@ -1176,7 +1250,7 @@
         barW.toFixed(1) +
         '" height="' +
         Math.max(0, gapH).toFixed(1) +
-        '" fill="#f59e0b"/>' +
+        '" rx="2" fill="#f59e0b"/>' +
         "</g>"
       );
     });
@@ -1184,7 +1258,7 @@
     return (
       '<div class="chart-card">' +
       '<div class="chart-header">' +
-      '<div class="chart-title">OTel Span Decomposition (Pre-Inference Gap vs LLM Inference)</div>' +
+      '<div class="chart-title">OTel Span Decomposition (App Gap vs LLM Inference)</div>' +
       '<div class="chart-stats">' +
       traces.length +
       " traces</div>" +
@@ -1297,7 +1371,7 @@
     return (
       '<div class="section-card">' +
       '<div class="section-card-header">' +
-      '<h3 class="section-card-title">OpenTelemetry GenAI Trace Waterfall (Privacy-Safe · Zero Prompt Content)</h3>' +
+      '<h3 class="section-card-title">OpenTelemetry GenAI Trace Waterfall (Zero Prompt Capture)</h3>' +
       '<div class="chart-legend" style="margin:0">' +
       '<span class="legend-item"><span class="dist-swatch" style="background:var(--amber)"></span>Pre-Inference App Gap</span>' +
       '<span class="legend-item"><span class="dist-swatch" style="background:var(--accent)"></span>LLM Inference Span</span>' +
@@ -1330,26 +1404,26 @@
               ? Math.round(c.limitsMemoryBytes / (1024 * 1024)) + "Mi"
               : "none";
             const lastTerm = c.lastTerminated
-              ? '<div class="alert-error" style="margin-top:0.35rem;padding:0.3rem 0.55rem;font-size:0.73rem">Last Terminated: <strong>' +
+              ? '<div class="alert-error" style="margin-top:0.35rem;padding:0.3rem 0.55rem;font-size:0.72rem">Last Terminated: <strong>' +
                 escapeHTML(c.lastTerminated.reason || "Terminated") +
                 " (exit " +
                 escapeHTML(c.lastTerminated.exitCode) +
                 ")</strong></div>"
               : "";
             const probeInfo = c.readinessProbe
-              ? '<div style="font-size:0.71rem;color:var(--muted);margin-top:0.25rem">ReadinessProbe: <code>' +
+              ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.25rem">ReadinessProbe: <code>' +
                 escapeHTML(
                   (c.readinessProbe.path || "/") +
                     ":" +
                     (c.readinessProbe.port || "") +
-                    " (initialDelay=" +
+                    " (delay=" +
                     (c.readinessProbe.initialDelaySeconds || 0) +
                     "s)"
                 ) +
                 "</code></div>"
               : "";
             return (
-              '<div style="border-top:1px solid var(--border-subtle);padding-top:0.45rem;margin-top:0.45rem;font-size:0.75rem">' +
+              '<div style="border-top:1px solid var(--border-subtle);padding-top:0.45rem;margin-top:0.45rem;font-size:0.74rem">' +
               '<div style="display:flex;justify-content:space-between">' +
               "<strong>" +
               escapeHTML((c.isInit ? "[init] " : "") + c.name) +
@@ -1387,7 +1461,7 @@
           escapeHTML(p.phase || "Unknown") +
           "</span>" +
           "</div>" +
-          '<div style="font-size:0.73rem;color:var(--muted)">Namespace: <code>' +
+          '<div style="font-size:0.72rem;color:var(--muted)">Namespace: <code>' +
           escapeHTML(p.namespace) +
           "</code> · Node: <code>" +
           escapeHTML(p.nodeName || "unassigned") +
@@ -1427,7 +1501,7 @@
 
     return (
       '<div class="section-card">' +
-      '<div class="section-card-header"><h3 class="section-card-title">Kubernetes Pod Specs, Resource Limits &amp; Container States</h3></div>' +
+      '<div class="section-card-header"><h3 class="section-card-title">Kubernetes Pod Specs, Limits &amp; Container States</h3></div>' +
       '<div class="pods-grid">' +
       (podCards || '<div class="empty-state">No pods captured.</div>') +
       "</div>" +
@@ -1446,8 +1520,9 @@
   function buildExportTabHTML(inc) {
     const rep = inc.report || {};
     const win = rep.window || {};
+    const splitFolder = (inc.id || "").indexOf("test--") === 0 ? "test" : "dev";
     const cliCmd = inc.runId
-      ? "./bin/why-slow --run-dir eval/runs/dev/" + inc.runId + " --format text"
+      ? "./bin/why-slow --run-dir eval/runs/" + splitFolder + "/" + inc.runId + " --format text"
       : './bin/why-slow --namespace ' +
         (inc.namespace || "genai") +
         ' --from "' +
@@ -1546,18 +1621,22 @@
 
     const topPct = topCause ? Math.round((topCause.confidence || 0) * 100) : 100;
 
-    // 1. Plain-English Executive Banner + Radial Gauge
+    // 1. Modern Hero Banner with integrated metadata pills
     const bannerClass = isDiagnosed ? "banner-diagnosed" : "banner-healthy";
+    const dotClass = isDiagnosed ? "dot-rose" : "dot-emerald";
     const bannerHTML =
       '<div class="detail-banner ' +
       bannerClass +
       '">' +
       "<div>" +
       '<div class="banner-eyebrow">' +
+      '<span class="status-dot ' +
+      dotClass +
+      '"></span>' +
       escapeHTML(
         isDiagnosed
           ? "Root Cause Isolated · " + topMeta.layer
-          : "Healthy Window · Abstention Guard (0 False Positives)"
+          : topMeta.layer
       ) +
       "</div>" +
       '<h2 class="banner-title">' +
@@ -1566,34 +1645,31 @@
       '<p class="banner-explain">' +
       escapeHTML(topMeta.explain) +
       "</p>" +
-      "</div>" +
-      renderRadialGaugeSVG(topPct, isDiagnosed) +
-      "</div>";
-
-    // 2. Metadata Strip
-    const metaGridHTML =
-      '<div class="meta-grid">' +
-      '<div class="meta-box"><div class="label">Incident / Run ID</div><div class="value">' +
+      '<div class="banner-meta-pills">' +
+      '<span class="meta-pill">ID <strong>' +
       escapeHTML(inc.id) +
-      "</div></div>" +
-      '<div class="meta-box"><div class="label">Window Duration</div><div class="value">' +
+      "</strong></span>" +
+      '<span class="meta-pill">Duration <strong>' +
       escapeHTML(formatDurationSec(winSec)) +
-      "</div></div>" +
-      '<div class="meta-box"><div class="label">Correlated Signals</div><div class="value">' +
+      "</strong></span>" +
+      '<span class="meta-pill">Signals <strong>' +
       escapeHTML(inc.traceCount || 0) +
       " traces · " +
       escapeHTML(inc.eventCount || 0) +
       " events · " +
       escapeHTML(inc.podCount || 0) +
-      " pods</div></div>" +
-      '<div class="meta-box"><div class="label">Window (UTC)</div><div class="value">' +
+      " pods</strong></span>" +
+      '<span class="meta-pill">Window <strong>' +
       escapeHTML(formatShortTime(win.from)) +
-      " &rarr; " +
-      escapeHTML(formatShortTime(win.to)) +
-      "</div></div>" +
+      " → " +
+      escapeHTML(formatHMS(win.to)) +
+      " UTC</strong></span>" +
+      "</div>" +
+      "</div>" +
+      renderRadialGaugeSVG(topPct, isDiagnosed) +
       "</div>";
 
-    // 3. Probable Causes & Correlated Proof Cards
+    // 2. Probable Causes & Correlated Proof Cards
     let causesHTML = "";
     if (!isDiagnosed) {
       causesHTML =
@@ -1691,11 +1767,11 @@
             '<div class="cause-summary"><strong>Measured Finding:</strong> ' +
             escapeHTML(c.summary) +
             "</div>" +
-            '<div class="remediation-box"><strong>How to verify / fix (Read-Only Guidance):</strong> ' +
+            '<div class="remediation-box"><strong>Read-Only Verification Guidance:</strong> ' +
             escapeHTML(cmeta.verify) +
             "</div>" +
             '<table class="evidence-table">' +
-            '<thead><tr><th style="width:130px">Signal Source</th><th style="width:240px">Timestamp &amp; Window Offset</th><th>Correlated Proof</th></tr></thead>' +
+            '<thead><tr><th style="width:130px">Signal Source</th><th style="width:230px">Timestamp &amp; Offset</th><th>Correlated Proof</th></tr></thead>' +
             "<tbody>" +
             evRows +
             "</tbody></table>" +
@@ -1705,7 +1781,7 @@
         .join("");
     }
 
-    // 4. OpenCost Card
+    // 3. OpenCost Card
     let costHTML = "";
     if (inc.cost) {
       const totalC = Number(inc.cost.totalWindowCost || 0);
@@ -1722,16 +1798,16 @@
         '%"></div></div>' +
         '<span class="confidence-pill">' +
         wastePct +
-        "% waste ratio (" +
+        "% waste (" +
         escapeHTML(inc.cost.source || "opencost") +
         ")</span></div></div>" +
         '<div class="meta-grid">' +
-        '<div class="meta-box"><div class="label">Total Window Allocation</div><div class="value">$' +
+        '<div class="meta-box"><div class="label">Total Window Cost</div><div class="value">$' +
         totalC.toFixed(4) +
         " " +
         escapeHTML(inc.cost.currency || "USD") +
         "</div></div>" +
-        '<div class="meta-box"><div class="label">Estimated Incident Waste</div><div class="value">$' +
+        '<div class="meta-box"><div class="label">Estimated Waste</div><div class="value text-amber">$' +
         wasteC.toFixed(4) +
         " " +
         escapeHTML(inc.cost.currency || "USD") +
@@ -1750,32 +1826,32 @@
 
     const chartCount =
       ((tel.charts && tel.charts.length) || 0) +
-      ((tel.requests && tel.requests.length > 0) ? 1 : 0) +
-      ((tel.traces && tel.traces.length > 0) ? 1 : 0);
+      (tel.requests && tel.requests.length > 0 ? 1 : 0) +
+      (tel.traces && tel.traces.length > 0 ? 1 : 0);
 
     const tabsNavHTML =
       '<div class="tabs-bar" role="tablist">' +
       '<button type="button" class="tab-btn' +
       (activeTab === "overview" ? " active" : "") +
-      '" data-tab="overview">1. Overview &amp; Topology</button>' +
+      '" data-tab="overview">Overview &amp; Topology</button>' +
       '<button type="button" class="tab-btn' +
       (activeTab === "charts" ? " active" : "") +
-      '" data-tab="charts">2. Metrics &amp; Latency Charts <span class="pill">' +
+      '" data-tab="charts">Telemetry Charts <span class="pill">' +
       chartCount +
       "</span></button>" +
       '<button type="button" class="tab-btn' +
       (activeTab === "traces" ? " active" : "") +
-      '" data-tab="traces">3. GenAI Traces Waterfall <span class="pill">' +
+      '" data-tab="traces">Trace Waterfall <span class="pill">' +
       (inc.traceCount || 0) +
       "</span></button>" +
       '<button type="button" class="tab-btn' +
       (activeTab === "k8s" ? " active" : "") +
-      '" data-tab="k8s">4. Kubernetes Pods &amp; Events <span class="pill">' +
+      '" data-tab="k8s">Kubernetes State <span class="pill">' +
       ((inc.podCount || 0) + (inc.eventCount || 0)) +
       "</span></button>" +
       '<button type="button" class="tab-btn' +
       (activeTab === "export" ? " active" : "") +
-      '" data-tab="export">5. CLI, CRD &amp; JSON</button>' +
+      '" data-tab="export">CLI, CRD &amp; JSON</button>' +
       "</div>";
 
     const overviewPanel =
@@ -1818,7 +1894,6 @@
 
     detailEl.innerHTML =
       bannerHTML +
-      metaGridHTML +
       tabsNavHTML +
       overviewPanel +
       chartsPanel +
@@ -1851,6 +1926,7 @@
       if (!resp.ok) {
         throw new Error(body.error || "HTTP " + resp.status);
       }
+      closeModal();
       activeID = body.id;
       await fetchIncidents();
       renderIncidentDetail(body);
@@ -1870,7 +1946,7 @@
     });
   });
 
-  Array.from(document.querySelectorAll(".chip-btn")).forEach(function (btn) {
+  Array.from(document.querySelectorAll(".scenario-card")).forEach(function (btn) {
     btn.addEventListener("click", function () {
       const preset = btn.getAttribute("data-preset") || "";
       document.getElementById("input-run-dir").value = preset;
@@ -1881,14 +1957,6 @@
     });
   });
 
-  filterStatus.addEventListener("change", function () {
-    activeID = null;
-    fetchIncidents();
-  });
-  filterCause.addEventListener("change", function () {
-    activeID = null;
-    fetchIncidents();
-  });
   filterSearch.addEventListener("input", applySearchAndRender);
   btnRefresh.addEventListener("click", fetchIncidents);
 
