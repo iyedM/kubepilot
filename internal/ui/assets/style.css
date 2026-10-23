@@ -1459,9 +1459,195 @@ html, body {
   font-size: 0.8rem;
 }
 
+/* 2B: Baseline vs Incident Comparator Grid */
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem;
+}
+
+.diff-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: border-color 0.15s;
+}
+
+.diff-card.diff-critical {
+  border-color: rgba(244, 63, 94, 0.45);
+  background: linear-gradient(180deg, rgba(244, 63, 94, 0.06), var(--bg-subtle));
+}
+
+.diff-card.diff-warning {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.diff-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.diff-metric-name {
+  font-size: 0.71rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.diff-badge {
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 0.1rem 0.42rem;
+  border-radius: 6px;
+}
+
+.diff-badge-critical {
+  background: var(--red-soft);
+  color: var(--red);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.diff-badge-warning {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.diff-badge-normal {
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.diff-values-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  margin-top: 0.15rem;
+}
+
+.diff-base-val {
+  color: var(--muted);
+  font-size: 0.71rem;
+}
+
+.diff-inc-val {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* 2E: What-If Chaos Simulator */
+.btn-sandbox-trigger {
+  height: 30px;
+  padding: 0 0.68rem;
+  border-radius: 8px;
+  border: 1px solid rgba(168, 85, 247, 0.42);
+  background: rgba(168, 85, 247, 0.12);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-sandbox-trigger:hover {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.22);
+}
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.sim-control-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.68rem 0.85rem;
+}
+
+.sim-control-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.38rem;
+}
+
+.sim-val-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+.sim-control-box input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.sim-control-box select {
+  width: 100%;
+  padding: 0.38rem 0.55rem;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.sim-preview-card {
+  margin-top: 0.9rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* 2A: Real-Time SSE Toast Notification */
+.sse-toast {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 150;
+  background: var(--surface-elevated);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 11px;
+  padding: 0.68rem 0.95rem;
+  box-shadow: var(--shadow-lg), var(--specular);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.77rem;
+  color: var(--text);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
 @media (max-width: 1150px) {
   .trust-pills { display: none; }
   .workspace { grid-template-columns: 300px 1fr; }
-  .topology-grid, .charts-grid, .scenario-grid { grid-template-columns: 1fr; }
+  .topology-grid, .charts-grid, .scenario-grid, .sim-grid { grid-template-columns: 1fr; }
   .topo-connector { display: none; }
 }

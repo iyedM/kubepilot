@@ -1594,7 +1594,7 @@
     const webhookCard =
       '<div class="section-card">' +
       '<div class="section-card-header">' +
-      '<h3 class="section-card-title">Send Webhook Alert (Slack / Discord / Alertmanager)</h3>' +
+      '<h3 class="section-card-title">Send Outgoing Webhook Alert (Slack / Discord / Alertmanager)</h3>' +
       '<span class="pill">POST /api/v1/webhook/test</span>' +
       "</div>" +
       '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
@@ -1606,18 +1606,37 @@
       '<div id="webhook-test-status" class="hidden" style="margin-top:0.5rem;font-size:0.76rem"></div>' +
       "</div>";
 
+    const alertmanagerCard =
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Zero-Touch Prometheus Alertmanager Receiver</h3>' +
+      '<span class="pill">POST /api/v1/alerts/alertmanager</span>' +
+      "</div>" +
+      '<p style="margin:0 0 0.65rem;font-size:0.78rem;color:var(--text-secondary)">When Prometheus Alertmanager fires a latency or pod alert, it POSTs its webhook payload here. KubePilot automatically extracts the alert window and diagnoses the root cause.</p>' +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+      '<button type="button" class="seg-btn active" id="btn-sim-alertmanager" style="padding:0.45rem 0.85rem">Simulate Firing Alertmanager Webhook</button>' +
+      '<span id="am-test-status" style="font-size:0.75rem;color:var(--muted)"></span>' +
+      "</div>" +
+      "</div>";
+
     return (
       patchCard +
       webhookCard +
+      alertmanagerCard +
       '<div class="section-card">' +
       '<div class="section-card-header">' +
-      '<h3 class="section-card-title">Reproduce via CLI (kubectl why-slow)</h3>' +
+      '<h3 class="section-card-title">Reproduce via CLI / Native kubectl Plugin &amp; Portable Bundle</h3>' +
+      '<div style="display:flex;gap:0.45rem;flex-wrap:wrap">' +
       '<a class="seg-btn active" href="/api/v1/incidents/' +
       encodeURIComponent(inc.id) +
-      '/postmortem" download style="text-decoration:none">Download Post-Mortem (.md)</a>' +
+      '/postmortem" download style="text-decoration:none">↓ Post-Mortem (.md)</a>' +
+      '<a class="seg-btn active" href="/api/v1/incidents/' +
+      encodeURIComponent(inc.id) +
+      '/bundle" download style="text-decoration:none">↓ Portable Bundle (.tar.gz)</a>' +
+      "</div>" +
       "</div>" +
       '<pre class="code-block">' +
-      escapeHTML(cliCmd) +
+      escapeHTML(cliCmd + "\n# Or via native kubectl plugin:\n./bin/kubectl-why_slow --namespace " + (inc.namespace || "genai")) +
       "</pre>" +
       "</div>" +
       '<div class="section-card">' +
@@ -1631,6 +1650,69 @@
       '<pre class="code-block">' +
       escapeHTML(cleanJSON) +
       "</pre>" +
+      "</div>"
+    );
+  }
+
+  // 2B: Baseline vs Incident Side-by-Side Comparison Card
+  function buildComparisonHTML(inc) {
+    const comp = inc.comparison;
+    if (!comp || !comp.metrics || comp.metrics.length === 0) return "";
+
+    const cards = comp.metrics
+      .map(function (m) {
+        const sev = m.severity || "normal";
+        const cardClass =
+          sev === "critical"
+            ? "diff-card diff-critical"
+            : sev === "warning"
+            ? "diff-card diff-warning"
+            : "diff-card";
+        const badgeClass =
+          sev === "critical"
+            ? "diff-badge diff-badge-critical"
+            : sev === "warning"
+            ? "diff-badge diff-badge-warning"
+            : "diff-badge diff-badge-normal";
+
+        return (
+          '<div class="' +
+          cardClass +
+          '">' +
+          '<div class="diff-card-top">' +
+          '<span class="diff-metric-name">' +
+          escapeHTML(m.name) +
+          "</span>" +
+          '<span class="' +
+          badgeClass +
+          '">' +
+          escapeHTML(m.deltaText) +
+          "</span>" +
+          "</div>" +
+          '<div class="diff-values-row">' +
+          '<span class="diff-base-val">Base: ' +
+          escapeHTML(m.baselineValue + " " + m.unit) +
+          "</span>" +
+          '<span class="diff-inc-val">Now: ' +
+          escapeHTML(m.incidentValue + " " + m.unit) +
+          "</span>" +
+          "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    return (
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Incident vs. Healthy Baseline Comparison</h3>' +
+      '<span class="pill">GET /api/v1/incidents/' +
+      escapeHTML(inc.id) +
+      "/compare</span>" +
+      "</div>" +
+      '<div class="diff-grid">' +
+      cards +
+      "</div>" +
       "</div>"
     );
   }
@@ -1655,7 +1737,7 @@
 
     const topPct = topCause ? Math.round((topCause.confidence || 0) * 100) : 100;
 
-    // 1. Modern Hero Banner with integrated metadata pills & Post-Mortem export
+    // 1. Modern Hero Banner with integrated metadata pills, Post-Mortem & Bundle export
     const bannerClass = isDiagnosed ? "banner-diagnosed" : "banner-healthy";
     const dotClass = isDiagnosed ? "dot-rose" : "dot-emerald";
     const bannerHTML =
@@ -1700,7 +1782,10 @@
       " UTC</strong></span>" +
       '<a class="meta-pill" href="/api/v1/incidents/' +
       encodeURIComponent(inc.id) +
-      '/postmortem" download style="text-decoration:none;color:var(--accent);border-color:rgba(56,189,248,0.35)"><strong>↓ Export Post-Mortem (.md)</strong></a>' +
+      '/postmortem" download style="text-decoration:none;color:var(--accent);border-color:rgba(56,189,248,0.35)"><strong>↓ Post-Mortem (.md)</strong></a>' +
+      '<a class="meta-pill" href="/api/v1/incidents/' +
+      encodeURIComponent(inc.id) +
+      '/bundle" download style="text-decoration:none;color:#a855f7;border-color:rgba(168,85,247,0.38)"><strong>↓ Bundle (.tar.gz)</strong></a>' +
       '<a class="meta-pill" href="/metrics" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text-secondary)"><strong>Prometheus /metrics ↗</strong></a>' +
       "</div>" +
       "</div>" +
@@ -1897,6 +1982,7 @@
       (activeTab === "overview" ? " active" : "") +
       '" data-panel="overview">' +
       buildTopologyHTML(inc, topCause, topMeta) +
+      buildComparisonHTML(inc) +
       buildSwimlaneHTML(inc) +
       causesHTML +
       costHTML +
@@ -1990,6 +2076,50 @@
         }
       });
     }
+
+    // 2C: Alertmanager Webhook Receiver simulation button
+    const btnSimAM = document.getElementById("btn-sim-alertmanager");
+    const amStatus = document.getElementById("am-test-status");
+    if (btnSimAM && amStatus) {
+      btnSimAM.addEventListener("click", async function () {
+        amStatus.style.color = "var(--muted)";
+        amStatus.textContent = "Posting Alertmanager v4 firing payload...";
+        try {
+          const resp = await fetch("/api/v1/alerts/alertmanager", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              version: "4",
+              status: "firing",
+              receiver: "kubepilot-auto-triage",
+              commonLabels: { alertname: "GenAIHighInferenceLatency", namespace: "genai" },
+              alerts: [
+                {
+                  status: "firing",
+                  labels: { alertname: "GenAIHighInferenceLatency", namespace: "genai" },
+                  annotations: {
+                    summary: "P95 inference latency exceeded 2s SLO",
+                    run_dir: "eval/runs/test/test--cpu-throttle--limit-200m--r1",
+                  },
+                },
+              ],
+            }),
+          });
+          const body = await resp.json();
+          if (!resp.ok) throw new Error(body.error || "HTTP " + resp.status);
+          amStatus.style.color = "var(--green)";
+          amStatus.textContent =
+            "Auto-triaged " +
+            body.diagnosed +
+            " alert(s) -> " +
+            (body.incidents && body.incidents[0] ? body.incidents[0].id : "done");
+          await fetchIncidents();
+        } catch (e) {
+          amStatus.style.color = "var(--red)";
+          amStatus.textContent = "Error: " + e.message;
+        }
+      });
+    }
   }
 
   async function runDiagnose(payload) {
@@ -2034,6 +2164,259 @@
       runDiagnose({ runDir: preset });
     });
   });
+
+  // 2D: Portable Bundle Upload (.tar.gz or .json)
+  const btnUploadBundle = document.getElementById("btn-upload-bundle");
+  const inputBundleFile = document.getElementById("input-bundle-file");
+  if (btnUploadBundle && inputBundleFile) {
+    btnUploadBundle.addEventListener("click", async function () {
+      errEl.classList.add("hidden");
+      const file = inputBundleFile.files && inputBundleFile.files[0];
+      if (!file) {
+        errEl.textContent = "Please choose a .tar.gz or .json incident bundle file first.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+      try {
+        const buf = await file.arrayBuffer();
+        const resp = await fetch("/api/v1/incidents/bundle", {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: buf,
+        });
+        const body = await resp.json();
+        if (!resp.ok) throw new Error(body.error || "HTTP " + resp.status);
+        closeModal();
+        activeID = body.id;
+        await fetchIncidents();
+        renderIncidentDetail(body);
+      } catch (e) {
+        errEl.textContent = "Bundle import failed: " + e.message;
+        errEl.classList.remove("hidden");
+      }
+    });
+  }
+
+  // 2E: Interactive What-If Chaos Simulator
+  const simModal = document.getElementById("sim-modal");
+  const btnOpenSim = document.getElementById("btn-open-sim");
+  const btnCloseSim = document.getElementById("btn-close-sim");
+  const simThrottle = document.getElementById("sim-throttle");
+  const simGap = document.getElementById("sim-gap");
+  const simCold = document.getElementById("sim-cold");
+  const simPsi = document.getElementById("sim-psi");
+  const simOom = document.getElementById("sim-oom");
+  const simUnsched = document.getElementById("sim-unsched");
+  const simReadiness = document.getElementById("sim-readiness");
+  const simThreads = document.getElementById("sim-threads");
+  const simDecoy = document.getElementById("sim-decoy");
+  const simVerdictTitle = document.getElementById("sim-verdict-title");
+  const simVerdictSub = document.getElementById("sim-verdict-sub");
+  const btnSimSave = document.getElementById("btn-sim-save");
+
+  function getSimPayload(recordInStore) {
+    const oomVal = simOom ? simOom.value : "";
+    return {
+      scenarioName: "what-if",
+      cfsThrottledPct: Number(simThrottle ? simThrottle.value : 0),
+      appPreInferenceGapMs: Number(simGap ? simGap.value : 0),
+      coldStartInitSec: Number(simCold ? simCold.value : 0),
+      hostPsiMsPerSec: Number(simPsi ? simPsi.value : 0),
+      oomKilled: oomVal !== "",
+      oomTarget: oomVal || "model-server",
+      unschedulableReason: simUnsched ? simUnsched.value : "",
+      readinessProbeMode: simReadiness ? simReadiness.value : "",
+      configThreads: Number(simThreads ? simThreads.value : 4),
+      decoyNoiseOom: Boolean(simDecoy && simDecoy.checked),
+      recordInStore: Boolean(recordInStore),
+    };
+  }
+
+  function syncSimLabels() {
+    const elT = document.getElementById("sim-val-throttle");
+    const elG = document.getElementById("sim-val-gap");
+    const elC = document.getElementById("sim-val-cold");
+    const elP = document.getElementById("sim-val-psi");
+    if (elT && simThrottle) elT.textContent = simThrottle.value + "%";
+    if (elG && simGap) elG.textContent = simGap.value + " ms";
+    if (elC && simCold) elC.textContent = simCold.value + " s";
+    if (elP && simPsi) elP.textContent = simPsi.value + " ms/s";
+  }
+
+  async function evaluateSimulation(recordInStore) {
+    syncSimLabels();
+    try {
+      const resp = await fetch("/api/v1/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(getSimPayload(recordInStore)),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const inc = data.incident;
+      const rep = (inc && inc.report) || {};
+      const top = rep.topCauses && rep.topCauses[0];
+      if (rep.status === "diagnosed" && top) {
+        const meta = getCauseMeta(top.cause);
+        if (simVerdictTitle) {
+          simVerdictTitle.style.color = "var(--red)";
+          simVerdictTitle.textContent =
+            "Diagnosed: " +
+            meta.title +
+            " (" +
+            Math.round((top.confidence || 0) * 100) +
+            "% confidence)";
+        }
+        if (simVerdictSub) {
+          const secondary =
+            rep.topCauses.length > 1
+              ? " · Secondary: " +
+                rep.topCauses
+                  .slice(1)
+                  .map(function (c) {
+                    return c.cause + " (" + Math.round(c.confidence * 100) + "%)";
+                  })
+                  .join(", ")
+              : "";
+          simVerdictSub.textContent = top.summary + secondary;
+        }
+      } else {
+        if (simVerdictTitle) {
+          simVerdictTitle.style.color = "var(--green)";
+          simVerdictTitle.textContent =
+            "Healthy Window — Honest Abstention (0 False Positives)";
+        }
+        if (simVerdictSub) {
+          simVerdictSub.textContent =
+            rep.reason ||
+            "No deterministic rule exceeded its evidence threshold; KubePilot abstains rather than guessing.";
+        }
+      }
+
+      if (recordInStore && inc) {
+        if (simModal) simModal.classList.add("hidden");
+        activeID = inc.id;
+        await fetchIncidents();
+        renderIncidentDetail(inc);
+      }
+    } catch (e) {
+      console.error("Simulation error:", e);
+    }
+  }
+
+  function applySimPreset(preset) {
+    if (simThrottle) simThrottle.value = "0";
+    if (simGap) simGap.value = "0";
+    if (simCold) simCold.value = "0";
+    if (simPsi) simPsi.value = "0";
+    if (simOom) simOom.value = "";
+    if (simUnsched) simUnsched.value = "";
+    if (simReadiness) simReadiness.value = "";
+    if (simThreads) simThreads.value = "4";
+    if (simDecoy) simDecoy.checked = false;
+
+    switch (preset) {
+      case "healthy-decoy":
+        if (simThrottle) simThrottle.value = "4";
+        if (simDecoy) simDecoy.checked = true;
+        break;
+      case "cpu-throttle":
+        if (simThrottle) simThrottle.value = "92";
+        break;
+      case "oom-kill":
+        if (simOom) simOom.value = "model-server";
+        break;
+      case "host-psi":
+        if (simPsi) simPsi.value = "75";
+        break;
+      case "app-gap":
+        if (simGap) simGap.value = "1800";
+        break;
+      case "multi-fault":
+        if (simOom) simOom.value = "model-server";
+        if (simThrottle) simThrottle.value = "88";
+        break;
+    }
+    evaluateSimulation(false);
+  }
+
+  if (btnOpenSim && simModal) {
+    btnOpenSim.addEventListener("click", function () {
+      simModal.classList.remove("hidden");
+      evaluateSimulation(false);
+    });
+  }
+  if (btnCloseSim && simModal) {
+    btnCloseSim.addEventListener("click", function () {
+      simModal.classList.add("hidden");
+    });
+  }
+  if (simModal) {
+    simModal.addEventListener("click", function (ev) {
+      if (ev.target === simModal) simModal.classList.add("hidden");
+    });
+  }
+  [simThrottle, simGap, simCold, simPsi, simOom, simUnsched, simReadiness, simThreads, simDecoy].forEach(
+    function (el) {
+      if (!el) return;
+      el.addEventListener("input", function () {
+        evaluateSimulation(false);
+      });
+      el.addEventListener("change", function () {
+        evaluateSimulation(false);
+      });
+    }
+  );
+  Array.from(document.querySelectorAll(".sim-preset")).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      applySimPreset(btn.getAttribute("data-sim") || "");
+    });
+  });
+  if (btnSimSave) {
+    btnSimSave.addEventListener("click", function () {
+      evaluateSimulation(true);
+    });
+  }
+
+  // 2A: Real-Time Server-Sent Events (SSE) Live Stream
+  let toastTimer = null;
+  function showSSEToast(msg) {
+    const toast = document.getElementById("sse-toast");
+    const text = document.getElementById("sse-toast-text");
+    if (!toast || !text) return;
+    text.textContent = msg;
+    toast.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.add("hidden");
+    }, 4000);
+  }
+
+  if (typeof window.EventSource !== "undefined") {
+    try {
+      const es = new EventSource("/api/v1/stream");
+      const sseDot = document.getElementById("sse-dot");
+      const sseLabel = document.getElementById("sse-label");
+      es.addEventListener("connected", function () {
+        if (sseDot) sseDot.className = "status-dot dot-emerald";
+        if (sseLabel) sseLabel.textContent = "SSE Live";
+      });
+      es.addEventListener("incident", function (ev) {
+        try {
+          const inc = JSON.parse(ev.data);
+          const top =
+            inc.report && inc.report.topCauses && inc.report.topCauses[0];
+          const label = top ? getCauseMeta(top.cause).short : "Healthy Window";
+          showSSEToast("Live Stream: " + inc.id + " · " + label);
+          fetchIncidents();
+        } catch (_) {}
+      });
+      es.onerror = function () {
+        if (sseDot) sseDot.className = "status-dot dot-rose";
+        if (sseLabel) sseLabel.textContent = "SSE Reconnecting";
+      };
+    } catch (_) {}
+  }
 
   filterSearch.addEventListener("input", applySearchAndRender);
   btnRefresh.addEventListener("click", fetchIncidents);

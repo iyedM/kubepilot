@@ -231,3 +231,97 @@ func TestMetricsPostMortemAndWebhook(t *testing.T) {
 		}
 	}
 }
+
+func TestSSECompareAlertmanagerBundleAndSimulate(t *testing.T) {
+	srv := New(Config{
+		CostEstimator: stubCostEstimator{},
+	})
+
+	// 2A: SSE /api/v1/stream?once=1
+	sseReq := httptest.NewRequest(http.MethodGet, "/api/v1/stream?once=1", nil)
+	sseRec := httptest.NewRecorder()
+	srv.ServeHTTP(sseRec, sseReq)
+	if sseRec.Code != http.StatusOK || !strings.Contains(sseRec.Body.String(), "event: connected") {
+		t.Fatalf("unexpected SSE response: code=%d body=%s", sseRec.Code, sseRec.Body.String())
+	}
+
+	// 2C: Alertmanager webhook auto-triage
+	runDir := filepath.Join("..", "..", "eval", "runs", "dev", "dev--cpu-throttle--limit-300m--r1")
+	amPayload, _ := json.Marshal(AlertmanagerWebhookPayload{
+		Version:  "4",
+		Status:   "firing",
+		Receiver: "kubepilot",
+		Alerts: []AlertmanagerAlert{
+			{
+				Status:      "firing",
+				Labels:      map[string]string{"alertname": "GenAIHighLatency", "namespace": "genai"},
+				Annotations: map[string]string{"run_dir": runDir},
+			},
+		},
+	})
+	amReq := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/alertmanager", bytes.NewReader(amPayload))
+	amRec := httptest.NewRecorder()
+	srv.ServeHTTP(amRec, amReq)
+	if amRec.Code != http.StatusOK {
+		t.Fatalf("Alertmanager webhook status=%d body=%s", amRec.Code, amRec.Body.String())
+	}
+
+	// 2B: Baseline vs Incident Comparison
+	cmpReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/compare", nil)
+	cmpRec := httptest.NewRecorder()
+	srv.ServeHTTP(cmpRec, cmpReq)
+	if cmpRec.Code != http.StatusOK {
+		t.Fatalf("GET /compare status=%d body=%s", cmpRec.Code, cmpRec.Body.String())
+	}
+	var cmp BaselineComparison
+	if err := json.Unmarshal(cmpRec.Body.Bytes(), &cmp); err != nil {
+		t.Fatalf("unmarshal BaselineComparison: %v", err)
+	}
+	if cmp.PrimaryCause != "cpu_throttling" || len(cmp.Metrics) == 0 {
+		t.Fatalf("unexpected BaselineComparison: %+v", cmp)
+	}
+
+	// 2D: Export .tar.gz bundle and re-import into a fresh Server
+	bndReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/bundle", nil)
+	bndRec := httptest.NewRecorder()
+	srv.ServeHTTP(bndRec, bndReq)
+	if bndRec.Code != http.StatusOK || bndRec.Body.Len() < 100 {
+		t.Fatalf("GET /bundle status=%d len=%d", bndRec.Code, bndRec.Body.Len())
+	}
+
+	srv2 := New(Config{})
+	upReq := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/bundle", bytes.NewReader(bndRec.Body.Bytes()))
+	upRec := httptest.NewRecorder()
+	srv2.ServeHTTP(upRec, upReq)
+	if upRec.Code != http.StatusOK {
+		t.Fatalf("POST /api/v1/incidents/bundle status=%d body=%s", upRec.Code, upRec.Body.String())
+	}
+	if _, ok := srv2.GetIncident("dev--cpu-throttle--limit-300m--r1"); !ok {
+		t.Fatalf("expected imported incident in srv2 store")
+	}
+
+	// 2E: What-If Simulator (1. Honest abstention with noise decoy, 2. CPU Throttling)
+	simHealthyBody, _ := json.Marshal(SimulateRequest{
+		ScenarioName:    "healthy-with-decoy",
+		CFSThrottledPct: 3.0,
+		DecoyNoiseOOM:   true,
+	})
+	simHReq := httptest.NewRequest(http.MethodPost, "/api/v1/simulate", bytes.NewReader(simHealthyBody))
+	simHRec := httptest.NewRecorder()
+	srv.ServeHTTP(simHRec, simHReq)
+	if simHRec.Code != http.StatusOK || !strings.Contains(simHRec.Body.String(), "\"status\": \"unknown\"") {
+		t.Fatalf("expected unknown status on healthy simulation, got: %s", simHRec.Body.String())
+	}
+
+	simFaultBody, _ := json.Marshal(SimulateRequest{
+		ScenarioName:    "throttle-92",
+		CFSThrottledPct: 92.0,
+		RecordInStore:   true,
+	})
+	simFReq := httptest.NewRequest(http.MethodPost, "/api/v1/simulate", bytes.NewReader(simFaultBody))
+	simFRec := httptest.NewRecorder()
+	srv.ServeHTTP(simFRec, simFReq)
+	if simFRec.Code != http.StatusOK || !strings.Contains(simFRec.Body.String(), "\"cause\": \"cpu_throttling\"") {
+		t.Fatalf("expected cpu_throttling diagnosis on simulated fault, got: %s", simFRec.Body.String())
+	}
+}

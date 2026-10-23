@@ -32,6 +32,7 @@ func main() {
 func run(args []string) error {
 	fs := flag.NewFlagSet("kubepilot-server", flag.ContinueOnError)
 	listenAddr := fs.String("listen", ":8090", "HTTP listen address")
+	addrAlias := fs.String("addr", "", "Alias for --listen")
 	kubeconfig := fs.String("kubeconfig", "", "Path to kubeconfig for live cluster collection")
 	kubeAPIURL := fs.String("kube-api-url", "", "Direct Kubernetes API server URL for GenAIIncident CRD operator (optional)")
 	namespace := fs.String("namespace", "genai", "Target workload Kubernetes namespace")
@@ -48,6 +49,9 @@ func run(args []string) error {
 
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if *addrAlias != "" {
+		*listenAddr = *addrAlias
 	}
 
 	liveCfg := live.Config{

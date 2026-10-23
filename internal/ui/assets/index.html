@@ -35,8 +35,8 @@
           <span class="trust-pill" title="Pure Go rule engine; 0 LLM calls in the diagnosis loop">
             <span class="status-dot dot-sky"></span>Deterministic · 0 LLM
           </span>
-          <span class="trust-pill" title="Held-out preregistered test split: 24/24 (100%) accuracy, 0/21 false positives">
-            <span class="status-dot dot-violet"></span>24/24 Test Recall · 0 FP
+          <span class="trust-pill" id="sse-pill" title="Real-Time Server-Sent Events stream (/api/v1/stream)">
+            <span class="status-dot dot-emerald" id="sse-dot"></span><span id="sse-label">SSE Live</span>
           </span>
         </div>
       </div>
@@ -72,6 +72,21 @@
           <button type="button" class="seg-btn" id="btn-seed-test" title="Load 45 Held-Out Test runs">Test · 45</button>
           <button type="button" class="seg-btn" id="btn-seed-all" title="Load all 64 runs">All · 64</button>
         </div>
+
+        <button type="button" id="btn-open-sim" class="btn-sandbox-trigger" title="Interactive What-If Chaos Simulator">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>What-If Sandbox</span>
+        </button>
 
         <button type="button" id="btn-open-modal" class="btn-diagnose-trigger" title="Run on-demand diagnosis or launch a test scenario (Ctrl+K)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -292,9 +307,137 @@
             <button type="submit" id="btn-diagnose" class="btn-primary">Run Diagnosis</button>
           </div>
         </form>
+
+        <div class="modal-section-label" style="margin-top:1.1rem">Import Portable Incident Bundle (.tar.gz or .json)</div>
+        <div style="display:flex;gap:0.65rem;align-items:center;flex-wrap:wrap">
+          <input id="input-bundle-file" type="file" accept=".gz,.tgz,.json,application/gzip,application/json" style="flex:1;padding:0.4rem 0.6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--text);font-size:0.76rem">
+          <button type="button" id="btn-upload-bundle" class="seg-btn active" style="padding:0.45rem 0.9rem">↑ Import Bundle</button>
+        </div>
+
         <div id="diagnose-error" class="alert-error hidden"></div>
       </div>
     </div>
+  </div>
+
+  <!-- 2E: Interactive What-If Chaos Simulator Modal -->
+  <div id="sim-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="sim-modal-title">
+    <div class="modal-dialog" style="max-width:860px">
+      <div class="modal-header">
+        <div>
+          <h2 id="sim-modal-title">Interactive What-If Chaos Sandbox</h2>
+          <p class="modal-subtitle">Adjust synthetic Kubernetes, Prometheus, and OpenTelemetry signals to test the real deterministic Go rule engine in live time.</p>
+        </div>
+        <button type="button" id="btn-close-sim" class="icon-btn" aria-label="Close simulator">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-section-label">Quick Sandbox Presets</div>
+        <div style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-bottom:0.85rem">
+          <button type="button" class="seg-btn sim-preset" data-sim="healthy-decoy">Healthy + Noise OOM Decoy (0 FP Abstention)</button>
+          <button type="button" class="seg-btn sim-preset" data-sim="cpu-throttle">CFS CPU Throttling (92%)</button>
+          <button type="button" class="seg-btn sim-preset" data-sim="oom-kill">OOMKilled · Exit 137</button>
+          <button type="button" class="seg-btn sim-preset" data-sim="host-psi">Noisy Neighbor Host PSI</button>
+          <button type="button" class="seg-btn sim-preset" data-sim="app-gap">App Pre-Inference Gap (1800ms)</button>
+          <button type="button" class="seg-btn sim-preset" data-sim="multi-fault">Multi-Fault (OOM + CPU Throttle)</button>
+        </div>
+
+        <div class="sim-grid">
+          <div class="sim-control-box">
+            <div class="sim-control-top">
+              <span>CFS CPU Throttled Periods (%)</span>
+              <span class="sim-val-badge" id="sim-val-throttle">0%</span>
+            </div>
+            <input type="range" id="sim-throttle" min="0" max="100" step="1" value="0">
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top">
+              <span>App Pre-Inference Span Gap (ms)</span>
+              <span class="sim-val-badge" id="sim-val-gap">0 ms</span>
+            </div>
+            <input type="range" id="sim-gap" min="0" max="2500" step="25" value="0">
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top">
+              <span>Cold Start initContainer Fetch (s)</span>
+              <span class="sim-val-badge" id="sim-val-cold">0 s</span>
+            </div>
+            <input type="range" id="sim-cold" min="0" max="150" step="5" value="0">
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top">
+              <span>Host CPU Runqueue Pressure (Linux PSI)</span>
+              <span class="sim-val-badge" id="sim-val-psi">0 ms/s</span>
+            </div>
+            <input type="range" id="sim-psi" min="0" max="120" step="5" value="0">
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top"><span>Container OOMKilled (Exit Code 137)</span></div>
+            <select id="sim-oom">
+              <option value="">None (Memory within limits)</option>
+              <option value="model-server">OOMKilled on deployment/model-server</option>
+              <option value="chat-api">OOMKilled on deployment/chat-api</option>
+            </select>
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top"><span>Pod Unschedulable Blocker</span></div>
+            <select id="sim-unsched">
+              <option value="">None (Pod Scheduled &amp; Running)</option>
+              <option value="insufficient_cpu">Insufficient CPU (64 cores requested)</option>
+              <option value="node_taint">Untolerated Node Taint</option>
+              <option value="pvc_unbound">Unbound PersistentVolumeClaim</option>
+              <option value="node_selector">Unmatched GPU nodeSelector</option>
+            </select>
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top"><span>Readiness Probe State</span></div>
+            <select id="sim-readiness">
+              <option value="">Healthy (Ready=True)</option>
+              <option value="http_404">Failing Probe (HTTP 404 Unhealthy Event)</option>
+              <option value="initial_delay_600">Excessive initialDelaySeconds=600</option>
+            </select>
+          </div>
+
+          <div class="sim-control-box">
+            <div class="sim-control-top"><span>Runtime Flag &amp; Noise Namespace Decoy</span></div>
+            <div style="display:flex;gap:0.65rem;align-items:center;flex-wrap:wrap">
+              <select id="sim-threads" style="flex:1">
+                <option value="4">--threads 4 (Optimal)</option>
+                <option value="1">--threads 1 (Config Regression)</option>
+              </select>
+              <label style="font-size:0.72rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer">
+                <input type="checkbox" id="sim-decoy"> Noise OOM Decoy
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="sim-preview" class="sim-preview-card">
+          <div>
+            <div class="modal-section-label" style="margin-bottom:0.2rem">Live Rule Engine Verdict</div>
+            <div id="sim-verdict-title" style="font-size:0.95rem;font-weight:700;color:var(--green)">Healthy Window — Honest Abstention (0 False Positives)</div>
+            <div id="sim-verdict-sub" style="font-size:0.76rem;color:var(--muted);margin-top:0.18rem">Move any slider above to evaluate the synthetic snapshot against all 8 deterministic Go rules.</div>
+          </div>
+          <button type="button" id="btn-sim-save" class="btn-primary">Open Full Inspection in Workspace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2A: Real-Time SSE Toast Notification -->
+  <div id="sse-toast" class="sse-toast hidden" role="status" aria-live="polite">
+    <span class="status-dot dot-sky"></span>
+    <span id="sse-toast-text">New incident diagnosed</span>
   </div>
 
   <script src="/assets/app.js"></script>

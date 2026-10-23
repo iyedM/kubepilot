@@ -57,9 +57,10 @@ lint: ## shellcheck the lab scripts (pinned image)
 compat-matrix: ## Record what each OpenAI instrumentation package emits (fixtures for P2)
 	lab/compat/run-matrix.sh
 
-build: ## Build why-slow, kubepilot-server and eval-score into ./bin
+build: ## Build why-slow, kubectl-why_slow, kubepilot-server and eval-score into ./bin
 	@mkdir -p bin
 	go build -trimpath -o bin/why-slow ./cmd/why-slow
+	go build -trimpath -o bin/kubectl-why_slow ./cmd/why-slow
 	go build -trimpath -o bin/kubepilot-server ./cmd/kubepilot-server
 	go build -trimpath -o bin/eval-score ./cmd/eval-score
 

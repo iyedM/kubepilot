@@ -84,19 +84,20 @@ type TelemetryOverview struct {
 // optional cost estimation, read-only GitOps patch suggestion, and rich telemetry
 // overview for the API, Web UI (P6), and Operator (P7).
 type IncidentRecord struct {
-	ID             string             `json:"id"`
-	CreatedAt      time.Time          `json:"createdAt"`
-	Source         string             `json:"source"` // "live", "poll", "run-dir", "snapshot"
-	RunID          string             `json:"runId,omitempty"`
-	Namespace      string             `json:"namespace"`
-	TraceID        string             `json:"traceId,omitempty"`
-	Report         snapshot.Report    `json:"report"`
-	TraceCount     int                `json:"traceCount"`
-	EventCount     int                `json:"eventCount"`
-	PodCount       int                `json:"podCount"`
-	Cost           *CostSummary       `json:"cost,omitempty"`
-	SuggestedPatch string             `json:"suggestedPatch,omitempty"`
-	Telemetry      *TelemetryOverview `json:"telemetry,omitempty"`
+	ID             string              `json:"id"`
+	CreatedAt      time.Time           `json:"createdAt"`
+	Source         string              `json:"source"` // "live", "poll", "run-dir", "snapshot"
+	RunID          string              `json:"runId,omitempty"`
+	Namespace      string              `json:"namespace"`
+	TraceID        string              `json:"traceId,omitempty"`
+	Report         snapshot.Report     `json:"report"`
+	TraceCount     int                 `json:"traceCount"`
+	EventCount     int                 `json:"eventCount"`
+	PodCount       int                 `json:"podCount"`
+	Cost           *CostSummary        `json:"cost,omitempty"`
+	SuggestedPatch string              `json:"suggestedPatch,omitempty"`
+	Comparison     *BaselineComparison `json:"comparison,omitempty"`
+	Telemetry      *TelemetryOverview  `json:"telemetry,omitempty"`
 }
 
 // Config configures a KubePilot HTTP Server.
@@ -112,13 +113,15 @@ type Config struct {
 
 // Server serves the KubePilot HTTP API and optional embedded Web UI.
 type Server struct {
-	cfg           Config
-	mu            sync.RWMutex
-	seq           int64
-	webhookSent   int64
-	webhookFailed int64
-	incidents     []IncidentRecord
-	mux           *http.ServeMux
+	cfg                  Config
+	mu                   sync.RWMutex
+	seq                  int64
+	webhookSent          int64
+	webhookFailed        int64
+	alertmanagerReceived int64
+	incidents            []IncidentRecord
+	subscribers          map[chan IncidentRecord]struct{}
+	mux                  *http.ServeMux
 }
 
 // New creates and initializes a Server.
@@ -143,8 +146,9 @@ func New(cfg Config) *Server {
 	}
 
 	s := &Server{
-		cfg: cfg,
-		mux: http.NewServeMux(),
+		cfg:         cfg,
+		subscribers: make(map[chan IncidentRecord]struct{}),
+		mux:         http.NewServeMux(),
 	}
 	s.registerRoutes()
 	return s
@@ -156,11 +160,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // RecordIncident stores a diagnosed or inspected IncidentRecord in the bounded
-// in-memory store and returns the stored record with its assigned ID.
+// in-memory store, broadcasts it to SSE subscribers, and returns the stored
+// record with its assigned ID.
 func (s *Server) RecordIncident(rec IncidentRecord) IncidentRecord {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.seq++
 	if rec.ID == "" {
 		rec.ID = fmt.Sprintf("inc-%04d", s.seq)
@@ -172,18 +175,23 @@ func (s *Server) RecordIncident(rec IncidentRecord) IncidentRecord {
 		rec.Namespace = s.cfg.LiveConfig.Namespace
 	}
 
-	// Deduplicate by ID if updating an existing seeded incident.
+	updated := false
 	for i := range s.incidents {
 		if s.incidents[i].ID == rec.ID {
 			s.incidents[i] = rec
-			return rec
+			updated = true
+			break
 		}
 	}
-
-	s.incidents = append([]IncidentRecord{rec}, s.incidents...)
-	if len(s.incidents) > s.cfg.MaxIncidents {
-		s.incidents = s.incidents[:s.cfg.MaxIncidents]
+	if !updated {
+		s.incidents = append([]IncidentRecord{rec}, s.incidents...)
+		if len(s.incidents) > s.cfg.MaxIncidents {
+			s.incidents = s.incidents[:s.cfg.MaxIncidents]
+		}
 	}
+	s.mu.Unlock()
+
+	s.broadcastIncident(rec)
 	return rec
 }
 
@@ -300,6 +308,8 @@ func (s *Server) buildRecord(ctx context.Context, source, runID string, snap *sn
 			rec.Cost = cost
 		}
 	}
+	comp := BuildBaselineComparison(rec)
+	rec.Comparison = &comp
 	return rec
 }
 
@@ -307,10 +317,14 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/healthz", s.handleHealth)
 	s.mux.HandleFunc("/readyz", s.handleHealth)
 	s.mux.HandleFunc("/metrics", s.handleMetrics)
+	s.mux.HandleFunc("/api/v1/stream", s.handleStream)
 	s.mux.HandleFunc("/api/v1/diagnose", s.handleDiagnose)
+	s.mux.HandleFunc("/api/v1/simulate", s.handleSimulate)
 	s.mux.HandleFunc("/api/v1/seed", s.handleSeed)
 	s.mux.HandleFunc("/api/v1/webhook/test", s.handleWebhookTest)
+	s.mux.HandleFunc("/api/v1/alerts/alertmanager", s.handleAlertmanagerWebhook)
 	s.mux.HandleFunc("/api/v1/incidents", s.handleIncidents)
+	s.mux.HandleFunc("/api/v1/incidents/bundle", s.handleBundleUpload)
 	s.mux.HandleFunc("/api/v1/incidents/", s.handleIncidentByID)
 	if s.cfg.UIHandler != nil {
 		s.mux.Handle("/", s.cfg.UIHandler)
@@ -327,14 +341,39 @@ func (s *Server) registerRoutes() {
 					"/healthz",
 					"/readyz",
 					"/metrics",
+					"/api/v1/stream",
 					"/api/v1/diagnose",
+					"/api/v1/simulate",
 					"/api/v1/seed",
 					"/api/v1/webhook/test",
+					"/api/v1/alerts/alertmanager",
 					"/api/v1/incidents",
+					"/api/v1/incidents/bundle",
 				},
 			})
 		})
 	}
+}
+
+func (s *Server) diagnoseRunDirInternal(ctx context.Context, runDir, source string) (IncidentRecord, error) {
+	snap, meta, err := offline.LoadRunDir(runDir, offline.Options{
+		SkewTolerance: s.cfg.LiveConfig.SkewTolerance,
+	})
+	if err != nil {
+		return IncidentRecord{}, err
+	}
+	runID := filepath.Base(runDir)
+	if meta != nil && meta.RunID != "" {
+		runID = meta.RunID
+	}
+	rep := rules.Diagnose(snap)
+	rec := s.buildRecord(ctx, source, runID, snap, rep)
+	rec.ID = runID
+	rec = s.RecordIncident(rec)
+	if rep.Status == snapshot.StatusDiagnosed && s.cfg.WebhookURL != "" {
+		_ = s.SendWebhookAlert(ctx, rec, s.cfg.WebhookURL)
+	}
+	return rec, nil
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -527,11 +566,19 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "missing incident id")
 		return
 	}
-	wantPostMortem := false
-	if strings.HasSuffix(rel, "/postmortem") {
-		wantPostMortem = true
+	subAction := ""
+	switch {
+	case strings.HasSuffix(rel, "/postmortem"):
+		subAction = "postmortem"
 		rel = strings.TrimSuffix(rel, "/postmortem")
+	case strings.HasSuffix(rel, "/compare"):
+		subAction = "compare"
+		rel = strings.TrimSuffix(rel, "/compare")
+	case strings.HasSuffix(rel, "/bundle"):
+		subAction = "bundle"
+		rel = strings.TrimSuffix(rel, "/bundle")
 	}
+
 	inc, ok := s.GetIncident(rel)
 	if !ok && !strings.Contains(rel, "/") && !strings.Contains(rel, "..") {
 		for _, split := range []string{"dev", "test"} {
@@ -556,15 +603,32 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, fmt.Sprintf("incident %q not found", rel))
 		return
 	}
-	if wantPostMortem {
+
+	switch subAction {
+	case "postmortem":
 		md := BuildPostMortemMarkdown(inc)
 		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"postmortem-%s.md\"", inc.ID))
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(md))
 		return
+	case "compare":
+		writeJSON(w, http.StatusOK, BuildBaselineComparison(inc))
+		return
+	case "bundle":
+		tgz, err := BuildIncidentBundleTarGz(inc)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("build bundle: %v", err))
+			return
+		}
+		w.Header().Set("Content-Type", "application/gzip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"kubepilot-bundle-%s.tar.gz\"", inc.ID))
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(tgz)
+		return
+	default:
+		writeJSON(w, http.StatusOK, inc)
 	}
-	writeJSON(w, http.StatusOK, inc)
 }
 
 // SeedRequest describes the payload accepted by POST /api/v1/seed.
@@ -908,6 +972,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	whSent := s.webhookSent
 	whFailed := s.webhookFailed
+	amRecv := s.alertmanagerReceived
 	s.mu.RUnlock()
 
 	var diagCount, unknownCount int
@@ -999,7 +1064,11 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	b.WriteString("# HELP kubepilot_webhook_notifications_total Total webhook alert deliveries attempted.\n")
 	b.WriteString("# TYPE kubepilot_webhook_notifications_total counter\n")
 	fmt.Fprintf(&b, "kubepilot_webhook_notifications_total{status=\"sent\"} %d\n", whSent)
-	fmt.Fprintf(&b, "kubepilot_webhook_notifications_total{status=\"failed\"} %d\n", whFailed)
+	fmt.Fprintf(&b, "kubepilot_webhook_notifications_total{status=\"failed\"} %d\n\n", whFailed)
+
+	b.WriteString("# HELP kubepilot_alertmanager_webhooks_received_total Total Prometheus Alertmanager firing webhooks received for automatic triage.\n")
+	b.WriteString("# TYPE kubepilot_alertmanager_webhooks_received_total counter\n")
+	fmt.Fprintf(&b, "kubepilot_alertmanager_webhooks_received_total %d\n", amRecv)
 
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
