@@ -269,8 +269,12 @@ func collectPrometheusMetrics(ctx context.Context, cfg Config, win snapshot.Wind
 		if cfg.PrometheusURL != "" {
 			raw, err = httpGet(ctx, cfg.HTTPClient, strings.TrimRight(cfg.PrometheusURL, "/")+path)
 		} else {
-			rawPath := fmt.Sprintf("/api/v1/namespaces/%s/services/kube-prometheus-stack-prometheus:9090/proxy%s", cfg.ObsNamespace, path)
+			rawPath := fmt.Sprintf("/api/v1/namespaces/%s/services/prometheus-server:80/proxy%s", cfg.ObsNamespace, path)
 			raw, err = runKubectlReadOnly(ctx, cfg, "get", "--raw", rawPath)
+			if err != nil {
+				fallbackPath := fmt.Sprintf("/api/v1/namespaces/%s/services/kube-prometheus-stack-prometheus:9090/proxy%s", cfg.ObsNamespace, path)
+				raw, err = runKubectlReadOnly(ctx, cfg, "get", "--raw", fallbackPath)
+			}
 		}
 		if err != nil {
 			return nil, fmt.Errorf("query %s: %w", name, err)
