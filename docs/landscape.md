@@ -173,14 +173,16 @@ HolmesGPT as the most credible "could do it next" threats.
 1. **Nobody found does the exact combination**: GenAI-trace-centric +
    Kubernetes events/metrics + deterministic rules + top-3 with evidence +
    explicit "unknown" + self-hosted open source.
-2. **Closest threats:**
+2. **Closest threats (subsequently measured hands-on in [`docs/p3-comparison.md`](p3-comparison.md)):**
    - *Coroot* already has deterministic, LLM-free RCA with eBPF. If it adds
      GenAI-specific inspections, it overlaps strongly. Its RCA is not in the
-     free edition today.
+     free edition today. (Hands-on P3 evaluation of Coroot CE `v1.28.1`:
+     [`docs/p3-comparison.md`](p3-comparison.md).)
    - *HolmesGPT* can reach the same data (Tempo, Prometheus, K8s) today, but
      through an LLM agent. KubePilot's argument against it must be
      **measured** (P3), not asserted: reproducibility, cost, latency and
-     accuracy on the same cases.
+     accuracy on the same cases. (Hands-on P3 evaluation of HolmesGPT `v0.45.0`:
+     [`docs/p3-comparison.md`](p3-comparison.md).)
    - *Dynatrace Davis* (not reviewed in depth) claims causal RCA that
      includes LLM telemetry *(vendor claim, untested)*. It is the main commercial reference point, but it
      is proprietary and not self-hosted open source.

@@ -120,5 +120,7 @@ eval/baselines/
     <case_id>.json          raw Coroot API application inspection payload for <case_id>
   holmesgpt/
     summary.json            aggregated HolmesGPT results, latency, and tool-call counts
-    <case_id>.txt           raw HolmesGPT CLI output and tool-call trace for <case_id>
+    <case_id>.json          raw HolmesGPT output, tool-call trace, and token counts for <case_id>
 ```
+
+For the full side-by-side results and analysis, see [`docs/p3-comparison.md`](../../docs/p3-comparison.md).

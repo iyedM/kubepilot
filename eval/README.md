@@ -246,3 +246,11 @@ test-run data.
 | `top3_recall` | `13 / 13` | `100.0%` | `[77.2%, 100.0%]` |
 | `evidence_precision` | `45 / 45` | `100.0%` | `[92.1%, 100.0%]` |
 | `false_positive_rate_on_healthy` | `0 / 6` | `0.0%` | `[0.0%, 39.0%]` |
+
+## Baseline Comparison (P3 — 2026-10-23)
+
+KubePilot (`why-slow`), **Coroot Community Edition** (`v1.28.1`), and **HolmesGPT** (`v0.45.0` with a self-hosted `Qwen2.5-0.5B-Instruct` GGUF model) were evaluated side-by-side on 12 representative cases covering all 8 cause classes plus a same-node OOM decoy window:
+
+- Protocol and scoring rubric: [`eval/baselines/README.md`](baselines/README.md)
+- Recorded outputs: [`eval/baselines/coroot/`](baselines/coroot/) and [`eval/baselines/holmesgpt/`](baselines/holmesgpt/)
+- Full comparison report (including where Coroot CE and HolmesGPT win): [`docs/p3-comparison.md`](../docs/p3-comparison.md)
