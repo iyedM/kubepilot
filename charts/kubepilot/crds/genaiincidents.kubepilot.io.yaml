@@ -1,0 +1,124 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: genaiincidents.kubepilot.io
+  labels:
+    app.kubernetes.io/name: kubepilot
+spec:
+  group: kubepilot.io
+  names:
+    kind: GenAIIncident
+    listKind: GenAIIncidentList
+    plural: genaiincidents
+    singular: genaiincident
+    shortNames:
+      - gai
+      - genaiinc
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Status
+          type: string
+          jsonPath: .status.diagnosisStatus
+        - name: TopCause
+          type: string
+          jsonPath: .status.topCause
+        - name: Confidence
+          type: number
+          jsonPath: .status.topConfidence
+        - name: Workload
+          type: string
+          jsonPath: .status.workload
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: >-
+            GenAIIncident represents a read-only KubePilot diagnosis request and
+            its correlated root-cause evidence for a GenAI workload or trace window.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                targetNamespace:
+                  type: string
+                  default: "genai"
+                workload:
+                  type: string
+                traceId:
+                  type: string
+                windowFrom:
+                  type: string
+                  format: date-time
+                windowTo:
+                  type: string
+                  format: date-time
+            status:
+              type: object
+              properties:
+                diagnosisStatus:
+                  type: string
+                  enum: ["diagnosed", "unknown"]
+                reason:
+                  type: string
+                topCause:
+                  type: string
+                topConfidence:
+                  type: number
+                workload:
+                  type: string
+                evaluatedAt:
+                  type: string
+                  format: date-time
+                estimatedWasteUSD:
+                  type: number
+                topCauses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      rule:
+                        type: string
+                      cause:
+                        type: string
+                      confidence:
+                        type: number
+                      summary:
+                        type: string
+                      component:
+                        type: object
+                        properties:
+                          namespace:
+                            type: string
+                          kind:
+                            type: string
+                          workload:
+                            type: string
+                          pod:
+                            type: string
+                          node:
+                            type: string
+                      evidence:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            source:
+                              type: string
+                            timestamp:
+                              type: string
+                            summary:
+                              type: string

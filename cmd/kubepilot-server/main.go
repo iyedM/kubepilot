@@ -16,6 +16,7 @@ import (
 
 	"github.com/iyedM/kubepilot/internal/collector/live"
 	"github.com/iyedM/kubepilot/internal/collector/offline"
+	"github.com/iyedM/kubepilot/internal/operator"
 	"github.com/iyedM/kubepilot/internal/server"
 	"github.com/iyedM/kubepilot/internal/ui"
 )
@@ -31,12 +32,14 @@ func run(args []string) error {
 	fs := flag.NewFlagSet("kubepilot-server", flag.ContinueOnError)
 	listenAddr := fs.String("listen", ":8090", "HTTP listen address")
 	kubeconfig := fs.String("kubeconfig", "", "Path to kubeconfig for live cluster collection")
+	kubeAPIURL := fs.String("kube-api-url", "", "Direct Kubernetes API server URL for GenAIIncident CRD operator (optional)")
 	namespace := fs.String("namespace", "genai", "Target workload Kubernetes namespace")
 	obsNamespace := fs.String("obs-namespace", "observability", "Observability stack Kubernetes namespace")
 	promURL := fs.String("prometheus-url", "", "Direct Prometheus base URL (optional)")
 	tempoURL := fs.String("tempo-url", "", "Direct Tempo base URL (optional)")
 	skew := fs.Duration("skew-tolerance", offline.DefaultSkewTolerance, "Clock-skew tolerance when correlating telemetry sources")
 	pollInterval := fs.Duration("poll-interval", 0, "Optional background diagnosis poll interval (0 disables polling)")
+	enableOperator := fs.Bool("enable-operator", false, "Enable read-only GenAIIncident CRD reconciliation loop")
 	seedRunsDir := fs.String("seed-runs-dir", "", "Optional directory of recorded runs (e.g. eval/runs/dev) to preload on startup")
 	seedLimit := fs.Int("seed-limit", 25, "Maximum number of recorded runs to preload from --seed-runs-dir")
 
@@ -44,16 +47,19 @@ func run(args []string) error {
 		return err
 	}
 
+	liveCfg := live.Config{
+		Kubeconfig:    *kubeconfig,
+		KubeAPIURL:    *kubeAPIURL,
+		Namespace:     *namespace,
+		ObsNamespace:  *obsNamespace,
+		PrometheusURL: *promURL,
+		TempoURL:      *tempoURL,
+		SkewTolerance: *skew,
+	}
+
 	srv := server.New(server.Config{
-		LiveConfig: live.Config{
-			Kubeconfig:    *kubeconfig,
-			Namespace:     *namespace,
-			ObsNamespace:  *obsNamespace,
-			PrometheusURL: *promURL,
-			TempoURL:      *tempoURL,
-			SkewTolerance: *skew,
-		},
-		UIHandler: ui.NewHandler(),
+		LiveConfig: liveCfg,
+		UIHandler:  ui.NewHandler(),
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -68,6 +74,19 @@ func run(args []string) error {
 		}
 	}
 
+	var opCtrl *operator.Controller
+	if *enableOperator {
+		apiURL := *kubeAPIURL
+		if apiURL == "" && os.Getenv("KUBERNETES_SERVICE_HOST") != "" {
+			apiURL = "https://" + os.Getenv("KUBERNETES_SERVICE_HOST") + ":" + os.Getenv("KUBERNETES_SERVICE_PORT")
+		}
+		opCtrl = operator.NewController(operator.Config{
+			KubeAPIURL: apiURL,
+			Namespace:  *namespace,
+			LiveConfig: liveCfg,
+		})
+	}
+
 	if *pollInterval > 0 {
 		go func() {
 			ticker := time.NewTicker(*pollInterval)
@@ -78,11 +97,20 @@ func run(args []string) error {
 					return
 				case now := <-ticker.C:
 					pctx, cancel := context.WithTimeout(ctx, 45*time.Second)
-					_, err := srv.PollOnce(pctx, now.Add(-3*time.Minute), now, "", false)
-					cancel()
+					rec, err := srv.PollOnce(pctx, now.Add(-3*time.Minute), now, "", false)
 					if err != nil {
 						log.Printf("poll warning: %v", err)
+					} else if opCtrl != nil && rec.ID != "" {
+						if _, pubErr := opCtrl.PublishIncident(pctx, rec); pubErr != nil {
+							log.Printf("operator publish warning: %v", pubErr)
+						}
 					}
+					if opCtrl != nil {
+						if _, recErr := opCtrl.ReconcileOnce(pctx); recErr != nil {
+							log.Printf("operator reconcile warning: %v", recErr)
+						}
+					}
+					cancel()
 				}
 			}
 		}()
