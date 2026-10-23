@@ -66,7 +66,8 @@ mapfile -t images < <(
 
 for img in "${images[@]}"; do
   log "image ${img}"
-  if ! out="$(docker manifest inspect "${img}" 2>&1 >/dev/null)"; then
+  ref="$(sed -E 's/:[^:@]+@sha256:/@sha256:/' <<<"${img}")"
+  if ! out="$(docker manifest inspect "${ref}" 2>&1 >/dev/null)"; then
     fail "image ${img}" "${out}"
   fi
 done
