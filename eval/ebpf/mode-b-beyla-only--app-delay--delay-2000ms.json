@@ -1,0 +1,394 @@
+{
+  "mode": "mode-b-beyla-only",
+  "case_id": "app-delay--delay-2000ms",
+  "fault": "app-delay",
+  "variant": "delay-2000ms",
+  "window": {
+    "from_utc": "2026-10-23T01:44:37.352Z",
+    "to_utc": "2026-10-23T01:45:22.736Z"
+  },
+  "tempo_telemetry": {
+    "tempo_search_count": 50,
+    "chat_trace_count": 13,
+    "probe_or_scrape_trace_count": 37,
+    "traces_with_gen_ai_attributes": 0,
+    "sample_chat_traces": [
+      {
+        "trace_id": "43de604ffa4ba8f5901b2a9b7d59b09f",
+        "root_service": "chat-api",
+        "root_trace_name": "POST /v1/chat/completions",
+        "duration_ms": 1361,
+        "is_chat_trace": true,
+        "has_gen_ai_span": false,
+        "span_count": 2,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "model-server",
+            "k8s_pod_name": "model-server-5bd4cc46f9-xww5t",
+            "scope_name": "",
+            "span_name": "POST /v1/chat/completions",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 1361.74,
+            "start_ns": 1792719919103910263,
+            "end_ns": 1792719920465646107,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "POST /v1/chat/completions",
+            "kind": "SPAN_KIND_CLIENT",
+            "duration_ms": 1361.97,
+            "start_ns": 1792719919103785623,
+            "end_ns": 1792719920465756547,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "http.request.method",
+              "http.response.status_code",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.full",
+              "url.scheme"
+            ]
+          }
+        ]
+      },
+      {
+        "trace_id": "be2b87883fd46a5015ee516bcb24853e",
+        "root_service": "chat-api",
+        "root_trace_name": "POST /chat",
+        "duration_ms": 3365,
+        "is_chat_trace": true,
+        "has_gen_ai_span": false,
+        "span_count": 3,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "in queue",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.25,
+            "start_ns": 1792719917101840126,
+            "end_ns": 1792719917102091793,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "processing",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 3365.07,
+            "start_ns": 1792719917102091793,
+            "end_ns": 1792719920467164051,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "POST /chat",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 3365.32,
+            "start_ns": 1792719917101840126,
+            "end_ns": 1792719920467164051,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          }
+        ]
+      },
+      {
+        "trace_id": "89f2d0a4661d44bcb0b57f3f036e180e",
+        "root_service": "chat-api",
+        "root_trace_name": "POST /v1/chat/completions",
+        "duration_ms": 451,
+        "is_chat_trace": true,
+        "has_gen_ai_span": false,
+        "span_count": 2,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "model-server",
+            "k8s_pod_name": "model-server-5bd4cc46f9-xww5t",
+            "scope_name": "",
+            "span_name": "POST /v1/chat/completions",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 451.71,
+            "start_ns": 1792719914104995063,
+            "end_ns": 1792719914556704241,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "POST /v1/chat/completions",
+            "kind": "SPAN_KIND_CLIENT",
+            "duration_ms": 451.95,
+            "start_ns": 1792719914104864365,
+            "end_ns": 1792719914556815124,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "http.request.method",
+              "http.response.status_code",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.full",
+              "url.scheme"
+            ]
+          }
+        ]
+      },
+      {
+        "trace_id": "ab885906881f79b0dd923ab271d3ce5",
+        "root_service": "chat-api",
+        "root_trace_name": "POST /chat",
+        "duration_ms": 2456,
+        "is_chat_trace": true,
+        "has_gen_ai_span": false,
+        "span_count": 3,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "in queue",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.27,
+            "start_ns": 1792719912101934024,
+            "end_ns": 1792719912102204597,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "processing",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 2455.77,
+            "start_ns": 1792719912102204597,
+            "end_ns": 1792719914557974283,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "POST /chat",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 2456.04,
+            "start_ns": 1792719912101934024,
+            "end_ns": 1792719914557974283,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          }
+        ]
+      }
+    ],
+    "sample_probe_traces": [
+      {
+        "trace_id": "2f512a32009154d6c402e1d9b8de54d1",
+        "root_service": "model-server",
+        "root_trace_name": "GET /health",
+        "duration_ms": null,
+        "is_chat_trace": false,
+        "has_gen_ai_span": false,
+        "span_count": 3,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "model-server",
+            "k8s_pod_name": "model-server-5bd4cc46f9-xww5t",
+            "scope_name": "",
+            "span_name": "in queue",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.13,
+            "start_ns": 1792719921384599511,
+            "end_ns": 1792719921384728439,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "model-server",
+            "k8s_pod_name": "model-server-5bd4cc46f9-xww5t",
+            "scope_name": "",
+            "span_name": "processing",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.07,
+            "start_ns": 1792719921384728439,
+            "end_ns": 1792719921384793833,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "model-server",
+            "k8s_pod_name": "model-server-5bd4cc46f9-xww5t",
+            "scope_name": "",
+            "span_name": "GET /health",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 0.19,
+            "start_ns": 1792719921384599511,
+            "end_ns": 1792719921384793833,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          }
+        ]
+      },
+      {
+        "trace_id": "8d906a018eb79afbb8eb453a8b8cae17",
+        "root_service": "chat-api",
+        "root_trace_name": "GET /healthz",
+        "duration_ms": 1,
+        "is_chat_trace": false,
+        "has_gen_ai_span": false,
+        "span_count": 3,
+        "scopes": [
+          ""
+        ],
+        "spans": [
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "in queue",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.21,
+            "start_ns": 1792719921345042669,
+            "end_ns": 1792719921345257288,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "processing",
+            "kind": "SPAN_KIND_INTERNAL",
+            "duration_ms": 0.98,
+            "start_ns": 1792719921345257288,
+            "end_ns": 1792719921346239376,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": []
+          },
+          {
+            "service_name": "chat-api",
+            "k8s_pod_name": "chat-api-75487bdfb-rl7tx",
+            "scope_name": "",
+            "span_name": "GET /healthz",
+            "kind": "SPAN_KIND_SERVER",
+            "duration_ms": 1.2,
+            "start_ns": 1792719921345042669,
+            "end_ns": 1792719921346239376,
+            "has_gen_ai_attrs": false,
+            "attribute_keys": [
+              "client.address",
+              "http.request.method",
+              "http.response.status_code",
+              "http.route",
+              "network.peer.address",
+              "network.peer.port",
+              "network.protocol.version",
+              "server.address",
+              "server.port",
+              "url.path",
+              "url.scheme"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "kubepilot_live": {
+    "status": "unknown",
+    "top1_cause": "none",
+    "top_causes": [],
+    "reason": "no deterministic rule matched the snapshot evidence"
+  }
+}

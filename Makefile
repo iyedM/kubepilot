@@ -14,7 +14,7 @@ INHIBIT := systemd-inhibit --what=sleep:idle:handle-lid-switch --who=kubepilot -
 else
 INHIBIT :=
 endif
-LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh lab/baselines/*.sh)
+LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh lab/baselines/*.sh lab/ebpf/*.sh)
 
 .PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test test-app eval-score lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 

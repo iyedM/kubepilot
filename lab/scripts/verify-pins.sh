@@ -60,6 +60,7 @@ mapfile -t images < <(
     echo "${COROOT_IMAGE}"
     echo "${COROOT_NODE_AGENT_IMAGE}"
     echo "${HOLMESGPT_IMAGE}"
+    echo "${BEYLA_IMAGE}"
   } | sort -u
 )
 
