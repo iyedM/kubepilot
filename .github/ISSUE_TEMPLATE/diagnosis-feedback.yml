@@ -1,0 +1,76 @@
+name: "External User Diagnosis Feedback (Field Evaluation)"
+description: "Report a real-world or lab diagnosis result (True Positive, False Positive, Honest Abstention, or Missing Cause)"
+title: "[Field-Eval]: <workload or scenario>"
+labels: ["field-evaluation", "user-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing **KubePilot**! Your feedback helps validate KubePilot beyond our local `kind` benchmark.
+        > **Privacy reminder:** Do not paste proprietary prompts or secrets. You can attach the sanitized output of `./bin/why-slow --format json` or `/api/v1/incidents/{id}/postmortem`.
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: "Kubernetes Environment"
+      options:
+        - "kind / minikube / k3d (local cluster)"
+        - "Managed Kubernetes (EKS / GKE / AKS / Kapsule)"
+        - "Self-managed Kubernetes (kubeadm / k3s / OpenShift)"
+        - "Offline recorded run (--run-dir)"
+    validations:
+      required: true
+
+  - type: input
+    id: serving_stack
+    attributes:
+      label: "GenAI Serving Stack"
+      description: "Which model server and instrumentation were running?"
+      placeholder: "e.g., llama.cpp / vLLM / TGI / Ollama + OpenTelemetry Python SDK"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: "Diagnosis Evaluation Outcome"
+      options:
+        - "True Positive — KubePilot isolated the exact root cause and component"
+        - "Partial Match — KubePilot identified the right symptom/component but secondary cause"
+        - "Honest Abstention (status=unknown) — Correct abstention on healthy or out-of-catalog issue"
+        - "False Negative (status=unknown) — Fault occurred within the 8-cause catalog but was missed"
+        - "False Positive — KubePilot blamed a component that was actually healthy"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reported_cause
+    attributes:
+      label: "Top-1 Cause Returned by KubePilot"
+      options:
+        - "cpu_throttling"
+        - "oom_killed"
+        - "unschedulable"
+        - "readiness_failing"
+        - "cold_start"
+        - "config_change"
+        - "host_cpu_contention"
+        - "unknown_no_infrastructure_cause"
+        - "unknown (abstained)"
+
+  - type: textarea
+    id: output
+    attributes:
+      label: "CLI Output or Post-Mortem Markdown"
+      description: "Paste the output of `./bin/why-slow` or `/api/v1/incidents/{id}/postmortem`"
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: ground_truth
+    attributes:
+      label: "Actual Root Cause & Operator Notes"
+      description: "What actually caused the slowness/failure, and did the suggested GitOps patch or SRE runbook help?"
+    validations:
+      required: true

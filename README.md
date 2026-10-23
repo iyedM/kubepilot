@@ -109,6 +109,7 @@ make build
 | `/api/v1/incidents/{id}/compare` | `GET` | Side-by-side metric comparison between the incident window and its healthy baseline |
 | `/api/v1/incidents/{id}/security` | `GET` | DevSecOps & Pod Security Standards (PSS-Restricted) posture audit + GitOps patch safety check |
 | `/api/v1/incidents/{id}/runbook` | `GET` | 5-channel signal coverage resilience matrix + controlled SRE runbook with human-approval gates |
+| `/api/v1/incidents/{id}/explain` | `GET` / `POST` | Controlled AI Copilot explanation grounded in the deterministic report (with optional OpenAI/Ollama/llama.cpp connector & destructive-command guardrails) |
 | `/api/v1/incidents/{id}/postmortem` | `GET` | Download a complete SRE Post-Mortem Markdown report with FinOps 2.0 ROI & GitOps remediation patch |
 | `/api/v1/incidents/{id}/bundle` | `GET` | Export a portable `.tar.gz` bundle (`incident.json`, `postmortem.md`, `patch.yaml`, `genaiincident.yaml`) |
 | `/api/v1/incidents/bundle` | `POST` | Import a portable `.tar.gz` or `.json` incident bundle into the store |
@@ -169,6 +170,8 @@ We evaluated **Grafana Beyla `v3.39.1`** (`go.opentelemetry.io/obi`) in both SDK
 
 ## Documentation Index
 
+- **Independent Verification & Field Evaluation Guide:** [`docs/independent-verification.md`](docs/independent-verification.md) and [External Diagnosis Feedback Template](.github/ISSUE_TEMPLATE/diagnosis-feedback.yml)
+- **DevSecOps STRIDE Threat Model, Empirical Limitations & Fair Tool Positioning:** [`docs/security-and-limitations.md`](docs/security-and-limitations.md)
 - **Landscape Analysis (P0):** [`docs/landscape.md`](docs/landscape.md)
 - **Lab & Reproducible Faults (P1):** [`docs/lab.md`](docs/lab.md) and [`docs/genai-conventions.md`](docs/genai-conventions.md)
 - **Evaluation Protocol & P2 Results (P2):** [`eval/README.md`](eval/README.md) and [`eval/faults/catalog.v1.json`](eval/faults/catalog.v1.json)

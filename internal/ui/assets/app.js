@@ -1882,6 +1882,22 @@
           escapeHTML(rb.scopeAndLimitations) +
           "</div>"
         : "") +
+      "</div>" +
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Controlled AI Copilot Explanation Extension (Optional OpenAI / Ollama / llama.cpp)</h3>' +
+      '<span class="pill">POST /api/v1/incidents/' +
+      escapeHTML(inc.id) +
+      "/explain</span>" +
+      "</div>" +
+      '<p style="margin:0 0 0.6rem;font-size:0.76rem;color:var(--text-secondary)">The deterministic Go rule engine remains the sole authority for root-cause classification. This controlled extension explains the correlated evidence, compares ruled-out hypotheses, and optionally queries a local OpenAI-compatible LLM under strict anti-hallucination and PSS-Restricted guardrails.</p>' +
+      '<div style="display:flex;gap:0.55rem;align-items:center;flex-wrap:wrap;margin-bottom:0.6rem">' +
+      '<input id="input-copilot-llm-url" type="url" placeholder="Optional OpenAI-compatible URL (e.g. http://127.0.0.1:11434/v1/chat/completions)" style="flex:1;min-width:260px;padding:0.44rem 0.65rem;border-radius:8px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--text);font-family:var(--font-mono);font-size:0.75rem">' +
+      '<button type="button" class="btn-primary" id="btn-run-copilot-explain" data-id="' +
+      escapeHTML(inc.id) +
+      '">Generate Grounded Explanation</button>' +
+      "</div>" +
+      '<div id="copilot-explain-output" class="hidden"></div>' +
       "</div>"
     );
   }
@@ -2319,6 +2335,57 @@
         } catch (e) {
           amStatus.style.color = "var(--red)";
           amStatus.textContent = "Error: " + e.message;
+        }
+      });
+    }
+
+    // Controlled AI Copilot Explanation button
+    const btnCopilot = document.getElementById("btn-run-copilot-explain");
+    const copilotOut = document.getElementById("copilot-explain-output");
+    const copilotURLInput = document.getElementById("input-copilot-llm-url");
+    if (btnCopilot && copilotOut) {
+      btnCopilot.addEventListener("click", async function () {
+        copilotOut.classList.remove("hidden");
+        copilotOut.innerHTML =
+          '<div style="font-size:0.75rem;color:var(--muted)">Generating grounded SRE explanation...</div>';
+        try {
+          const resp = await fetch(
+            "/api/v1/incidents/" + encodeURIComponent(inc.id) + "/explain",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                llmEndpoint: copilotURLInput ? copilotURLInput.value.trim() : "",
+              }),
+            }
+          );
+          const body = await resp.json();
+          if (!resp.ok) throw new Error(body.error || "HTTP " + resp.status);
+          const guards = (body.guardrails || [])
+            .map(function (g) {
+              return '<li style="margin-bottom:0.2rem">' + escapeHTML(g) + "</li>";
+            })
+            .join("");
+          const narrativeText =
+            body.llmExplanation || body.deterministicNarrative || "";
+          copilotOut.innerHTML =
+            '<div class="remediation-box" style="margin-bottom:0.55rem">' +
+            "<strong>Mode:</strong> <code>" +
+            escapeHTML(body.mode) +
+            "</code> · <strong>Guardrail Status:</strong> <code>" +
+            escapeHTML(body.llmSafetyStatus) +
+            "</code>" +
+            '<ul style="margin:0.35rem 0 0 1.1rem;padding:0;font-size:0.72rem">' +
+            guards +
+            "</ul></div>" +
+            '<pre class="code-block" style="white-space:pre-wrap;font-size:0.75rem">' +
+            escapeHTML(narrativeText) +
+            "</pre>";
+        } catch (e) {
+          copilotOut.innerHTML =
+            '<div class="alert-error">Copilot error: ' +
+            escapeHTML(e.message) +
+            "</div>";
         }
       });
     }

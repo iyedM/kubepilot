@@ -354,4 +354,39 @@ func TestSSECompareAlertmanagerBundleAndSimulate(t *testing.T) {
 	if rb.SignalCoveragePct < 80 || len(rb.Signals) != 5 || len(rb.Steps) < 4 {
 		t.Fatalf("unexpected RunbookSynthesis: %+v", rb)
 	}
+
+	// Controlled Agentic Explanation endpoint (/explain) — deterministic + guardrail-checked mock LLM
+	expReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/explain", nil)
+	expRec := httptest.NewRecorder()
+	srv.ServeHTTP(expRec, expReq)
+	if expRec.Code != http.StatusOK {
+		t.Fatalf("GET /explain status=%d body=%s", expRec.Code, expRec.Body.String())
+	}
+	var exp CopilotExplanation
+	if err := json.Unmarshal(expRec.Body.Bytes(), &exp); err != nil {
+		t.Fatalf("unmarshal CopilotExplanation: %v", err)
+	}
+	if exp.Mode != "deterministic-grounded-synthesis" || len(exp.Guardrails) < 5 || !strings.Contains(exp.DeterministicNarrative, "cpu_throttling") {
+		t.Fatalf("unexpected CopilotExplanation: %+v", exp)
+	}
+
+	// Verify guardrail blocks unsafe LLM command ("kubectl delete") and falls back to deterministic narrative
+	unsafeLLMSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": "Run kubectl delete pod --force immediately"}},
+			},
+		})
+	}))
+	defer unsafeLLMSrv.Close()
+
+	expPostBody, _ := json.Marshal(ExplainRequest{LLMEndpoint: unsafeLLMSrv.URL})
+	expPostReq := httptest.NewRequest(http.MethodPost, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/explain", bytes.NewReader(expPostBody))
+	expPostRec := httptest.NewRecorder()
+	srv.ServeHTTP(expPostRec, expPostReq)
+	var expBlocked CopilotExplanation
+	_ = json.Unmarshal(expPostRec.Body.Bytes(), &expBlocked)
+	if !strings.Contains(expBlocked.LLMSafetyStatus, "blocked-by-guardrail") || expBlocked.LLMExplanation != "" {
+		t.Fatalf("expected guardrail to block unsafe LLM output, got: %+v", expBlocked)
+	}
 }

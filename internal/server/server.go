@@ -567,10 +567,6 @@ func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use GET")
-		return
-	}
 	rel := strings.TrimPrefix(r.URL.Path, "/api/v1/incidents/")
 	if rel == "" {
 		writeError(w, http.StatusBadRequest, "missing incident id")
@@ -593,6 +589,19 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(rel, "/runbook"):
 		subAction = "runbook"
 		rel = strings.TrimSuffix(rel, "/runbook")
+	case strings.HasSuffix(rel, "/explain"):
+		subAction = "explain"
+		rel = strings.TrimSuffix(rel, "/explain")
+	}
+
+	if subAction == "explain" {
+		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed; use GET or POST")
+			return
+		}
+	} else if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use GET")
+		return
 	}
 
 	inc, ok := s.GetIncident(rel)
@@ -636,6 +645,19 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		return
 	case "runbook":
 		writeJSON(w, http.StatusOK, inc.Runbook)
+		return
+	case "explain":
+		var req ExplainRequest
+		if r.Method == http.MethodPost && r.Body != nil {
+			_ = json.NewDecoder(r.Body).Decode(&req)
+		}
+		if req.LLMEndpoint == "" {
+			req.LLMEndpoint = r.URL.Query().Get("llm_endpoint")
+		}
+		if req.Model == "" {
+			req.Model = r.URL.Query().Get("model")
+		}
+		writeJSON(w, http.StatusOK, BuildCopilotExplanation(r.Context(), inc, req))
 		return
 	case "bundle":
 		tgz, err := BuildIncidentBundleTarGz(inc)
