@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KubePilot — Read-Only GenAI Incident &amp; Evidence Console</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">KP</span>
+      <div>
+        <h1>KubePilot</h1>
+        <p class="subtitle">Deterministic GenAI Slow/Failed Request Diagnosis on Kubernetes</p>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="badge badge-readonly">Read-Only RBAC</span>
+      <span class="badge badge-deterministic">Deterministic (No LLM in Loop)</span>
+      <span class="badge badge-rules">8 Catalog Rules</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="diagnose-bar card">
+      <h2>Run Diagnosis (`POST /api/v1/diagnose`)</h2>
+      <form id="diagnose-form" class="diagnose-form">
+        <div class="field">
+          <label for="input-trace-id">Trace ID (optional)</label>
+          <input id="input-trace-id" name="traceId" type="text" placeholder="e.g. a45841bed378d1796cf1b256f186a0f2">
+        </div>
+        <div class="field">
+          <label for="input-run-dir">Offline Run Dir (optional)</label>
+          <input id="input-run-dir" name="runDir" type="text" placeholder="e.g. eval/runs/dev/dev--cpu-throttle--limit-300m--r1">
+        </div>
+        <div class="field">
+          <label for="input-from">From UTC (optional)</label>
+          <input id="input-from" name="from" type="text" placeholder="2026-10-23T01:40:00Z">
+        </div>
+        <div class="field">
+          <label for="input-to">To UTC (optional)</label>
+          <input id="input-to" name="to" type="text" placeholder="2026-10-23T01:45:00Z">
+        </div>
+        <div class="field-actions">
+          <button type="submit" id="btn-diagnose" class="btn-primary">Diagnose Now</button>
+          <button type="button" id="btn-refresh" class="btn-secondary">Refresh List</button>
+        </div>
+      </form>
+      <div id="diagnose-error" class="alert-error hidden"></div>
+    </section>
+
+    <section class="workspace">
+      <aside class="incident-pane card">
+        <div class="pane-header">
+          <h2>Incidents <span id="incident-count" class="pill">0</span></h2>
+          <div class="filters">
+            <select id="filter-status" aria-label="Filter by status">
+              <option value="">All statuses</option>
+              <option value="diagnosed">diagnosed</option>
+              <option value="unknown">unknown</option>
+            </select>
+            <select id="filter-cause" aria-label="Filter by cause">
+              <option value="">All causes</option>
+              <option value="cpu_throttling">cpu_throttling</option>
+              <option value="oom_killed">oom_killed</option>
+              <option value="unschedulable">unschedulable</option>
+              <option value="readiness_failing">readiness_failing</option>
+              <option value="cold_start">cold_start</option>
+              <option value="config_change">config_change</option>
+              <option value="host_cpu_contention">host_cpu_contention</option>
+              <option value="unknown_no_infrastructure_cause">unknown_no_infrastructure_cause</option>
+            </select>
+          </div>
+        </div>
+        <ul id="incident-list" class="incident-list">
+          <li class="empty-state">Loading incidents...</li>
+        </ul>
+      </aside>
+
+      <section class="detail-pane card" id="detail-pane">
+        <div class="empty-detail">
+          <h3>Select an incident or run a diagnosis</h3>
+          <p>Choose an incident from the list on the left to inspect its top-3 probable causes, confidence scores, correlated evidence timeline, and estimated resource cost.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>

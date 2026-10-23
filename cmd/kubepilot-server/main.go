@@ -17,6 +17,7 @@ import (
 	"github.com/iyedM/kubepilot/internal/collector/live"
 	"github.com/iyedM/kubepilot/internal/collector/offline"
 	"github.com/iyedM/kubepilot/internal/server"
+	"github.com/iyedM/kubepilot/internal/ui"
 )
 
 func main() {
@@ -52,6 +53,7 @@ func run(args []string) error {
 			TempoURL:      *tempoURL,
 			SkewTolerance: *skew,
 		},
+		UIHandler: ui.NewHandler(),
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
