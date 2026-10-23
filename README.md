@@ -21,9 +21,11 @@ and outputs the **top-3 probable causes**, each with **timestamped evidence**, a
 - **Strictly Read-Only RBAC:** No pod restarting, no patching, no autoscaling, and no privileged eBPF DaemonSet (`hostPID`/`CAP_BPF`).
 - **Privacy by Default:** Prompt and completion payloads are stripped at trace ingestion and never stored in [`snapshot.Snapshot`](internal/snapshot/snapshot.go).
 - **Convention-Proof `gen_ai.*` Adapter:** All unstable OpenTelemetry GenAI semantic convention names live exclusively inside [`internal/genai/adapter.go`](internal/genai/adapter.go) (documented in [`docs/genai-conventions.md`](docs/genai-conventions.md)).
-- **Multiple Consumption Modes:**
-  - **`why-slow` CLI / `kubectl why-slow` Krew plugin** ([`cmd/why-slow`](cmd/why-slow/main.go), [`packaging/krew/why-slow.yaml`](packaging/krew/why-slow.yaml))
-  - **`kubepilot-server` HTTP API & Embedded Web UI** ([`cmd/kubepilot-server`](cmd/kubepilot-server/main.go), [`internal/server`](internal/server/server.go), [`internal/ui`](internal/ui/ui.go))
+- **Multiple Consumption Modes & SRE Integrations:**
+  - **`why-slow` CLI / `kubectl why-slow` Native Plugin** ([`cmd/why-slow`](cmd/why-slow/main.go), [`packaging/krew/why-slow.yaml`](packaging/krew/why-slow.yaml))
+  - **`kubepilot-server` HTTP API & Embedded Web UI** ([`cmd/kubepilot-server`](cmd/kubepilot-server/main.go), [`internal/server`](internal/server/server.go), [`internal/ui`](internal/ui/ui.go)) with interactive blast-radius topology, 4-lane signal swimlanes, Baseline vs. Incident comparator, real-time SSE streaming (`/api/v1/stream`), and an interactive **What-If Chaos Sandbox** (`/api/v1/simulate`)
+  - **SRE Post-Mortem Markdown, GitOps Patch & Portable `.tar.gz` Bundles** (`/api/v1/incidents/{id}/postmortem`, `/api/v1/incidents/{id}/bundle`, `/api/v1/incidents/{id}/compare`)
+  - **Prometheus `/metrics` Exporter, Alertmanager Auto-Triage Receiver & Official Grafana Dashboard** (`/metrics`, `/api/v1/alerts/alertmanager`, [`charts/kubepilot/dashboards/kubepilot-overview.json`](charts/kubepilot/dashboards/kubepilot-overview.json))
   - **Read-Only `GenAIIncident` CustomResourceDefinition Operator** ([`internal/operator`](internal/operator/operator.go), [`charts/kubepilot/crds/`](charts/kubepilot/crds/genaiincidents.kubepilot.io.yaml))
   - **OpenCost Incident Resource Waste Estimator** ([`internal/cost`](internal/cost/opencost.go))
 
@@ -34,7 +36,7 @@ and outputs the **top-3 probable causes**, each with **timestamped evidence**, a
 You can build and test KubePilot immediately against the 64 recorded lab runs in [`eval/runs/`](eval/runs/) without spinning up a cluster:
 
 ```sh
-# 1. Build ./bin/why-slow, ./bin/kubepilot-server, and ./bin/eval-score
+# 1. Build ./bin/why-slow, ./bin/kubectl-why_slow, ./bin/kubepilot-server, and ./bin/eval-score
 make build
 
 # 2. Diagnose a recorded CFS CPU throttling fault run
@@ -47,6 +49,20 @@ make build
 ./bin/kubepilot-server --listen 127.0.0.1:8090 --seed-runs-dir eval/runs/dev --seed-limit 19
 # -> Open http://127.0.0.1:8090
 ```
+
+### HTTP API & SRE Endpoints (`kubepilot-server`)
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/metrics` | `GET` | Prometheus metrics exporter (`kubepilot_incidents_by_cause_total`, `kubepilot_incident_waste_dollars_total`, etc.) |
+| `/api/v1/stream` | `GET` | Real-time Server-Sent Events (SSE) stream of newly diagnosed incidents |
+| `/api/v1/diagnose` | `GET` / `POST` | Diagnose a live cluster window, OpenTelemetry `trace_id`, or offline `run_dir` |
+| `/api/v1/simulate` | `POST` | Interactive What-If Chaos Simulator against the unmodified deterministic Go rule engine |
+| `/api/v1/alerts/alertmanager` | `POST` | Zero-touch Prometheus Alertmanager v4 webhook receiver for automatic incident triage |
+| `/api/v1/incidents/{id}/compare` | `GET` | Side-by-side metric comparison between the incident window and its healthy baseline |
+| `/api/v1/incidents/{id}/postmortem` | `GET` | Download a complete SRE Post-Mortem Markdown report with GitOps remediation YAML patch |
+| `/api/v1/incidents/{id}/bundle` | `GET` | Export a portable `.tar.gz` bundle (`incident.json`, `postmortem.md`, `patch.yaml`, `genaiincident.yaml`) |
+| `/api/v1/incidents/bundle` | `POST` | Import a portable `.tar.gz` or `.json` incident bundle into the store |
 
 Example CLI output:
 
