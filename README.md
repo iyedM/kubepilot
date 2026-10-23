@@ -1,5 +1,11 @@
 # KubePilot
 
+[![CI](https://github.com/iyedM/kubepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/iyedM/kubepilot/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/iyedM/kubepilot?label=release&color=0ea5e9)](https://github.com/iyedM/kubepilot/releases)
+[![Go 1.26](https://img.shields.io/badge/Go-1.26%20(Zero%20External%20Deps)-00ADD8?logo=go&logoColor=white)](go.mod)
+[![Security Posture](https://img.shields.io/badge/RBAC-Read--Only%20%C2%B7%20PSS--Restricted-10b981)](charts/kubepilot/templates/rbac.yaml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 **KubePilot** is an open-source, self-hosted, **read-only** Kubernetes diagnosis tool and service in Go that answers one question:
 
 > **Why was this GenAI request on Kubernetes slow, or why did it fail?**
@@ -9,25 +15,62 @@ Given a trace ID or a time window, KubePilot correlates:
 - **Kubernetes events and Pod/Node/PVC state**, and
 - **Prometheus metrics** (cAdvisor CFS throttling, Linux PSI CPU pressure, `kube-state-metrics`, and `llama.cpp` serving metrics),
 
-and outputs the **top-3 probable causes**, each with **timestamped evidence**, a **confidence score**, and an **OpenCost resource waste estimate**. When the evidence is ambiguous, it returns **`"unknown"`** instead of guessing.
+and outputs the **top-3 probable causes**, each with **timestamped evidence**, a **confidence score**, an **OpenCost Operational FinOps 2.0 ROI & waste estimate**, a **DevSecOps PSS-Restricted posture audit**, and a **controlled Human-in-the-Loop SRE runbook**. When the evidence is ambiguous, it returns **`"unknown"`** instead of guessing.
 
 > **Methodological disclaimer:** All benchmark and baseline comparison numbers reported in this repository are measured on **faults injected in a single-cluster local `kind` lab** (`kubepilot-lab`) with one CPU-served model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`), one GenAI application (`chat-api`), and synthetic traffic (`loadgen`), **not on real production incidents**.
+
+```mermaid
+flowchart LR
+    subgraph Signals["5-Channel Telemetry Input (Read-Only)"]
+        T["OTel GenAI Traces<br/>(Tempo · 0 Prompts)"]
+        P["Prometheus Metrics<br/>(CFS · PSI · KSM · llama.cpp)"]
+        K["Kubernetes API<br/>(Pods · Events · PVCs)"]
+        R["Client Request Logs<br/>(HTTP 502/504 · Latency)"]
+        O["OpenCost API<br/>(/allocation/compute)"]
+    end
+
+    subgraph Engine["KubePilot Core (Go 1.26 · 0 Deps)"]
+        A["GenAI Semantic Adapter<br/>(internal/genai)"]
+        S["Correlated Snapshot<br/>(internal/snapshot)"]
+        D["Deterministic Rule Engine<br/>(8 Rules · 0 LLM Calls)"]
+        G["FinOps 2.0 + DevSecOps PSS<br/>+ Controlled SRE Runbook"]
+    end
+
+    subgraph Outputs["SRE & Platform Outputs"]
+        CLI["why-slow & kubectl-why_slow"]
+        UI["Embedded Web Console<br/>(SSE · Topology · What-If)"]
+        PM["Post-Mortem .md, GitOps Patch<br/>& Portable .tar.gz Bundles"]
+        AM["Prometheus /metrics &<br/>Alertmanager Auto-Triage"]
+    end
+
+    T --> A --> S
+    P --> S
+    K --> S
+    R --> S
+    S --> D --> G
+    O --> G
+    G --> CLI
+    G --> UI
+    G --> PM
+    G --> AM
+```
 
 ---
 
 ## Key Features & Design Principles
 
 - **Deterministic First (Zero LLM in the Diagnosis Loop):** Every diagnosis is produced in `< 1 s` by 8 pure, explainable Go rules in [`internal/rules/`](internal/rules/). Identical snapshots always yield identical causes and evidence.
-- **Strictly Read-Only RBAC:** No pod restarting, no patching, no autoscaling, and no privileged eBPF DaemonSet (`hostPID`/`CAP_BPF`).
+- **Strictly Read-Only RBAC & PSS-Restricted Posture Auditor:** No pod restarting, no patching, no autoscaling, and no privileged eBPF DaemonSet (`hostPID`/`CAP_BPF`). Built-in `/api/v1/incidents/{id}/security` auditor scores workload and patch compliance (`0–100`) across 6 controls (RBAC least privilege, prompt redaction, resource limits, image tag pinning, `hostPath` isolation, and patch safety).
+- **Operational FinOps 2.0 & Unit Economics:** Computes window cost/waste, **30-day projected monthly waste (`$/mo`)**, **GenAI unit economics (`$/1k requests` & `$/1M output tokens`)**, and the **monthly cost delta (`PatchMonthlyDeltaUSD`)** of the suggested GitOps remediation patch.
+- **5-Channel Signal Resilience & Controlled SRE Runbook:** `/api/v1/incidents/{id}/runbook` reports per-channel health and explicit graceful-degradation fallbacks if Tempo, Prometheus, or Kubernetes Events are unavailable, alongside a 4-step human-approved remediation & rollback runbook.
 - **Privacy by Default:** Prompt and completion payloads are stripped at trace ingestion and never stored in [`snapshot.Snapshot`](internal/snapshot/snapshot.go).
 - **Convention-Proof `gen_ai.*` Adapter:** All unstable OpenTelemetry GenAI semantic convention names live exclusively inside [`internal/genai/adapter.go`](internal/genai/adapter.go) (documented in [`docs/genai-conventions.md`](docs/genai-conventions.md)).
 - **Multiple Consumption Modes & SRE Integrations:**
   - **`why-slow` CLI / `kubectl why-slow` Native Plugin** ([`cmd/why-slow`](cmd/why-slow/main.go), [`packaging/krew/why-slow.yaml`](packaging/krew/why-slow.yaml))
-  - **`kubepilot-server` HTTP API & Embedded Web UI** ([`cmd/kubepilot-server`](cmd/kubepilot-server/main.go), [`internal/server`](internal/server/server.go), [`internal/ui`](internal/ui/ui.go)) with interactive blast-radius topology, 4-lane signal swimlanes, Baseline vs. Incident comparator, real-time SSE streaming (`/api/v1/stream`), and an interactive **What-If Chaos Sandbox** (`/api/v1/simulate`)
+  - **`kubepilot-server` HTTP API & Embedded Web UI** ([`cmd/kubepilot-server`](cmd/kubepilot-server/main.go), [`internal/server`](internal/server/server.go), [`internal/ui`](internal/ui/ui.go)) with interactive blast-radius topology, 4-lane signal swimlanes, Baseline vs. Incident comparator, DevSecOps & Runbook governance tab, real-time SSE streaming (`/api/v1/stream`), and an interactive **What-If Chaos Sandbox** (`/api/v1/simulate`)
   - **SRE Post-Mortem Markdown, GitOps Patch & Portable `.tar.gz` Bundles** (`/api/v1/incidents/{id}/postmortem`, `/api/v1/incidents/{id}/bundle`, `/api/v1/incidents/{id}/compare`)
   - **Prometheus `/metrics` Exporter, Alertmanager Auto-Triage Receiver & Official Grafana Dashboard** (`/metrics`, `/api/v1/alerts/alertmanager`, [`charts/kubepilot/dashboards/kubepilot-overview.json`](charts/kubepilot/dashboards/kubepilot-overview.json))
   - **Read-Only `GenAIIncident` CustomResourceDefinition Operator** ([`internal/operator`](internal/operator/operator.go), [`charts/kubepilot/crds/`](charts/kubepilot/crds/genaiincidents.kubepilot.io.yaml))
-  - **OpenCost Incident Resource Waste Estimator** ([`internal/cost`](internal/cost/opencost.go))
 
 ---
 
@@ -36,6 +79,10 @@ and outputs the **top-3 probable causes**, each with **timestamped evidence**, a
 You can build and test KubePilot immediately against the 64 recorded lab runs in [`eval/runs/`](eval/runs/) without spinning up a cluster:
 
 ```sh
+# Run the complete 1-click end-to-end showcase (CLI + kubectl plugin + FinOps 2.0 + DevSecOps + Runbook + Simulator):
+bash scripts/demo-showcase.sh
+
+# Or step-by-step:
 # 1. Build ./bin/why-slow, ./bin/kubectl-why_slow, ./bin/kubepilot-server, and ./bin/eval-score
 make build
 
