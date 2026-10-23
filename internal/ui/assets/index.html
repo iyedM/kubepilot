@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KubePilot — GenAI Root-Cause &amp; Evidence Console</title>
+  <title>KubePilot — GenAI Kubernetes Root-Cause &amp; Telemetry Console</title>
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <div class="brand-logo" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
           <polyline points="2 17 12 22 22 17"></polyline>
           <polyline points="2 12 12 17 22 12"></polyline>
@@ -19,25 +19,33 @@
       <div>
         <div class="brand-title-row">
           <h1>KubePilot</h1>
-          <span class="version-chip">v0.1.0</span>
+          <span class="version-chip">v1.0 · SRE Console</span>
+          <span class="badge badge-readonly" title="Strictly Read-Only RBAC: never mutates Pods, Deployments, or Nodes">
+            <span class="dot dot-green"></span> Read-Only RBAC
+          </span>
+          <span class="badge badge-deterministic" title="Pure Go rule engine; 0 LLM calls in the diagnosis loop">
+            <span class="dot dot-blue"></span> Deterministic (Zero LLM)
+          </span>
+          <span class="badge badge-rules" title="Preregistered held-out test split: 24/24 (100%) top-1 accuracy, 0/21 false positives">
+            <span class="dot dot-amber"></span> 100% Test Recall · 0% FP
+          </span>
         </div>
-        <p class="subtitle">Deterministic Root-Cause Diagnosis for Slow or Failing GenAI Requests on Kubernetes</p>
+        <p class="subtitle">Correlating OpenTelemetry GenAI Traces, Kubernetes Events &amp; Pods, Prometheus Cgroup/PSI Metrics, and OpenCost Waste</p>
       </div>
     </div>
+
     <div class="topbar-right">
-      <div class="badges">
-        <span class="badge badge-readonly" title="Never mutates Pods, Deployments, or Nodes">
-          <span class="dot dot-green"></span> Read-Only RBAC
-        </span>
-        <span class="badge badge-deterministic" title="Pure Go rule engine; 0 LLM calls in diagnosis loop">
-          <span class="dot dot-blue"></span> Deterministic (Zero LLM)
-        </span>
-        <span class="badge badge-rules" title="24/24 (100%) on held-out test split, 0/21 false positives">
-          <span class="dot dot-amber"></span> 8 Catalog Rules · 100% Test Recall
-        </span>
+      <div class="dataset-switcher" role="group" aria-label="Dataset Switcher">
+        <span class="switcher-label">Dataset:</span>
+        <button type="button" class="btn-chip" id="btn-seed-dev" title="Load the 19 development evaluation runs">Dev Split (19)</button>
+        <button type="button" class="btn-chip btn-chip-accent" id="btn-seed-test" title="Load the 45 held-out preregistered test runs">Test Split (45)</button>
+        <button type="button" class="btn-chip" id="btn-seed-all" title="Load all 64 evaluation runs (dev + test)">All 64 Runs</button>
       </div>
+      <button type="button" id="btn-toggle-drawer" class="btn-primary-sm" title="Run on-demand diagnosis or pick a preset scenario">
+        + Diagnose / Presets
+      </button>
       <button type="button" id="btn-theme" class="btn-icon" title="Switch Dark / Light theme" aria-label="Toggle color theme">
-        Theme
+        Light Mode
       </button>
     </div>
   </header>
@@ -46,44 +54,74 @@
     <!-- Top KPI Strip -->
     <section class="kpi-strip" aria-label="Overview Metrics">
       <div class="kpi-card">
-        <span class="kpi-label">Windows Inspected</span>
+        <div class="kpi-top">
+          <span class="kpi-label">Windows Inspected</span>
+          <span class="kpi-icon kpi-icon-blue">WIN</span>
+        </div>
         <strong class="kpi-value" id="kpi-total">0</strong>
-        <span class="kpi-sub" id="kpi-sub-total">Loaded in store</span>
+        <span class="kpi-sub" id="kpi-sub-total">Loaded in memory store</span>
       </div>
       <div class="kpi-card kpi-card-warn">
-        <span class="kpi-label">Diagnosed Incidents</span>
+        <div class="kpi-top">
+          <span class="kpi-label">Diagnosed Incidents</span>
+          <span class="kpi-icon kpi-icon-red">RCA</span>
+        </div>
         <strong class="kpi-value" id="kpi-diagnosed">0</strong>
-        <span class="kpi-sub">Root cause isolated</span>
+        <span class="kpi-sub" id="kpi-sub-diagnosed">Multi-signal root cause isolated</span>
       </div>
       <div class="kpi-card kpi-card-ok">
-        <span class="kpi-label">Healthy / No-Fault Windows</span>
+        <div class="kpi-top">
+          <span class="kpi-label">Healthy / Decoy Windows</span>
+          <span class="kpi-icon kpi-icon-green">0 FP</span>
+        </div>
         <strong class="kpi-value" id="kpi-healthy">0</strong>
-        <span class="kpi-sub">0 false positives on decoys</span>
+        <span class="kpi-sub">Abstained cleanly on decoys</span>
+      </div>
+      <div class="kpi-card kpi-card-telemetry">
+        <div class="kpi-top">
+          <span class="kpi-label">Correlated Signals</span>
+          <span class="kpi-icon kpi-icon-purple">OTEL</span>
+        </div>
+        <strong class="kpi-value" id="kpi-signals">0</strong>
+        <span class="kpi-sub" id="kpi-sub-signals">Traces · K8s events · Pods</span>
       </div>
       <div class="kpi-card kpi-card-cost">
-        <span class="kpi-label">Cumulative Incident Waste</span>
+        <div class="kpi-top">
+          <span class="kpi-label">Cumulative Incident Waste</span>
+          <span class="kpi-icon kpi-icon-amber">COST</span>
+        </div>
         <strong class="kpi-value" id="kpi-waste">$0.0000</strong>
-        <span class="kpi-sub">OpenCost CPU + RAM model</span>
+        <span class="kpi-sub" id="kpi-sub-waste">OpenCost CPU + RAM model</span>
       </div>
     </section>
 
-    <!-- Collapsible / Clean On-Demand Diagnosis Bar -->
-    <section class="diagnose-bar card">
+    <!-- Interactive Root-Cause Distribution Bar -->
+    <section class="distribution-card card" aria-label="Root Cause Distribution">
+      <div class="dist-header">
+        <span class="dist-title">Catalog Root-Cause Breakdown (click any category to filter)</span>
+        <button type="button" id="btn-clear-cause" class="link-btn hidden">Reset filter</button>
+      </div>
+      <div id="dist-bar" class="dist-bar"></div>
+      <div id="dist-legend" class="dist-legend"></div>
+    </section>
+
+    <!-- On-Demand Diagnosis & Quick Held-Out Scenarios Drawer -->
+    <section id="diagnose-drawer" class="diagnose-bar card">
       <div class="diagnose-bar-header">
         <div>
-          <h2>Run On-Demand Diagnosis</h2>
-          <p class="section-hint">Inspect a recorded lab run directory, a specific OpenTelemetry Trace ID, or a live cluster time window.</p>
+          <h2>On-Demand Diagnosis &amp; Held-Out Test Scenarios</h2>
+          <p class="section-hint">Click any held-out test preset below to run the Go rule engine and inspect its full telemetry, or query a custom run directory / live cluster window.</p>
         </div>
         <div class="preset-group">
-          <span class="preset-label">Quick Held-Out Test Examples:</span>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cpu-throttle--limit-200m--r1">+ CPU Throttle (200m)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--oomkill--app-oom-40mi--r1">+ OOMKill (chat-api)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--unschedulable--node-taint--r1">+ Node Taint</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--readiness-fail--initial-delay-600--r1">+ Readiness Delay 600s</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cold-start--model-download-hf--r1">+ Cold Start (HF Download)</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--host-contention--neighbor-pod-same-node--r1">+ Noisy Neighbor CPU</button>
-          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--app-delay--intermittent-delay--r1">+ App Pre-Inference Delay</button>
-          <button type="button" class="chip-btn chip-btn-ok" data-preset="eval/runs/test/test--nofault--decoy-same-node-oom--r1">+ Healthy (Same-Node OOM Decoy)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cpu-throttle--limit-200m--r1">CPU Throttle (200m)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--oomkill--app-oom-40mi--r1">OOMKill (chat-api Exit 137)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--unschedulable--node-taint--r1">Unschedulable (Node Taint)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--readiness-fail--initial-delay-600--r1">Readiness Delay (600s)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--cold-start--model-download-hf--r1">Cold Start (HF Download)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--config-change--threads-1--r1">Config Regression (--threads 1)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--host-contention--neighbor-pod-same-node--r1">Host CPU Contention (PSI)</button>
+          <button type="button" class="chip-btn" data-preset="eval/runs/test/test--app-delay--intermittent-delay--r1">App Pre-Inference Delay</button>
+          <button type="button" class="chip-btn chip-btn-ok" data-preset="eval/runs/test/test--nofault--decoy-same-node-oom--r1">Healthy + Same-Node OOM Decoy</button>
         </div>
       </div>
 
@@ -114,18 +152,18 @@
 
     <!-- Main Split Workspace -->
     <section class="workspace">
-      <!-- Left Sidebar: Filterable Incident List -->
+      <!-- Left Sidebar: Filterable Incident Explorer -->
       <aside class="incident-pane card">
         <div class="pane-header">
           <div class="pane-title-row">
-            <h2>Evaluated Windows <span id="incident-count" class="pill">0</span></h2>
+            <h2>Incident Windows <span id="incident-count" class="pill">0</span></h2>
           </div>
-          <input id="filter-search" type="search" placeholder="Search by ID, pod, workload, cause..." aria-label="Search incidents">
+          <input id="filter-search" type="search" placeholder="Search ID, pod, workload, cause..." aria-label="Search incidents">
           <div class="filters">
             <select id="filter-status" aria-label="Filter by status">
               <option value="">All outcomes</option>
               <option value="diagnosed">Diagnosed (Fault found)</option>
-              <option value="unknown">Healthy / Unknown (No fault)</option>
+              <option value="unknown">Healthy / Unknown (0 FP)</option>
             </select>
             <select id="filter-cause" aria-label="Filter by root cause">
               <option value="">All 8 catalog causes</option>
@@ -145,11 +183,11 @@
         </ul>
       </aside>
 
-      <!-- Right Detail View: Plain-English Explanation, Causes, Timeline & Cost -->
+      <!-- Right Detail View: Multi-Tab Visual Inspector -->
       <section class="detail-pane card" id="detail-pane">
         <div class="empty-detail">
           <h3>Select an incident window on the left</h3>
-          <p>Inspect its plain-English diagnosis, root-cause confidence score, correlated multi-source evidence timeline (Prometheus, Kubernetes Events/Pods, OpenTelemetry GenAI traces), and OpenCost waste breakdown.</p>
+          <p>Explore its interactive service topology map, multi-signal swimlane timeline, Prometheus &amp; latency charts, OpenTelemetry trace waterfall, Kubernetes pod specs, and OpenCost waste breakdown.</p>
         </div>
       </section>
     </section>

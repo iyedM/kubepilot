@@ -47,20 +47,54 @@ type CostEstimator interface {
 	Estimate(ctx context.Context, snap *snapshot.Snapshot, rep snapshot.Report) (*CostSummary, error)
 }
 
-// IncidentRecord wraps a snapshot.Report with metadata, trace/event counts, and
-// optional cost estimation for the API, Web UI (P6), and Operator (P7).
+// MetricPoint is a single (timestamp, value) sample for UI time-series charts.
+type MetricPoint struct {
+	Timestamp time.Time `json:"ts"`
+	Value     float64   `json:"value"`
+}
+
+// MetricLine is one labeled series inside a MetricChart.
+type MetricLine struct {
+	Label  string        `json:"label"`
+	Points []MetricPoint `json:"points"`
+}
+
+// MetricChart holds a named time-series chart extracted from Snapshot.Metrics.
+type MetricChart struct {
+	ID     string       `json:"id"`
+	Title  string       `json:"title"`
+	Unit   string       `json:"unit"`
+	Series []MetricLine `json:"series"`
+}
+
+// TelemetryOverview bundles the correlated traces, requests, pods, events, and
+// Prometheus metric curves from a Snapshot so the Web UI can render interactive
+// topology diagrams, swimlane timelines, trace waterfalls, and metric charts.
+type TelemetryOverview struct {
+	Baseline *snapshot.TimeRange      `json:"baseline,omitempty"`
+	Requests []snapshot.RequestSample `json:"requests,omitempty"`
+	Traces   []snapshot.TraceSummary  `json:"traces,omitempty"`
+	Pods     []snapshot.PodSnapshot   `json:"pods,omitempty"`
+	Events   []snapshot.K8sEvent      `json:"events,omitempty"`
+	Charts   []MetricChart            `json:"charts,omitempty"`
+}
+
+// IncidentRecord wraps a snapshot.Report with metadata, trace/event counts,
+// optional cost estimation, and rich telemetry overview for the API, Web UI (P6),
+// and Operator (P7).
 type IncidentRecord struct {
-	ID         string          `json:"id"`
-	CreatedAt  time.Time       `json:"createdAt"`
-	Source     string          `json:"source"` // "live", "poll", "run-dir", "snapshot"
-	RunID      string          `json:"runId,omitempty"`
-	Namespace  string          `json:"namespace"`
-	TraceID    string          `json:"traceId,omitempty"`
-	Report     snapshot.Report `json:"report"`
-	TraceCount int             `json:"traceCount"`
-	EventCount int             `json:"eventCount"`
-	PodCount   int             `json:"podCount"`
-	Cost       *CostSummary    `json:"cost,omitempty"`
+	ID         string             `json:"id"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Source     string             `json:"source"` // "live", "poll", "run-dir", "snapshot"
+	RunID      string             `json:"runId,omitempty"`
+	Namespace  string             `json:"namespace"`
+	TraceID    string             `json:"traceId,omitempty"`
+	Report     snapshot.Report    `json:"report"`
+	TraceCount int                `json:"traceCount"`
+	EventCount int                `json:"eventCount"`
+	PodCount   int                `json:"podCount"`
+	Cost       *CostSummary       `json:"cost,omitempty"`
+	Telemetry  *TelemetryOverview `json:"telemetry,omitempty"`
 }
 
 // Config configures a KubePilot HTTP Server.
@@ -231,16 +265,21 @@ func (s *Server) PollOnce(ctx context.Context, from, to time.Time, traceID strin
 }
 
 func (s *Server) buildRecord(ctx context.Context, source, runID string, snap *snapshot.Snapshot, rep snapshot.Report) IncidentRecord {
+	ns := s.cfg.LiveConfig.Namespace
+	if ns == "" {
+		ns = "genai"
+	}
 	rec := IncidentRecord{
 		CreatedAt:  time.Now().UTC(),
 		Source:     source,
 		RunID:      runID,
-		Namespace:  s.cfg.LiveConfig.Namespace,
+		Namespace:  ns,
 		TraceID:    snap.TargetTraceID,
 		Report:     rep,
 		TraceCount: len(snap.Traces),
 		EventCount: len(snap.Events),
 		PodCount:   len(snap.Pods),
+		Telemetry:  buildTelemetryOverview(snap, ns),
 	}
 	if s.cfg.CostEstimator != nil {
 		if cost, err := s.cfg.CostEstimator.Estimate(ctx, snap, rep); err == nil && cost != nil {
@@ -254,6 +293,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/healthz", s.handleHealth)
 	s.mux.HandleFunc("/readyz", s.handleHealth)
 	s.mux.HandleFunc("/api/v1/diagnose", s.handleDiagnose)
+	s.mux.HandleFunc("/api/v1/seed", s.handleSeed)
 	s.mux.HandleFunc("/api/v1/incidents", s.handleIncidents)
 	s.mux.HandleFunc("/api/v1/incidents/", s.handleIncidentByID)
 	if s.cfg.UIHandler != nil {
@@ -271,6 +311,7 @@ func (s *Server) registerRoutes() {
 					"/healthz",
 					"/readyz",
 					"/api/v1/diagnose",
+					"/api/v1/seed",
 					"/api/v1/incidents",
 				},
 			})
@@ -441,6 +482,14 @@ func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		}
 		list = filtered
 	}
+	if r.URL.Query().Get("full") != "1" {
+		compact := make([]IncidentRecord, len(list))
+		for i := range list {
+			compact[i] = list[i]
+			compact[i].Telemetry = nil
+		}
+		list = compact
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"count":     len(list),
 		"incidents": list,
@@ -463,6 +512,336 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, inc)
+}
+
+// SeedRequest describes the payload accepted by POST /api/v1/seed.
+type SeedRequest struct {
+	Dir   string `json:"dir"`
+	Limit int    `json:"limit,omitempty"`
+	Clear bool   `json:"clear,omitempty"`
+}
+
+func (s *Server) handleSeed(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use POST")
+		return
+	}
+	var req SeedRequest
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+	dir := filepath.Clean(strings.TrimSpace(req.Dir))
+	if dir == "" || dir == "." {
+		dir = filepath.Join("eval", "runs", "dev")
+	}
+	if req.Clear {
+		s.mu.Lock()
+		s.incidents = nil
+		s.mu.Unlock()
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	defer cancel()
+
+	var loaded int
+	if dir == "all" {
+		n1, _ := s.SeedFromRunsDir(ctx, filepath.Join("eval", "runs", "dev"), limit)
+		n2, _ := s.SeedFromRunsDir(ctx, filepath.Join("eval", "runs", "test"), limit)
+		loaded = n1 + n2
+	} else {
+		n, err := s.SeedFromRunsDir(ctx, dir, limit)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("seed %q: %v", dir, err))
+			return
+		}
+		loaded = n
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"seeded": loaded,
+		"total":  len(s.ListIncidents()),
+	})
+}
+
+func buildTelemetryOverview(snap *snapshot.Snapshot, targetNS string) *TelemetryOverview {
+	if snap == nil {
+		return nil
+	}
+	ov := &TelemetryOverview{
+		Baseline: snap.Window.Baseline,
+	}
+
+	// 1. Requests (sorted by timestamp, capped at 80)
+	if len(snap.Requests) > 0 {
+		reqs := make([]snapshot.RequestSample, len(snap.Requests))
+		copy(reqs, snap.Requests)
+		sort.Slice(reqs, func(i, j int) bool {
+			return reqs[i].Timestamp.Before(reqs[j].Timestamp)
+		})
+		if len(reqs) > 80 {
+			reqs = reqs[:80]
+		}
+		ov.Requests = reqs
+	}
+
+	// 2. Traces (sorted by StartTime, capped at 60)
+	if len(snap.Traces) > 0 {
+		trs := make([]snapshot.TraceSummary, len(snap.Traces))
+		copy(trs, snap.Traces)
+		sort.Slice(trs, func(i, j int) bool {
+			return trs[i].StartTime.Before(trs[j].StartTime)
+		})
+		if len(trs) > 60 {
+			trs = trs[:60]
+		}
+		ov.Traces = trs
+	}
+
+	// 3. Pods (prioritize target namespace + noise namespace, capped at 20)
+	for _, p := range snap.Pods {
+		if p.Namespace == targetNS || p.Namespace == "noise" {
+			ov.Pods = append(ov.Pods, p)
+		}
+	}
+	if len(ov.Pods) == 0 && len(snap.Pods) > 0 {
+		limit := len(snap.Pods)
+		if limit > 20 {
+			limit = 20
+		}
+		ov.Pods = append(ov.Pods, snap.Pods[:limit]...)
+	}
+
+	// 4. Events (sorted by Timestamp, capped at 60)
+	if len(snap.Events) > 0 {
+		evs := make([]snapshot.K8sEvent, len(snap.Events))
+		copy(evs, snap.Events)
+		sort.Slice(evs, func(i, j int) bool {
+			return evs[i].Timestamp.Before(evs[j].Timestamp)
+		})
+		if len(evs) > 60 {
+			evs = evs[:60]
+		}
+		ov.Events = evs
+	}
+
+	// 5. Prometheus Metric Time-Series Charts
+	ov.Charts = buildMetricCharts(snap, targetNS)
+	return ov
+}
+
+func buildMetricCharts(snap *snapshot.Snapshot, targetNS string) []MetricChart {
+	if len(snap.Metrics) == 0 {
+		return nil
+	}
+	var charts []MetricChart
+
+	// Chart A: CFS CPU Throttling Ratio (%) per pod
+	if throtChart := buildThrottlingChart(snap, targetNS); len(throtChart.Series) > 0 {
+		charts = append(charts, throtChart)
+	}
+
+	// Chart B: Container CPU Usage Rate (cores)
+	if cpuChart := buildCounterRateChart(
+		snap.Metrics["cpu_usage_seconds"],
+		"cpu_usage_cores",
+		"Container CPU Usage Rate",
+		"cores",
+		1.0,
+		targetNS,
+	); len(cpuChart.Series) > 0 {
+		charts = append(charts, cpuChart)
+	}
+
+	// Chart C: Container Memory Working Set (MiB)
+	if memChart := buildGaugeChart(
+		snap.Metrics["memory_working_set_bytes"],
+		"memory_mib",
+		"Container Memory Working Set",
+		"MiB",
+		1.0/(1024.0*1024.0),
+		targetNS,
+	); len(memChart.Series) > 0 {
+		charts = append(charts, memChart)
+	}
+
+	// Chart D: LLM Predicted Token Generation Speed (tok/s)
+	if tokChart := buildGaugeChart(
+		snap.Metrics["llama_predicted_tokens_per_second"],
+		"llama_tok_s",
+		"LLM Token Generation Throughput",
+		"tok/s",
+		1.0,
+		targetNS,
+	); len(tokChart.Series) > 0 {
+		charts = append(charts, tokChart)
+	}
+
+	// Chart E: Linux PSI CPU Waiting Pressure (ms/s)
+	if psiChart := buildCounterRateChart(
+		snap.Metrics["cpu_pressure_waiting_seconds"],
+		"cpu_pressure_ms",
+		"Host CPU Runqueue Pressure (Linux PSI)",
+		"ms/s",
+		1000.0,
+		targetNS,
+	); len(psiChart.Series) > 0 {
+		charts = append(charts, psiChart)
+	}
+
+	return charts
+}
+
+func streamPodLabel(labels map[string]string, targetNS string) (string, bool) {
+	ns := labels["namespace"]
+	if ns != "" && ns != targetNS && ns != "noise" {
+		return "", false
+	}
+	pod := labels["pod"]
+	container := labels["container"]
+	if container == "POD" {
+		return "", false
+	}
+	if pod == "" {
+		if job := labels["job"]; job != "" {
+			return job, true
+		}
+		return "series", true
+	}
+	if ns == "noise" {
+		return "noise/" + pod, true
+	}
+	return pod, true
+}
+
+func buildThrottlingChart(snap *snapshot.Snapshot, targetNS string) MetricChart {
+	chart := MetricChart{
+		ID:    "cpu_throttled_pct",
+		Title: "CFS CPU Throttled Periods (%)",
+		Unit:  "%",
+	}
+	throtSeries, ok1 := snap.Metrics["cpu_throttled_periods"]
+	totalSeries, ok2 := snap.Metrics["cpu_periods"]
+	if !ok1 || !ok2 {
+		return chart
+	}
+	totalsByPod := make(map[string][]snapshot.MetricSample)
+	for _, st := range totalSeries.Streams {
+		lbl, keep := streamPodLabel(st.Labels, targetNS)
+		if !keep || len(st.Samples) < 2 {
+			continue
+		}
+		totalsByPod[lbl] = st.Samples
+	}
+	for _, st := range throtSeries.Streams {
+		lbl, keep := streamPodLabel(st.Labels, targetNS)
+		if !keep || len(st.Samples) < 2 {
+			continue
+		}
+		totSamples, exists := totalsByPod[lbl]
+		if !exists || len(totSamples) < 2 {
+			continue
+		}
+		totByTS := make(map[int64]float64, len(totSamples))
+		for _, s := range totSamples {
+			totByTS[s.Timestamp.Unix()] = s.Value
+		}
+		var pts []MetricPoint
+		for i := 1; i < len(st.Samples); i++ {
+			prev := st.Samples[i-1]
+			curr := st.Samples[i]
+			tPrev, okP := totByTS[prev.Timestamp.Unix()]
+			tCurr, okC := totByTS[curr.Timestamp.Unix()]
+			if !okP || !okC || tCurr <= tPrev {
+				continue
+			}
+			dThrot := curr.Value - prev.Value
+			if dThrot < 0 {
+				dThrot = 0
+			}
+			pct := (dThrot / (tCurr - tPrev)) * 100.0
+			if pct > 100 {
+				pct = 100
+			}
+			pts = append(pts, MetricPoint{
+				Timestamp: curr.Timestamp,
+				Value:     pct,
+			})
+		}
+		if len(pts) > 0 {
+			chart.Series = append(chart.Series, MetricLine{
+				Label:  lbl,
+				Points: pts,
+			})
+		}
+	}
+	return chart
+}
+
+func buildCounterRateChart(s snapshot.Series, id, title, unit string, scale float64, targetNS string) MetricChart {
+	chart := MetricChart{
+		ID:    id,
+		Title: title,
+		Unit:  unit,
+	}
+	seen := make(map[string]bool)
+	for _, st := range s.Streams {
+		lbl, keep := streamPodLabel(st.Labels, targetNS)
+		if !keep || seen[lbl] || len(st.Samples) < 2 {
+			continue
+		}
+		var pts []MetricPoint
+		for i := 1; i < len(st.Samples); i++ {
+			dt := st.Samples[i].Timestamp.Sub(st.Samples[i-1].Timestamp).Seconds()
+			dv := st.Samples[i].Value - st.Samples[i-1].Value
+			if dt <= 0 || dv < 0 {
+				continue
+			}
+			pts = append(pts, MetricPoint{
+				Timestamp: st.Samples[i].Timestamp,
+				Value:     (dv / dt) * scale,
+			})
+		}
+		if len(pts) > 0 {
+			seen[lbl] = true
+			chart.Series = append(chart.Series, MetricLine{
+				Label:  lbl,
+				Points: pts,
+			})
+		}
+	}
+	return chart
+}
+
+func buildGaugeChart(s snapshot.Series, id, title, unit string, scale float64, targetNS string) MetricChart {
+	chart := MetricChart{
+		ID:    id,
+		Title: title,
+		Unit:  unit,
+	}
+	seen := make(map[string]bool)
+	for _, st := range s.Streams {
+		lbl, keep := streamPodLabel(st.Labels, targetNS)
+		if !keep || seen[lbl] || len(st.Samples) == 0 {
+			continue
+		}
+		var pts []MetricPoint
+		for _, smp := range st.Samples {
+			pts = append(pts, MetricPoint{
+				Timestamp: smp.Timestamp,
+				Value:     smp.Value * scale,
+			})
+		}
+		if len(pts) > 0 {
+			seen[lbl] = true
+			chart.Series = append(chart.Series, MetricLine{
+				Label:  lbl,
+				Points: pts,
+			})
+		}
+	}
+	return chart
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
