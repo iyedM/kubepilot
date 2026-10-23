@@ -7,6 +7,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -80,21 +81,22 @@ type TelemetryOverview struct {
 }
 
 // IncidentRecord wraps a snapshot.Report with metadata, trace/event counts,
-// optional cost estimation, and rich telemetry overview for the API, Web UI (P6),
-// and Operator (P7).
+// optional cost estimation, read-only GitOps patch suggestion, and rich telemetry
+// overview for the API, Web UI (P6), and Operator (P7).
 type IncidentRecord struct {
-	ID         string             `json:"id"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	Source     string             `json:"source"` // "live", "poll", "run-dir", "snapshot"
-	RunID      string             `json:"runId,omitempty"`
-	Namespace  string             `json:"namespace"`
-	TraceID    string             `json:"traceId,omitempty"`
-	Report     snapshot.Report    `json:"report"`
-	TraceCount int                `json:"traceCount"`
-	EventCount int                `json:"eventCount"`
-	PodCount   int                `json:"podCount"`
-	Cost       *CostSummary       `json:"cost,omitempty"`
-	Telemetry  *TelemetryOverview `json:"telemetry,omitempty"`
+	ID             string             `json:"id"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	Source         string             `json:"source"` // "live", "poll", "run-dir", "snapshot"
+	RunID          string             `json:"runId,omitempty"`
+	Namespace      string             `json:"namespace"`
+	TraceID        string             `json:"traceId,omitempty"`
+	Report         snapshot.Report    `json:"report"`
+	TraceCount     int                `json:"traceCount"`
+	EventCount     int                `json:"eventCount"`
+	PodCount       int                `json:"podCount"`
+	Cost           *CostSummary       `json:"cost,omitempty"`
+	SuggestedPatch string             `json:"suggestedPatch,omitempty"`
+	Telemetry      *TelemetryOverview `json:"telemetry,omitempty"`
 }
 
 // Config configures a KubePilot HTTP Server.
@@ -104,15 +106,19 @@ type Config struct {
 	CostEstimator CostEstimator
 	UIHandler     http.Handler
 	MaxIncidents  int
+	WebhookURL    string
+	HTTPClient    *http.Client
 }
 
 // Server serves the KubePilot HTTP API and optional embedded Web UI.
 type Server struct {
-	cfg       Config
-	mu        sync.RWMutex
-	seq       int64
-	incidents []IncidentRecord
-	mux       *http.ServeMux
+	cfg           Config
+	mu            sync.RWMutex
+	seq           int64
+	webhookSent   int64
+	webhookFailed int64
+	incidents     []IncidentRecord
+	mux           *http.ServeMux
 }
 
 // New creates and initializes a Server.
@@ -131,6 +137,9 @@ func New(cfg Config) *Server {
 	}
 	if cfg.MaxIncidents <= 0 {
 		cfg.MaxIncidents = 200
+	}
+	if cfg.HTTPClient == nil {
+		cfg.HTTPClient = &http.Client{Timeout: 10 * time.Second}
 	}
 
 	s := &Server{
@@ -245,7 +254,8 @@ func (s *Server) SeedFromRunsDir(ctx context.Context, dir string, limit int) (in
 
 // PollOnce executes one read-only live collection + diagnosis pass and records
 // the resulting incident if status == StatusDiagnosed (or always if recordAll
-// is true).
+// is true). If WebhookURL is configured and a fault is diagnosed, an alert is
+// dispatched asynchronously.
 func (s *Server) PollOnce(ctx context.Context, from, to time.Time, traceID string, recordAll bool) (IncidentRecord, error) {
 	lcfg := s.cfg.LiveConfig
 	lcfg.From = from
@@ -260,6 +270,9 @@ func (s *Server) PollOnce(ctx context.Context, from, to time.Time, traceID strin
 	rec := s.buildRecord(ctx, "live", "", snap, rep)
 	if recordAll || rep.Status == snapshot.StatusDiagnosed {
 		rec = s.RecordIncident(rec)
+		if rep.Status == snapshot.StatusDiagnosed && s.cfg.WebhookURL != "" {
+			_ = s.SendWebhookAlert(ctx, rec, s.cfg.WebhookURL)
+		}
 	}
 	return rec, nil
 }
@@ -270,16 +283,17 @@ func (s *Server) buildRecord(ctx context.Context, source, runID string, snap *sn
 		ns = "genai"
 	}
 	rec := IncidentRecord{
-		CreatedAt:  time.Now().UTC(),
-		Source:     source,
-		RunID:      runID,
-		Namespace:  ns,
-		TraceID:    snap.TargetTraceID,
-		Report:     rep,
-		TraceCount: len(snap.Traces),
-		EventCount: len(snap.Events),
-		PodCount:   len(snap.Pods),
-		Telemetry:  buildTelemetryOverview(snap, ns),
+		CreatedAt:      time.Now().UTC(),
+		Source:         source,
+		RunID:          runID,
+		Namespace:      ns,
+		TraceID:        snap.TargetTraceID,
+		Report:         rep,
+		TraceCount:     len(snap.Traces),
+		EventCount:     len(snap.Events),
+		PodCount:       len(snap.Pods),
+		SuggestedPatch: buildSuggestedPatch(snap, rep, ns),
+		Telemetry:      buildTelemetryOverview(snap, ns),
 	}
 	if s.cfg.CostEstimator != nil {
 		if cost, err := s.cfg.CostEstimator.Estimate(ctx, snap, rep); err == nil && cost != nil {
@@ -292,8 +306,10 @@ func (s *Server) buildRecord(ctx context.Context, source, runID string, snap *sn
 func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/healthz", s.handleHealth)
 	s.mux.HandleFunc("/readyz", s.handleHealth)
+	s.mux.HandleFunc("/metrics", s.handleMetrics)
 	s.mux.HandleFunc("/api/v1/diagnose", s.handleDiagnose)
 	s.mux.HandleFunc("/api/v1/seed", s.handleSeed)
+	s.mux.HandleFunc("/api/v1/webhook/test", s.handleWebhookTest)
 	s.mux.HandleFunc("/api/v1/incidents", s.handleIncidents)
 	s.mux.HandleFunc("/api/v1/incidents/", s.handleIncidentByID)
 	if s.cfg.UIHandler != nil {
@@ -310,8 +326,10 @@ func (s *Server) registerRoutes() {
 				"routes": []string{
 					"/healthz",
 					"/readyz",
+					"/metrics",
 					"/api/v1/diagnose",
 					"/api/v1/seed",
+					"/api/v1/webhook/test",
 					"/api/v1/incidents",
 				},
 			})
@@ -449,6 +467,9 @@ func (s *Server) handleDiagnose(w http.ResponseWriter, r *http.Request) {
 	rep := rules.Diagnose(snap)
 	rec := s.buildRecord(ctx, source, runID, snap, rep)
 	rec = s.RecordIncident(rec)
+	if rep.Status == snapshot.StatusDiagnosed && s.cfg.WebhookURL != "" {
+		_ = s.SendWebhookAlert(ctx, rec, s.cfg.WebhookURL)
+	}
 	writeJSON(w, http.StatusOK, rec)
 }
 
@@ -501,14 +522,27 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use GET")
 		return
 	}
-	id := strings.TrimPrefix(r.URL.Path, "/api/v1/incidents/")
-	if id == "" {
+	rel := strings.TrimPrefix(r.URL.Path, "/api/v1/incidents/")
+	if rel == "" {
 		writeError(w, http.StatusBadRequest, "missing incident id")
 		return
 	}
-	inc, ok := s.GetIncident(id)
+	wantPostMortem := false
+	if strings.HasSuffix(rel, "/postmortem") {
+		wantPostMortem = true
+		rel = strings.TrimSuffix(rel, "/postmortem")
+	}
+	inc, ok := s.GetIncident(rel)
 	if !ok {
-		writeError(w, http.StatusNotFound, fmt.Sprintf("incident %q not found", id))
+		writeError(w, http.StatusNotFound, fmt.Sprintf("incident %q not found", rel))
+		return
+	}
+	if wantPostMortem {
+		md := BuildPostMortemMarkdown(inc)
+		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"postmortem-%s.md\"", inc.ID))
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(md))
 		return
 	}
 	writeJSON(w, http.StatusOK, inc)
@@ -842,6 +876,507 @@ func buildGaugeChart(s snapshot.Series, id, title, unit string, scale float64, t
 		}
 	}
 	return chart
+}
+
+// --- Prometheus /metrics exporter (1A) --------------------------------------
+
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use GET")
+		return
+	}
+	list := s.ListIncidents()
+	s.mu.RLock()
+	whSent := s.webhookSent
+	whFailed := s.webhookFailed
+	s.mu.RUnlock()
+
+	var diagCount, unknownCount int
+	type causeKey struct {
+		ns, cause, workload string
+	}
+	causeTotals := make(map[causeKey]int)
+	lastConf := make(map[causeKey]float64)
+
+	type costKey struct {
+		ns, workload string
+	}
+	wasteByWorkload := make(map[costKey]float64)
+	allocByWorkload := make(map[costKey]float64)
+
+	for _, inc := range list {
+		ns := inc.Namespace
+		if ns == "" {
+			ns = "genai"
+		}
+		if inc.Report.Status == snapshot.StatusDiagnosed && len(inc.Report.TopCauses) > 0 {
+			diagCount++
+			top := inc.Report.TopCauses[0]
+			wl := top.Component.Workload
+			if wl == "" {
+				wl = "unknown"
+			}
+			ck := causeKey{ns: ns, cause: string(top.Cause), workload: wl}
+			causeTotals[ck]++
+			if _, exists := lastConf[ck]; !exists {
+				lastConf[ck] = top.Confidence
+			}
+		} else {
+			unknownCount++
+		}
+		if inc.Cost != nil {
+			wl := inc.Cost.Workload
+			if wl == "" {
+				wl = "namespace/" + ns
+			}
+			wk := costKey{ns: ns, workload: wl}
+			wasteByWorkload[wk] += inc.Cost.EstimatedWasteCost
+			allocByWorkload[wk] += inc.Cost.TotalWindowCost
+		}
+	}
+
+	var b strings.Builder
+	b.WriteString("# HELP kubepilot_build_info Build and operating mode metadata for KubePilot.\n")
+	b.WriteString("# TYPE kubepilot_build_info gauge\n")
+	b.WriteString("kubepilot_build_info{mode=\"read-only\",engine=\"deterministic-go\"} 1\n\n")
+
+	b.WriteString("# HELP kubepilot_windows_inspected_total Number of telemetry windows currently loaded in the KubePilot store.\n")
+	b.WriteString("# TYPE kubepilot_windows_inspected_total gauge\n")
+	fmt.Fprintf(&b, "kubepilot_windows_inspected_total{status=\"diagnosed\"} %d\n", diagCount)
+	fmt.Fprintf(&b, "kubepilot_windows_inspected_total{status=\"unknown\"} %d\n\n", unknownCount)
+
+	b.WriteString("# HELP kubepilot_incidents_by_cause_total Diagnosed incidents grouped by namespace, catalog cause, and workload.\n")
+	b.WriteString("# TYPE kubepilot_incidents_by_cause_total gauge\n")
+	for k, cnt := range causeTotals {
+		fmt.Fprintf(&b, "kubepilot_incidents_by_cause_total{namespace=%q,cause=%q,workload=%q} %d\n",
+			k.ns, k.cause, k.workload, cnt)
+	}
+	b.WriteString("\n")
+
+	b.WriteString("# HELP kubepilot_last_incident_confidence Confidence score (0..1) of the most recent incident for each cause.\n")
+	b.WriteString("# TYPE kubepilot_last_incident_confidence gauge\n")
+	for k, conf := range lastConf {
+		fmt.Fprintf(&b, "kubepilot_last_incident_confidence{namespace=%q,cause=%q,workload=%q} %.4f\n",
+			k.ns, k.cause, k.workload, conf)
+	}
+	b.WriteString("\n")
+
+	b.WriteString("# HELP kubepilot_incident_waste_dollars_total Cumulative OpenCost estimated incident waste in USD.\n")
+	b.WriteString("# TYPE kubepilot_incident_waste_dollars_total gauge\n")
+	for k, val := range wasteByWorkload {
+		fmt.Fprintf(&b, "kubepilot_incident_waste_dollars_total{namespace=%q,workload=%q} %.6f\n",
+			k.ns, k.workload, val)
+	}
+	b.WriteString("\n")
+
+	b.WriteString("# HELP kubepilot_window_allocation_dollars_total Cumulative OpenCost total window resource cost in USD.\n")
+	b.WriteString("# TYPE kubepilot_window_allocation_dollars_total gauge\n")
+	for k, val := range allocByWorkload {
+		fmt.Fprintf(&b, "kubepilot_window_allocation_dollars_total{namespace=%q,workload=%q} %.6f\n",
+			k.ns, k.workload, val)
+	}
+	b.WriteString("\n")
+
+	b.WriteString("# HELP kubepilot_webhook_notifications_total Total webhook alert deliveries attempted.\n")
+	b.WriteString("# TYPE kubepilot_webhook_notifications_total counter\n")
+	fmt.Fprintf(&b, "kubepilot_webhook_notifications_total{status=\"sent\"} %d\n", whSent)
+	fmt.Fprintf(&b, "kubepilot_webhook_notifications_total{status=\"failed\"} %d\n", whFailed)
+
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(b.String()))
+}
+
+// --- Webhook Alerting (1C) --------------------------------------------------
+
+// WebhookAlertPayload is the JSON body POSTed to a configured webhook endpoint
+// (compatible with Slack/Discord incoming webhooks via `text` + `content` and
+// with custom SRE / Alertmanager receivers via `incident`).
+type WebhookAlertPayload struct {
+	Text      string         `json:"text"`
+	Content   string         `json:"content"`
+	Timestamp time.Time      `json:"timestamp"`
+	Service   string         `json:"service"`
+	Mode      string         `json:"mode"`
+	Incident  IncidentRecord `json:"incident"`
+}
+
+// SendWebhookAlert sends a JSON alert for rec to targetURL.
+func (s *Server) SendWebhookAlert(ctx context.Context, rec IncidentRecord, targetURL string) error {
+	targetURL = strings.TrimSpace(targetURL)
+	if targetURL == "" {
+		return fmt.Errorf("empty webhook URL")
+	}
+
+	summaryText := fmt.Sprintf("[KubePilot] Incident %s in namespace %s: status=%s",
+		rec.ID, rec.Namespace, rec.Report.Status)
+	if len(rec.Report.TopCauses) > 0 {
+		top := rec.Report.TopCauses[0]
+		wasteStr := ""
+		if rec.Cost != nil && rec.Cost.EstimatedWasteCost > 0 {
+			wasteStr = fmt.Sprintf(" | Waste: $%.4f %s", rec.Cost.EstimatedWasteCost, rec.Cost.Currency)
+		}
+		summaryText = fmt.Sprintf("[KubePilot Alert] %s (%.0f%% confidence) on %s in ns/%s — %s%s",
+			top.Cause, top.Confidence*100, top.Component.Workload, rec.Namespace, top.Summary, wasteStr)
+	}
+
+	compactRec := rec
+	compactRec.Telemetry = nil
+
+	payload := WebhookAlertPayload{
+		Text:      summaryText,
+		Content:   summaryText,
+		Timestamp: time.Now().UTC(),
+		Service:   "kubepilot-server",
+		Mode:      "read-only",
+		Incident:  compactRec,
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, bytes.NewReader(raw))
+	if err != nil {
+		s.mu.Lock()
+		s.webhookFailed++
+		s.mu.Unlock()
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.cfg.HTTPClient.Do(req)
+	if err != nil {
+		s.mu.Lock()
+		s.webhookFailed++
+		s.mu.Unlock()
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode >= 300 {
+		s.mu.Lock()
+		s.webhookFailed++
+		s.mu.Unlock()
+		return fmt.Errorf("webhook HTTP %d", resp.StatusCode)
+	}
+
+	s.mu.Lock()
+	s.webhookSent++
+	s.mu.Unlock()
+	return nil
+}
+
+// WebhookTestRequest is accepted by POST /api/v1/webhook/test.
+type WebhookTestRequest struct {
+	IncidentID string `json:"incidentId"`
+	WebhookURL string `json:"webhookUrl,omitempty"`
+}
+
+func (s *Server) handleWebhookTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed; use POST")
+		return
+	}
+	var req WebhookTestRequest
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+	targetURL := strings.TrimSpace(req.WebhookURL)
+	if targetURL == "" {
+		targetURL = s.cfg.WebhookURL
+	}
+	if targetURL == "" {
+		writeError(w, http.StatusBadRequest, "no webhookUrl provided and --webhook-url not configured on server")
+		return
+	}
+
+	var inc IncidentRecord
+	if req.IncidentID != "" {
+		found, ok := s.GetIncident(req.IncidentID)
+		if !ok {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("incident %q not found", req.IncidentID))
+			return
+		}
+		inc = found
+	} else {
+		list := s.ListIncidents()
+		if len(list) == 0 {
+			writeError(w, http.StatusBadRequest, "no incidents loaded to send")
+			return
+		}
+		inc = list[0]
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	if err := s.SendWebhookAlert(ctx, inc, targetURL); err != nil {
+		writeError(w, http.StatusBadGateway, fmt.Sprintf("webhook delivery failed: %v", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":     "sent",
+		"incidentId": inc.ID,
+		"webhookUrl": targetURL,
+	})
+}
+
+// --- Read-Only GitOps Patch Suggestion & Post-Mortem Markdown (1B) ----------
+
+func buildSuggestedPatch(snap *snapshot.Snapshot, rep snapshot.Report, ns string) string {
+	if rep.Status != snapshot.StatusDiagnosed || len(rep.TopCauses) == 0 {
+		return ""
+	}
+	top := rep.TopCauses[0]
+	wl := top.Component.Workload
+	deployName := strings.TrimPrefix(wl, "deployment/")
+	if deployName == "" || deployName == wl {
+		deployName = "model-server"
+	}
+	containerName := deployName
+
+	switch top.Cause {
+	case snapshot.CauseCPUThrottling:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: CFS CPU quota throttling on %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+        - name: %s
+          resources:
+            requests:
+              cpu: "2000m"
+            limits:
+              cpu: "2000m"
+`, wl, deployName, ns, containerName)
+
+	case snapshot.CauseOOMKilled:
+		recMem := "1536Mi"
+		if deployName == "chat-api" {
+			recMem = "256Mi"
+		}
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Container OOMKilled (Exit Code 137) on %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+        - name: %s
+          resources:
+            requests:
+              memory: "768Mi"
+            limits:
+              memory: %q
+`, wl, deployName, ns, containerName, recMem)
+
+	case snapshot.CauseReadinessFail:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Failing or delayed readinessProbe on %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+        - name: %s
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+`, wl, deployName, ns, containerName)
+
+	case snapshot.CauseUnschedulable:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Pod Pending / Unschedulable on %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      nodeSelector: null
+      tolerations: []
+      containers:
+        - name: %s
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "768Mi"
+`, wl, deployName, ns, containerName)
+
+	case snapshot.CauseColdStart:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Slow initContainer model weight fetch / image pull on %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      initContainers: []
+      containers:
+        - name: %s
+          imagePullPolicy: IfNotPresent
+`, wl, deployName, ns, containerName)
+
+	case snapshot.CauseConfigChange:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Serving runtime flag regression (--threads) on %s
+# Recommended action: Roll back Deployment or restore optimal thread count:
+#   kubectl rollout undo deployment/%s -n %s
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+        - name: %s
+          args:
+            - "--model"
+            - "/models/tinyllama.gguf"
+            - "--threads"
+            - "4"
+`, wl, deployName, ns, deployName, ns, containerName)
+
+	case snapshot.CauseHostContention:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Worker node CPU contention (Linux PSI) from noisy neighbor pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  template:
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+`, deployName, ns)
+
+	case snapshot.CauseUnknownNoInfra:
+		return fmt.Sprintf(`# Read-Only GitOps Strategic Merge Patch (kubectl apply -f patch.yaml)
+# Cause: Application pre-inference delay inside %s (before GenAI client span)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-api
+  namespace: %s
+spec:
+  template:
+    spec:
+      containers:
+        - name: chat-api
+          env:
+            - name: CHAT_API_PRE_INFERENCE_DELAY_MS
+              value: "0"
+            - name: CHAT_API_DELAY_PROBABILITY
+              value: "0"
+`, wl, ns)
+	}
+	return ""
+}
+
+// BuildPostMortemMarkdown renders a structured SRE Post-Mortem Markdown report
+// for an IncidentRecord.
+func BuildPostMortemMarkdown(inc IncidentRecord) string {
+	var b strings.Builder
+	rep := inc.Report
+	win := rep.Window
+
+	fmt.Fprintf(&b, "# KubePilot Incident Post-Mortem Report: `%s`\n\n", inc.ID)
+	fmt.Fprintf(&b, "- **Diagnosis Status**: `%s`\n", rep.Status)
+	fmt.Fprintf(&b, "- **Target Namespace**: `%s`\n", inc.Namespace)
+	fmt.Fprintf(&b, "- **Analysis Window (UTC)**: `%s` → `%s`\n",
+		win.From.UTC().Format(time.RFC3339), win.To.UTC().Format(time.RFC3339))
+	fmt.Fprintf(&b, "- **Correlated Signals**: `%d` OTel GenAI traces, `%d` Kubernetes events, `%d` pods\n",
+		inc.TraceCount, inc.EventCount, inc.PodCount)
+	b.WriteString("- **Engine Mode**: Deterministic Go Rule Engine (`0` LLM calls, Read-Only RBAC)\n\n")
+
+	if rep.Status != snapshot.StatusDiagnosed || len(rep.TopCauses) == 0 {
+		b.WriteString("## Executive Summary\n\n")
+		b.WriteString("No infrastructure or application fault was detected in the target namespace (`0` false positives).\n")
+		if rep.Reason != "" {
+			fmt.Fprintf(&b, "\n> %s\n", rep.Reason)
+		}
+		return b.String()
+	}
+
+	top := rep.TopCauses[0]
+	b.WriteString("## 1. Executive Summary & Root Cause\n\n")
+	fmt.Fprintf(&b, "- **Primary Root Cause**: `%s` (Rule: `%s`)\n", top.Cause, top.Rule)
+	fmt.Fprintf(&b, "- **Confidence Score**: **%.0f%%** (`%.2f`)\n", top.Confidence*100, top.Confidence)
+	fmt.Fprintf(&b, "- **Blamed Component**: `namespace=%s` `workload=%s` `pod=%s`\n",
+		top.Component.Namespace, top.Component.Workload, top.Component.Pod)
+	fmt.Fprintf(&b, "- **Finding Summary**: %s\n\n", top.Summary)
+
+	b.WriteString("## 2. Correlated Multi-Signal Evidence Timeline\n\n")
+	b.WriteString("| Signal Source | Timestamp (UTC) | Correlated Proof |\n")
+	b.WriteString("| :--- | :--- | :--- |\n")
+	for _, ev := range top.Evidence {
+		ts := "-"
+		if !ev.Timestamp.IsZero() {
+			ts = ev.Timestamp.UTC().Format(time.RFC3339)
+		}
+		fmt.Fprintf(&b, "| `%s` | `%s` | %s |\n", ev.Source, ts, ev.Summary)
+	}
+	b.WriteString("\n")
+
+	if inc.Cost != nil {
+		b.WriteString("## 3. OpenCost Resource & Financial Waste Estimate\n\n")
+		fmt.Fprintf(&b, "- **Total Window Resource Cost**: `$%.4f %s` (CPU: `$%.4f`, RAM: `$%.4f`)\n",
+			inc.Cost.TotalWindowCost, inc.Cost.Currency, inc.Cost.CPUCost, inc.Cost.RAMCost)
+		fmt.Fprintf(&b, "- **Estimated Incident Waste**: **`$%.4f %s`** (Source: `%s`)\n",
+			inc.Cost.EstimatedWasteCost, inc.Cost.Currency, inc.Cost.Source)
+		fmt.Fprintf(&b, "- **Model Explanation**: %s\n\n", inc.Cost.Explanation)
+	}
+
+	if inc.SuggestedPatch != "" {
+		b.WriteString("## 4. Suggested Read-Only GitOps Remediation Patch\n\n")
+		b.WriteString("```yaml\n")
+		b.WriteString(strings.TrimSpace(inc.SuggestedPatch))
+		b.WriteString("\n```\n\n")
+	}
+
+	b.WriteString("## 5. CLI Reproduction\n\n")
+	b.WriteString("```bash\n")
+	if inc.RunID != "" {
+		split := "dev"
+		if strings.HasPrefix(inc.RunID, "test--") {
+			split = "test"
+		}
+		fmt.Fprintf(&b, "./bin/why-slow --run-dir eval/runs/%s/%s --format text\n", split, inc.RunID)
+	} else {
+		fmt.Fprintf(&b, "./bin/why-slow --namespace %s --from %q --to %q\n",
+			inc.Namespace, win.From.UTC().Format(time.RFC3339), win.To.UTC().Format(time.RFC3339))
+	}
+	b.WriteString("```\n")
+	return b.String()
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

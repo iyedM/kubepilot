@@ -17,6 +17,7 @@ observabilityNamespace: "observability"
 prometheusURL: "http://prometheus-server.observability.svc.cluster.local:80"
 tempoURL: "http://tempo.observability.svc.cluster.local:3200"
 openCostURL: ""
+webhookURL: ""
 pollInterval: "60s"
 
 operator:

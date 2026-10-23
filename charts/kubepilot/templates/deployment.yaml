@@ -17,6 +17,10 @@ spec:
       labels:
         app.kubernetes.io/name: kubepilot
         app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.service.port }}"
     spec:
       serviceAccountName: {{ default .Release.Name .Values.serviceAccount.name }}
       containers:
@@ -32,6 +36,9 @@ spec:
             - "--poll-interval={{ .Values.pollInterval }}"
           {{- if .Values.openCostURL }}
             - "--opencost-url={{ .Values.openCostURL }}"
+          {{- end }}
+          {{- if .Values.webhookURL }}
+            - "--webhook-url={{ .Values.webhookURL }}"
           {{- end }}
           {{- if .Values.operator.enabled }}
             - "--enable-operator=true"

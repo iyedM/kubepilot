@@ -39,6 +39,7 @@ func run(args []string) error {
 	promURL := fs.String("prometheus-url", "", "Direct Prometheus base URL (optional)")
 	tempoURL := fs.String("tempo-url", "", "Direct Tempo base URL (optional)")
 	openCostURL := fs.String("opencost-url", "", "Optional OpenCost base URL for /allocation/compute queries")
+	webhookURL := fs.String("webhook-url", "", "Optional Slack/Discord/Alertmanager webhook URL for diagnosed incident alerts")
 	skew := fs.Duration("skew-tolerance", offline.DefaultSkewTolerance, "Clock-skew tolerance when correlating telemetry sources")
 	pollInterval := fs.Duration("poll-interval", 0, "Optional background diagnosis poll interval (0 disables polling)")
 	enableOperator := fs.Bool("enable-operator", false, "Enable read-only GenAIIncident CRD reconciliation loop")
@@ -66,6 +67,7 @@ func run(args []string) error {
 		LiveConfig:    liveCfg,
 		CostEstimator: costEst,
 		UIHandler:     ui.NewHandler(),
+		WebhookURL:    *webhookURL,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

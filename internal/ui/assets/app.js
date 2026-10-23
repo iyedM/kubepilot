@@ -1579,9 +1579,43 @@
       2
     );
 
-    return (
+    const patchCard = inc.suggestedPatch
+      ? '<div class="section-card">' +
+        '<div class="section-card-header">' +
+        '<h3 class="section-card-title">Suggested Read-Only GitOps Remediation Patch (patch.yaml)</h3>' +
+        '<button type="button" class="seg-btn active" id="btn-copy-patch">Copy Patch YAML</button>' +
+        "</div>" +
+        '<pre class="code-block" id="patch-code-block">' +
+        escapeHTML(inc.suggestedPatch) +
+        "</pre>" +
+        "</div>"
+      : "";
+
+    const webhookCard =
       '<div class="section-card">' +
-      '<div class="section-card-header"><h3 class="section-card-title">Reproduce via CLI (kubectl why-slow)</h3></div>' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Send Webhook Alert (Slack / Discord / Alertmanager)</h3>' +
+      '<span class="pill">POST /api/v1/webhook/test</span>' +
+      "</div>" +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+      '<input id="input-webhook-test" type="url" placeholder="https://hooks.slack.com/services/... or http://127.0.0.1:9093/api/v1/alerts" style="flex:1;min-width:260px;padding:0.46rem 0.68rem;border-radius:8px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--text);font-family:var(--font-mono);font-size:0.78rem">' +
+      '<button type="button" class="btn-primary" id="btn-send-webhook" data-id="' +
+      escapeHTML(inc.id) +
+      '">Send Alert Now</button>' +
+      "</div>" +
+      '<div id="webhook-test-status" class="hidden" style="margin-top:0.5rem;font-size:0.76rem"></div>' +
+      "</div>";
+
+    return (
+      patchCard +
+      webhookCard +
+      '<div class="section-card">' +
+      '<div class="section-card-header">' +
+      '<h3 class="section-card-title">Reproduce via CLI (kubectl why-slow)</h3>' +
+      '<a class="seg-btn active" href="/api/v1/incidents/' +
+      encodeURIComponent(inc.id) +
+      '/postmortem" download style="text-decoration:none">Download Post-Mortem (.md)</a>' +
+      "</div>" +
       '<pre class="code-block">' +
       escapeHTML(cliCmd) +
       "</pre>" +
@@ -1621,7 +1655,7 @@
 
     const topPct = topCause ? Math.round((topCause.confidence || 0) * 100) : 100;
 
-    // 1. Modern Hero Banner with integrated metadata pills
+    // 1. Modern Hero Banner with integrated metadata pills & Post-Mortem export
     const bannerClass = isDiagnosed ? "banner-diagnosed" : "banner-healthy";
     const dotClass = isDiagnosed ? "dot-rose" : "dot-emerald";
     const bannerHTML =
@@ -1664,6 +1698,10 @@
       " → " +
       escapeHTML(formatHMS(win.to)) +
       " UTC</strong></span>" +
+      '<a class="meta-pill" href="/api/v1/incidents/' +
+      encodeURIComponent(inc.id) +
+      '/postmortem" download style="text-decoration:none;color:var(--accent);border-color:rgba(56,189,248,0.35)"><strong>↓ Export Post-Mortem (.md)</strong></a>' +
+      '<a class="meta-pill" href="/metrics" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text-secondary)"><strong>Prometheus /metrics ↗</strong></a>' +
       "</div>" +
       "</div>" +
       renderRadialGaugeSVG(topPct, isDiagnosed) +
@@ -1851,7 +1889,7 @@
       "</span></button>" +
       '<button type="button" class="tab-btn' +
       (activeTab === "export" ? " active" : "") +
-      '" data-tab="export">CLI, CRD &amp; JSON</button>' +
+      '" data-tab="export">Patch, Webhook &amp; Export</button>' +
       "</div>";
 
     const overviewPanel =
@@ -1912,6 +1950,46 @@
         });
       });
     });
+
+    const btnCopyPatch = document.getElementById("btn-copy-patch");
+    if (btnCopyPatch && inc.suggestedPatch) {
+      btnCopyPatch.addEventListener("click", function () {
+        navigator.clipboard.writeText(inc.suggestedPatch).then(function () {
+          btnCopyPatch.textContent = "Copied!";
+          setTimeout(function () {
+            btnCopyPatch.textContent = "Copy Patch YAML";
+          }, 1800);
+        });
+      });
+    }
+
+    const btnSendWh = document.getElementById("btn-send-webhook");
+    const whStatus = document.getElementById("webhook-test-status");
+    const whInput = document.getElementById("input-webhook-test");
+    if (btnSendWh && whStatus) {
+      btnSendWh.addEventListener("click", async function () {
+        whStatus.classList.remove("hidden");
+        whStatus.style.color = "var(--muted)";
+        whStatus.textContent = "Sending webhook alert...";
+        try {
+          const resp = await fetch("/api/v1/webhook/test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              incidentId: inc.id,
+              webhookUrl: whInput ? whInput.value.trim() : "",
+            }),
+          });
+          const body = await resp.json();
+          if (!resp.ok) throw new Error(body.error || "HTTP " + resp.status);
+          whStatus.style.color = "var(--green)";
+          whStatus.textContent = "Alert delivered to " + body.webhookUrl;
+        } catch (e) {
+          whStatus.style.color = "var(--red)";
+          whStatus.textContent = "Webhook error: " + e.message;
+        }
+      });
+    }
   }
 
   async function runDiagnose(payload) {

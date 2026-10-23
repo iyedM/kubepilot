@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -166,5 +167,67 @@ func TestLiveCollectMockAndSeedFromRunsDir(t *testing.T) {
 	}
 	if n != 3 {
 		t.Fatalf("SeedFromRunsDir loaded %d runs, want 3", n)
+	}
+}
+
+func TestMetricsPostMortemAndWebhook(t *testing.T) {
+	var receivedAlert WebhookAlertPayload
+	whServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&receivedAlert)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer whServer.Close()
+
+	srv := New(Config{
+		CostEstimator: stubCostEstimator{},
+		WebhookURL:    whServer.URL,
+	})
+
+	runDir := filepath.Join("..", "..", "eval", "runs", "dev", "dev--cpu-throttle--limit-300m--r1")
+	payload, _ := json.Marshal(DiagnoseRequest{RunDir: runDir})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/diagnose", bytes.NewReader(payload))
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("diagnose status=%d", rec.Code)
+	}
+
+	var inc IncidentRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &inc); err != nil {
+		t.Fatalf("unmarshal incident: %v", err)
+	}
+	if !strings.Contains(inc.SuggestedPatch, "kind: Deployment") {
+		t.Fatalf("expected SuggestedPatch YAML, got %q", inc.SuggestedPatch)
+	}
+	if receivedAlert.Incident.ID != inc.ID || !strings.Contains(receivedAlert.Text, "cpu_throttling") {
+		t.Fatalf("webhook alert not received properly: %+v", receivedAlert)
+	}
+
+	// Verify GET /api/v1/incidents/{id}/postmortem
+	pmReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/"+inc.ID+"/postmortem", nil)
+	pmRec := httptest.NewRecorder()
+	srv.ServeHTTP(pmRec, pmReq)
+	if pmRec.Code != http.StatusOK || !strings.Contains(pmRec.Body.String(), "# KubePilot Incident Post-Mortem Report") {
+		t.Fatalf("unexpected postmortem response: code=%d body=%s", pmRec.Code, pmRec.Body.String())
+	}
+
+	// Verify GET /metrics
+	mReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	mRec := httptest.NewRecorder()
+	srv.ServeHTTP(mRec, mReq)
+	if mRec.Code != http.StatusOK {
+		t.Fatalf("GET /metrics status=%d", mRec.Code)
+	}
+	mBody := mRec.Body.String()
+	for _, want := range []string{
+		"kubepilot_build_info{mode=\"read-only\",engine=\"deterministic-go\"} 1",
+		"kubepilot_windows_inspected_total{status=\"diagnosed\"} 1",
+		"kubepilot_incidents_by_cause_total",
+		"kubepilot_incident_waste_dollars_total",
+		"kubepilot_webhook_notifications_total{status=\"sent\"} 1",
+	} {
+		if !strings.Contains(mBody, want) {
+			t.Fatalf("GET /metrics missing %q in:\n%s", want, mBody)
+		}
 	}
 }
