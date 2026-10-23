@@ -57,6 +57,8 @@ mapfile -t images < <(
     echo "${TELEMETRYGEN_IMAGE}"
     echo "${LLAMACPP_IMAGE}"
     echo "${CURL_IMAGE}"
+    echo "${COROOT_IMAGE}"
+    echo "${COROOT_NODE_AGENT_IMAGE}"
   } | sort -u
 )
 

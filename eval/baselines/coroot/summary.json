@@ -1,0 +1,5101 @@
+{
+  "tool": "Coroot Community Edition",
+  "coroot_image": "ghcr.io/coroot/coroot:1.28.1@sha256:2317f5b2bf61fc91923fe5e3269d11f2879e243b6460162d5d23d6840b0c6c00",
+  "node_agent_image": "ghcr.io/coroot/coroot-node-agent:1.37.0@sha256:d5d281301c1340265dcca7651085cc74f7486ac73304f7d1f8f4be94eba013eb",
+  "total_cases": 12,
+  "fault_cases": 11,
+  "nofault_cases": 1,
+  "counts": {
+    "pass": 4,
+    "partial": 4,
+    "miss": 3,
+    "false_positive": 0,
+    "healthy_ok": 1
+  },
+  "cases": [
+    {
+      "case_id": "app-delay--delay-2000ms",
+      "fault": "app-delay",
+      "variant": "delay-2000ms",
+      "expected_cause": "unknown_no_infrastructure_cause",
+      "target_workload": "deployment/chat-api",
+      "window": {
+        "from_utc": "2026-10-23T00:26:31.223Z",
+        "to_utc": "2026-10-23T00:27:16.176Z",
+        "from_ms": 1792715161215,
+        "to_ms": 1792715236176
+      },
+      "coroot": {
+        "query_ms": 159,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-xmv5z",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.96",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-5f9b9d87b9-ntr8z",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.86",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "miss",
+        "rationale": "All infrastructure checks (CPU, Memory, Instances, Net, Logs) reported ok, but Coroot did not flag the 2000ms application-internal delay between the HTTP server span and GenAI client span."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "unknown_no_infrastructure_cause",
+        "top1_confidence": 0.85,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/chat-api",
+          "pod": "chat-api-69fb959bd4-2lst4"
+        },
+        "top1_summary": "Application pre-inference delay in deployment/chat-api (trace gap HTTP span start -> GenAI span start: p50=2001 ms, p90=2001 ms, 51/51 traces >= 500 ms) with no infrastructure or configuration cause"
+      }
+    },
+    {
+      "case_id": "cold-start--model-download-10mbs",
+      "fault": "cold-start",
+      "variant": "model-download-10mbs",
+      "expected_cause": "cold_start",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:28:52.262Z",
+        "to_utc": "2026-10-23T00:30:04.154Z",
+        "from_ms": 1792715302254,
+        "to_ms": 1792715404154
+      },
+      "coroot": {
+        "query_ms": 145,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-bd95fc88f-spmhh",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.106",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-j45kj",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.93",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "miss",
+        "rationale": "All checks ok once pod became Ready (or startup window did not attribute cause to initContainer cold start)."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "cold_start",
+        "top1_confidence": 0.93,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-bd95fc88f-jn6b9"
+        },
+        "top1_summary": "Slow cold start on pod model-server-bd95fc88f-jn6b9 (deployment/model-server): initContainer model fetch delayed main container start by 49s before becoming Ready"
+      }
+    },
+    {
+      "case_id": "config-regression--threads-1",
+      "fault": "config-regression",
+      "variant": "threads-1",
+      "expected_cause": "config_change",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:01:36.173Z",
+        "to_utc": "2026-10-23T00:03:10.832Z",
+        "from_ms": 1792713666164,
+        "to_ms": 1792713790832
+      },
+      "coroot": {
+        "query_ms": 137,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-58dc78d5f6-4xbth",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.76",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "miss",
+        "rationale": "All checks ok; Coroot Deployments inspection requires >= 30m deployment lifetime ('Not enough data due to the lifetime < 30 minutes') and does not inspect llama.cpp token/s or --threads args."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "config_change",
+        "top1_confidence": 0.88,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-58dc78d5f6-7rmjw"
+        },
+        "top1_summary": "Rollout of deployment/model-server (pod model-server-58dc78d5f6-7rmjw) degraded serving without resource pressure: p50 latency x1.63 (498 ms -> 813 ms)"
+      }
+    },
+    {
+      "case_id": "cpu-throttle--limit-300m",
+      "fault": "cpu-throttle",
+      "variant": "limit-300m",
+      "expected_cause": "cpu_throttling",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-22T23:22:40.505Z",
+        "to_utc": "2026-10-22T23:24:00.553Z",
+        "from_ms": 1792711315498,
+        "to_ms": 1792711440553
+      },
+      "coroot": {
+        "query_ms": 148,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "CPU",
+            "id": "CPUContainer",
+            "title": "Container CPU utilization",
+            "status": "warning",
+            "message": "high CPU utilization of 1 container"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-h9qbp",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.58",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-szft7",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.45",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "pass",
+        "rationale": "CPUContainer check fired ('high CPU utilization') and CPU report recorded limit=0.3 cores and elevated Throttled time."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "cpu_throttling",
+        "top1_confidence": 0.92,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-6c974f9667-57p7c"
+        },
+        "top1_summary": "Pod model-server-6c974f9667-57p7c (deployment/model-server) is CFS CPU-throttled (93.3% of periods throttled), increasing p50 latency x6.61 (493 ms -> 3262 ms)"
+      }
+    },
+    {
+      "case_id": "host-contention--neighbor-pod-same-node",
+      "fault": "host-contention",
+      "variant": "neighbor-pod-same-node",
+      "expected_cause": "host_cpu_contention",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:34:40.131Z",
+        "to_utc": "2026-10-23T00:36:00.707Z",
+        "from_ms": 1792715650122,
+        "to_ms": 1792715760707
+      },
+      "coroot": {
+        "query_ms": 147,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "CPU",
+            "id": "CPUNode",
+            "title": "Node CPU utilization",
+            "status": "warning",
+            "message": "high CPU utilization of 1 node"
+          }
+        ],
+        "chat_api_non_ok_checks": [
+          {
+            "report": "CPU",
+            "id": "CPUNode",
+            "title": "Node CPU utilization",
+            "status": "warning",
+            "message": "high CPU utilization of 1 node"
+          }
+        ],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-tzl4c",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.108",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-j45kj",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.93",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "pass",
+        "rationale": "CPUNode check fired ('high CPU utilization of node') alongside CPU delay and CPU consumers chart showing cpu-neighbor."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "host_cpu_contention",
+        "top1_confidence": 0.9,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-5bd4cc46f9-5zf76",
+          "node": "kubepilot-lab-worker2"
+        },
+        "top1_summary": "Pod model-server-5bd4cc46f9-5zf76 (deployment/model-server) experiences host CPU contention (PSI CPU waiting +11.53 s over 285 s, CFS throttled fraction 0.001), increasing p50 latency x1.64"
+      }
+    },
+    {
+      "case_id": "nofault--decoy-same-node-oom",
+      "fault": "nofault",
+      "variant": "decoy-same-node-oom",
+      "expected_cause": "none",
+      "target_workload": "none",
+      "window": {
+        "from_utc": "2026-10-23T00:05:50.688Z",
+        "to_utc": "2026-10-23T00:06:32.637Z",
+        "from_ms": 1792713920679,
+        "to_ms": 1792713992637
+      },
+      "coroot": {
+        "query_ms": 154,
+        "model_server_status": "ok",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-rpkmb",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.78",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "healthy_ok",
+        "rationale": "All checks on genai/model-server and genai/chat-api remained ok while noise/decoy-oom failed."
+      },
+      "kubepilot": {
+        "status": "unknown",
+        "top1_cause": null,
+        "top1_confidence": null,
+        "top1_component": null,
+        "top1_summary": null
+      }
+    },
+    {
+      "case_id": "oomkill--app-oom-40mi",
+      "fault": "oomkill",
+      "variant": "app-oom-40mi",
+      "expected_cause": "oom_killed",
+      "target_workload": "deployment/chat-api",
+      "window": {
+        "from_utc": "2026-10-23T00:27:44.136Z",
+        "to_utc": "2026-10-23T00:28:26.859Z",
+        "from_ms": 1792715234129,
+        "to_ms": 1792715306859
+      },
+      "coroot": {
+        "query_ms": 153,
+        "model_server_status": "ok",
+        "chat_api_status": "warning",
+        "model_server_non_ok_checks": [],
+        "chat_api_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-xmv5z",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.2.96",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-6f86945d96-p94mn",
+            "status": "down (waiting:CrashLoopBackOff)",
+            "restarts": "",
+            "ip": "10.244.1.91",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "partial",
+        "rationale": "Flagged deployment/chat-api checks [('InstanceAvailability', 'no instances available')] without naming OOMKilled in check message."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "oom_killed",
+        "top1_confidence": 0.96,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/chat-api",
+          "pod": "chat-api-6f86945d96-x98pw"
+        },
+        "top1_summary": "Container in pod chat-api-6f86945d96-x98pw (deployment/chat-api) was OOMKilled (exit code 137) at memory limit 40Mi and restarted 5 times"
+      }
+    },
+    {
+      "case_id": "oomkill--noload-400mi",
+      "fault": "oomkill",
+      "variant": "noload-400mi",
+      "expected_cause": "oom_killed",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-22T23:24:28.957Z",
+        "to_utc": "2026-10-22T23:26:01.007Z",
+        "from_ms": 1792711423947,
+        "to_ms": 1792711561007
+      },
+      "coroot": {
+        "query_ms": 149,
+        "model_server_status": "warning",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-54645c7fc5-ntnpp",
+            "status": "down (waiting:CrashLoopBackOff)",
+            "restarts": "",
+            "ip": "10.244.2.60",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-szft7",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.45",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "partial",
+        "rationale": "Flagged deployment/model-server checks [('InstanceAvailability', 'no instances available')] without naming OOMKilled in check message."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "oom_killed",
+        "top1_confidence": 0.96,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-7d785c95dc-6slrm"
+        },
+        "top1_summary": "Container in pod model-server-7d785c95dc-6slrm (deployment/model-server) was OOMKilled (exit code 137) and restarted 5 times"
+      }
+    },
+    {
+      "case_id": "readiness-fail--initial-delay-600",
+      "fault": "readiness-fail",
+      "variant": "initial-delay-600",
+      "expected_cause": "readiness_failing",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:23:24.675Z",
+        "to_utc": "2026-10-23T00:24:06.436Z",
+        "from_ms": 1792714974667,
+        "to_ms": 1792715046436
+      },
+      "coroot": {
+        "query_ms": 158,
+        "model_server_status": "warning",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-68b49878bf-67dj2",
+            "status": "down (readiness probe failed)",
+            "restarts": "",
+            "ip": "10.244.2.94",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "partial",
+        "rationale": "InstanceAvailability fired ('no instances available'); Instances table status='down (readiness probe failed)'."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "readiness_failing",
+        "top1_confidence": 0.94,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-68b49878bf-fwqxk"
+        },
+        "top1_summary": "Pod model-server-68b49878bf-fwqxk (deployment/model-server) is Running but never became Ready (readinessProbe initialDelaySeconds=600)"
+      }
+    },
+    {
+      "case_id": "readiness-fail--probe-path-404",
+      "fault": "readiness-fail",
+      "variant": "probe-path-404",
+      "expected_cause": "readiness_failing",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:22:20.233Z",
+        "to_utc": "2026-10-23T00:23:01.998Z",
+        "from_ms": 1792714910226,
+        "to_ms": 1792714981998
+      },
+      "coroot": {
+        "query_ms": 154,
+        "model_server_status": "warning",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-6b46964796-7nlwd",
+            "status": "down (readiness probe failed)",
+            "restarts": "",
+            "ip": "10.244.2.90",
+            "node": "kubepilot-lab-worker2"
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "partial",
+        "rationale": "InstanceAvailability fired ('no instances available'); Instances table status='down (readiness probe failed)'."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "readiness_failing",
+        "top1_confidence": 0.94,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-6b46964796-qkvvp"
+        },
+        "top1_summary": "Pod model-server-6b46964796-qkvvp (deployment/model-server) is Running but never became Ready (Readiness probe failed: HTTP probe failed with statuscode: 404)"
+      }
+    },
+    {
+      "case_id": "unschedulable--node-taint",
+      "fault": "unschedulable",
+      "variant": "node-taint",
+      "expected_cause": "unschedulable",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:06:57.179Z",
+        "to_utc": "2026-10-23T00:07:37.033Z",
+        "from_ms": 1792713987171,
+        "to_ms": 1792714057033
+      },
+      "coroot": {
+        "query_ms": 140,
+        "model_server_status": "warning",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-5bd4cc46f9-smcfv",
+            "status": "down (pending, not scheduled)",
+            "restarts": "",
+            "ip": "",
+            "node": ""
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "pass",
+        "rationale": "InstanceAvailability fired and Instances table reported 'down (pending, not scheduled)'."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "unschedulable",
+        "top1_confidence": 0.96,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-5bd4cc46f9-rrr48"
+        },
+        "top1_summary": "Pod model-server-5bd4cc46f9-rrr48 (deployment/model-server) is Pending/Unschedulable: 3 node(s) had untolerated taint(s)"
+      }
+    },
+    {
+      "case_id": "unschedulable--pvc-unbound",
+      "fault": "unschedulable",
+      "variant": "pvc-unbound",
+      "expected_cause": "unschedulable",
+      "target_workload": "deployment/model-server",
+      "window": {
+        "from_utc": "2026-10-23T00:14:56.804Z",
+        "to_utc": "2026-10-23T00:15:38.587Z",
+        "from_ms": 1792714466797,
+        "to_ms": 1792714538587
+      },
+      "coroot": {
+        "query_ms": 149,
+        "model_server_status": "warning",
+        "chat_api_status": "ok",
+        "model_server_non_ok_checks": [
+          {
+            "report": "Instances",
+            "id": "InstanceAvailability",
+            "title": "Instance availability",
+            "status": "warning",
+            "message": "no instances available"
+          }
+        ],
+        "chat_api_non_ok_checks": [],
+        "model_server_instances": [
+          {
+            "instance": "model-server-f489596bd-grk28",
+            "status": "down (pending, not scheduled)",
+            "restarts": "",
+            "ip": "",
+            "node": ""
+          }
+        ],
+        "chat_api_instances": [
+          {
+            "instance": "chat-api-7f9456fbd4-n57cl",
+            "status": "up (running)",
+            "restarts": "",
+            "ip": "10.244.1.63",
+            "node": "kubepilot-lab-worker"
+          }
+        ],
+        "deployments": [
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "6 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "8 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "8 minutes ago",
+            "age": "8 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Collecting data...",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "9 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "9 minutes ago",
+            "age": "30 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "10 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "12 minutes ago",
+            "age": "4 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "13 minutes ago",
+            "age": "15 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796: llama.cpp@sha256:1439260",
+            "deployed": "14 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "21 minutes ago",
+            "age": "6 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "22 minutes ago",
+            "age": "45 seconds",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "33 minutes ago",
+            "age": "11 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+            "deployed": "34 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "54 minutes ago",
+            "age": "44 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "No notable changes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "5f9b9d87b9",
+            "deployed": "56 minutes ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "58 minutes ago",
+            "age": "23 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "58dc78d5f6",
+            "deployed": "59 minutes ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "bd95fc88f",
+            "deployed": "1 hour ago",
+            "age": "2 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "68b49878bf",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "6b46964796",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "f489596bd",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "7f9456fbd4: chat-api:d8299e496c0a",
+            "deployed": "1 hour ago",
+            "age": "13 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+            "deployed": "1 hour ago",
+            "age": "5 minutes",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+            "version": "6f86945d96",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          },
+          {
+            "app_id": "sv7uw0bf:genai:Deployment:model-server",
+            "version": "54645c7fc5",
+            "deployed": "1 hour ago",
+            "age": "1 minute",
+            "status": "ok",
+            "summary": [
+              {
+                "status": "",
+                "message": "Not enough data due to the lifetime < 30 minutes",
+                "link": null
+              }
+            ]
+          }
+        ],
+        "grade": "pass",
+        "rationale": "InstanceAvailability fired and Instances table reported 'down (pending, not scheduled)'."
+      },
+      "kubepilot": {
+        "status": "diagnosed",
+        "top1_cause": "unschedulable",
+        "top1_confidence": 0.96,
+        "top1_component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-f489596bd-lbkmf"
+        },
+        "top1_summary": "Pod model-server-f489596bd-lbkmf (deployment/model-server) is Pending/Unschedulable: persistentvolumeclaim \"model-scratch\" is being deleted"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2380 @@
+{
+  "case_id": "oomkill--noload-400mi",
+  "fault": "oomkill",
+  "variant": "noload-400mi",
+  "expected_cause": "oom_killed",
+  "target_workload": "deployment/model-server",
+  "window": {
+    "from_utc": "2026-10-22T23:24:28.957Z",
+    "to_utc": "2026-10-22T23:26:01.007Z",
+    "from_ms": 1792711423947,
+    "to_ms": 1792711561007
+  },
+  "coroot": {
+    "image": "ghcr.io/coroot/coroot:1.28.1@sha256:2317f5b2bf61fc91923fe5e3269d11f2879e243b6460162d5d23d6840b0c6c00",
+    "node_agent_image": "ghcr.io/coroot/coroot-node-agent:1.37.0@sha256:d5d281301c1340265dcca7651085cc74f7486ac73304f7d1f8f4be94eba013eb",
+    "project_id": "sv7uw0bf",
+    "query_ms": 149,
+    "overview_applications": [
+      {
+        "id": "sv7uw0bf:genai:Deployment:model-server",
+        "category": "application",
+        "status": "warning",
+        "instances": {
+          "status": "warning",
+          "value": "0/1"
+        },
+        "restarts": {
+          "status": "ok",
+          "value": ""
+        },
+        "cpu": {
+          "status": "unknown",
+          "value": ""
+        },
+        "memory": {
+          "status": "unknown",
+          "value": ""
+        },
+        "latency": {
+          "status": "unknown",
+          "value": ""
+        },
+        "errors": {
+          "status": "unknown",
+          "value": ""
+        }
+      },
+      {
+        "id": "sv7uw0bf:genai:Deployment:chat-api",
+        "category": "application",
+        "status": "ok",
+        "instances": {
+          "status": "ok",
+          "value": "1/1"
+        },
+        "restarts": {
+          "status": "ok",
+          "value": ""
+        },
+        "cpu": {
+          "status": "unknown",
+          "value": ""
+        },
+        "memory": {
+          "status": "unknown",
+          "value": ""
+        },
+        "latency": {
+          "status": "unknown",
+          "value": ""
+        },
+        "errors": {
+          "status": "unknown",
+          "value": ""
+        }
+      },
+      {
+        "id": "sv7uw0bf:genai:Deployment:loadgen",
+        "category": "application",
+        "status": "ok",
+        "instances": {
+          "status": "ok",
+          "value": "1/1"
+        },
+        "restarts": {
+          "status": "ok",
+          "value": ""
+        },
+        "cpu": {
+          "status": "unknown",
+          "value": ""
+        },
+        "memory": {
+          "status": "unknown",
+          "value": ""
+        },
+        "latency": {
+          "status": "unknown",
+          "value": ""
+        },
+        "errors": {
+          "status": "unknown",
+          "value": ""
+        }
+      }
+    ],
+    "overview_deployments": [
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "6 minutes ago",
+        "age": "6 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Collecting data...",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "bd95fc88f",
+        "deployed": "8 minutes ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "7f9456fbd4: chat-api:d8299e496c0a",
+        "deployed": "8 minutes ago",
+        "age": "8 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Collecting data...",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "6f86945d96",
+        "deployed": "9 minutes ago",
+        "age": "45 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "7f9456fbd4: chat-api:d8299e496c0a",
+        "deployed": "9 minutes ago",
+        "age": "30 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "5f9b9d87b9",
+        "deployed": "10 minutes ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "12 minutes ago",
+        "age": "4 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "68b49878bf: llama.cpp@sha256:1439260",
+        "deployed": "13 minutes ago",
+        "age": "45 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "13 minutes ago",
+        "age": "15 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "6b46964796: llama.cpp@sha256:1439260",
+        "deployed": "14 minutes ago",
+        "age": "45 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "21 minutes ago",
+        "age": "6 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "f489596bd",
+        "deployed": "22 minutes ago",
+        "age": "45 seconds",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "33 minutes ago",
+        "age": "11 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "58dc78d5f6: llama.cpp@sha256:1439260",
+        "deployed": "34 minutes ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "7f9456fbd4: chat-api:d8299e496c0a",
+        "deployed": "54 minutes ago",
+        "age": "44 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "No notable changes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "5f9b9d87b9",
+        "deployed": "56 minutes ago",
+        "age": "2 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "58 minutes ago",
+        "age": "23 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "58dc78d5f6",
+        "deployed": "59 minutes ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "bd95fc88f",
+        "deployed": "1 hour ago",
+        "age": "2 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "68b49878bf",
+        "deployed": "1 hour ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "6b46964796",
+        "deployed": "1 hour ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "f489596bd",
+        "deployed": "1 hour ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "7f9456fbd4: chat-api:d8299e496c0a",
+        "deployed": "1 hour ago",
+        "age": "13 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "5bd4cc46f9: llama.cpp@sha256:1439260",
+        "deployed": "1 hour ago",
+        "age": "5 minutes",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:chat-api",
+        "version": "6f86945d96",
+        "deployed": "1 hour ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      },
+      {
+        "app_id": "sv7uw0bf:genai:Deployment:model-server",
+        "version": "54645c7fc5",
+        "deployed": "1 hour ago",
+        "age": "1 minute",
+        "status": "ok",
+        "summary": [
+          {
+            "status": "",
+            "message": "Not enough data due to the lifetime < 30 minutes",
+            "link": null
+          }
+        ]
+      }
+    ],
+    "model_server": {
+      "app_map": {
+        "id": "sv7uw0bf:genai:Deployment:model-server",
+        "status": "warning",
+        "instances": [
+          {
+            "id": "model-server-54645c7fc5-ntnpp",
+            "labels": {}
+          }
+        ]
+      },
+      "reports": [
+        {
+          "name": "SLO",
+          "status": "unknown",
+          "checks": [
+            {
+              "id": "SLOAvailability",
+              "title": "Availability",
+              "status": "unknown",
+              "message": "not configured",
+              "threshold": 99,
+              "unit": "percent"
+            },
+            {
+              "id": "SLOLatency",
+              "title": "Latency",
+              "status": "unknown",
+              "message": "not configured",
+              "threshold": 99,
+              "unit": "percent"
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Client",
+                "",
+                "Requests",
+                "Latency",
+                "Errors"
+              ],
+              "rows": []
+            }
+          ],
+          "charts": []
+        },
+        {
+          "name": "Instances",
+          "status": "warning",
+          "checks": [
+            {
+              "id": "InstanceAvailability",
+              "title": "Instance availability",
+              "status": "warning",
+              "message": "no instances available",
+              "threshold": 75,
+              "unit": "percent"
+            },
+            {
+              "id": "InstanceRestarts",
+              "title": "Restarts",
+              "status": "ok",
+              "message": "",
+              "threshold": 1,
+              "unit": ""
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Instance",
+                "Status",
+                "Restarts",
+                "IP",
+                "Node"
+              ],
+              "rows": [
+                [
+                  {
+                    "value": "model-server-54645c7fc5-ntnpp",
+                    "status": null
+                  },
+                  {
+                    "value": "down (waiting:CrashLoopBackOff)",
+                    "status": "warning"
+                  },
+                  {
+                    "value": "",
+                    "status": null
+                  },
+                  {
+                    "value": "10.244.2.60",
+                    "status": null
+                  },
+                  {
+                    "value": "kubepilot-lab-worker2",
+                    "status": "ok"
+                  }
+                ]
+              ]
+            }
+          ],
+          "charts": [
+            {
+              "title": "Instances",
+              "series": [
+                {
+                  "name": "up",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "desired",
+                "data": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "CPU",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "CPUNode",
+              "title": "Node CPU utilization",
+              "status": "ok",
+              "message": "",
+              "threshold": 80,
+              "unit": "percent"
+            },
+            {
+              "id": "CPUContainer",
+              "title": "Container CPU utilization",
+              "status": "ok",
+              "message": "",
+              "threshold": 80,
+              "unit": "percent"
+            }
+          ],
+          "tables": [],
+          "charts": [
+            {
+              "title": "container: model-server",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    0.47594807,
+                    0.3264067,
+                    0.000015475938,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "limit",
+                "data": [
+                  2,
+                  2,
+                  null,
+                  null,
+                  null,
+                  null
+                ]
+              }
+            },
+            {
+              "title": "container: model-server",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    0.9357666,
+                    0.2320685,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "container: model-server",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    0.7002945,
+                    0.16496737,
+                    0,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "overview",
+              "series": [
+                {
+                  "name": "kubepilot-lab-worker2",
+                  "data": [
+                    64.65854,
+                    28.901602,
+                    16.440466,
+                    16.580694,
+                    15.601788,
+                    15.429059
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker2",
+              "series": [
+                {
+                  "name": "user",
+                  "data": [
+                    18.461048,
+                    16.481693,
+                    12.9105835,
+                    13.006926,
+                    12.337422,
+                    12.275509
+                  ]
+                },
+                {
+                  "name": "nice",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "system",
+                  "data": [
+                    30.862982,
+                    9.462242,
+                    3.0565693,
+                    3.097837,
+                    2.928537,
+                    2.8746264
+                  ]
+                },
+                {
+                  "name": "iowait",
+                  "data": [
+                    15.186869,
+                    2.8232265,
+                    0.3278969,
+                    0.32203823,
+                    0.2077582,
+                    0.15084673
+                  ]
+                },
+                {
+                  "name": "steal",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "irq",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "softirq",
+                  "data": [
+                    0.14764208,
+                    0.13443936,
+                    0.14541514,
+                    0.15389438,
+                    0.12807013,
+                    0.12807742
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker2",
+              "series": [
+                {
+                  "name": "model-server",
+                  "data": [
+                    0.47594807,
+                    0.3264067,
+                    0.000015475938,
+                    null,
+                    null,
+                    null
+                  ]
+                },
+                {
+                  "name": "prometheus-server",
+                  "data": [
+                    0.011921367,
+                    0.011392867,
+                    0.027315967,
+                    0.029166967,
+                    0.0104238335,
+                    0.0101658
+                  ]
+                },
+                {
+                  "name": "coroot-node-agent",
+                  "data": [
+                    0.028178433,
+                    0.0271312,
+                    0.026417166,
+                    0.026967533,
+                    0.026153933,
+                    0.0251158
+                  ]
+                },
+                {
+                  "name": "containerd",
+                  "data": [
+                    0.0130015,
+                    0.0124607,
+                    0.020341434,
+                    0.0223307,
+                    0.0137216,
+                    0.012838366
+                  ]
+                },
+                {
+                  "name": "other",
+                  "data": [
+                    0.0011689666,
+                    0.0021233,
+                    0.0020252,
+                    0.0011369666,
+                    0.0002831,
+                    0.00068409997
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "total",
+                "data": [
+                  12,
+                  12,
+                  12,
+                  12,
+                  12,
+                  12
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "MemoryOOM",
+              "title": "Out of Memory",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            },
+            {
+              "id": "MemoryPressure",
+              "title": "Memory pressure",
+              "status": "ok",
+              "message": "",
+              "threshold": 0.02,
+              "unit": "second"
+            },
+            {
+              "id": "MemoryLeakPercent",
+              "title": "Memory leak",
+              "status": "ok",
+              "message": "",
+              "threshold": 10,
+              "unit": ""
+            }
+          ],
+          "tables": [],
+          "charts": [
+            {
+              "title": "RSS container: model-server",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    165306370,
+                    165306370,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "limit",
+                "data": [
+                  1610612700,
+                  1610612700,
+                  null,
+                  null,
+                  null,
+                  null
+                ]
+              }
+            },
+            {
+              "title": "RSS",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    165306370,
+                    165306370,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "RSS + PageCache",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    167366660,
+                    167366660,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "some",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "full",
+              "series": [
+                {
+                  "name": "model-server-5bd4cc46f9-h9qbp",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "Node memory usage (unreclaimable), %",
+              "series": [
+                {
+                  "name": "kubepilot-lab-worker2",
+                  "data": [
+                    71.380394,
+                    70.68593,
+                    71.32003,
+                    70.212845,
+                    70.31287,
+                    69.941864
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker2",
+              "series": [
+                {
+                  "name": "prometheus-server",
+                  "data": [
+                    336957440,
+                    337051650,
+                    375992320,
+                    326127600,
+                    326127600,
+                    330612740
+                  ]
+                },
+                {
+                  "name": "model-server",
+                  "data": [
+                    165306370,
+                    165306370,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                },
+                {
+                  "name": "containerd",
+                  "data": [
+                    163725310,
+                    162467840,
+                    144719870,
+                    144723970,
+                    145125380,
+                    145014780
+                  ]
+                },
+                {
+                  "name": "coroot-node-agent",
+                  "data": [
+                    65204224,
+                    65265664,
+                    65306624,
+                    66236416,
+                    67227650,
+                    67276800
+                  ]
+                },
+                {
+                  "name": "other",
+                  "data": [
+                    38768640,
+                    38768640,
+                    38817790,
+                    38875136,
+                    38928384,
+                    39174144
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "total",
+                "data": [
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logs",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "LogErrors",
+              "title": "Errors",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            }
+          ],
+          "tables": [],
+          "charts": []
+        },
+        {
+          "name": "Deployments",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "DeploymentStatus",
+              "title": "Deployment status",
+              "status": "ok",
+              "message": "",
+              "threshold": 180,
+              "unit": "second"
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Deployment",
+                "Deployed",
+                "Summary"
+              ],
+              "rows": [
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "6 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Collecting data...",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "bd95fc88f",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "8 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "12 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "68b49878bf: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "13 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "13 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "6b46964796: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "14 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "21 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "f489596bd",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "22 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "33 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "58dc78d5f6: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "34 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "58 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "58dc78d5f6",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "59 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "bd95fc88f",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "68b49878bf",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "6b46964796",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "f489596bd",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5bd4cc46f9: llama.cpp@sha256:1439260",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "54645c7fc5",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ]
+              ]
+            }
+          ],
+          "charts": []
+        },
+        {
+          "name": "Profiling",
+          "status": "unknown",
+          "checks": [],
+          "tables": [],
+          "charts": []
+        },
+        {
+          "name": "Tracing",
+          "status": "unknown",
+          "checks": [],
+          "tables": [],
+          "charts": []
+        }
+      ]
+    },
+    "chat_api": {
+      "app_map": {
+        "id": "sv7uw0bf:genai:Deployment:chat-api",
+        "status": "ok",
+        "instances": [
+          {
+            "id": "chat-api-7f9456fbd4-szft7",
+            "labels": {}
+          }
+        ]
+      },
+      "reports": [
+        {
+          "name": "SLO",
+          "status": "unknown",
+          "checks": [
+            {
+              "id": "SLOAvailability",
+              "title": "Availability",
+              "status": "unknown",
+              "message": "not configured",
+              "threshold": 99,
+              "unit": "percent"
+            },
+            {
+              "id": "SLOLatency",
+              "title": "Latency",
+              "status": "unknown",
+              "message": "not configured",
+              "threshold": 99,
+              "unit": "percent"
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Client",
+                "",
+                "Requests",
+                "Latency",
+                "Errors"
+              ],
+              "rows": []
+            }
+          ],
+          "charts": []
+        },
+        {
+          "name": "Instances",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "InstanceAvailability",
+              "title": "Instance availability",
+              "status": "ok",
+              "message": "",
+              "threshold": 75,
+              "unit": "percent"
+            },
+            {
+              "id": "InstanceRestarts",
+              "title": "Restarts",
+              "status": "ok",
+              "message": "",
+              "threshold": 1,
+              "unit": ""
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Instance",
+                "Status",
+                "Restarts",
+                "IP",
+                "Node"
+              ],
+              "rows": [
+                [
+                  {
+                    "value": "chat-api-7f9456fbd4-szft7",
+                    "status": null
+                  },
+                  {
+                    "value": "up (running)",
+                    "status": "ok"
+                  },
+                  {
+                    "value": "",
+                    "status": null
+                  },
+                  {
+                    "value": "10.244.1.45",
+                    "status": null
+                  },
+                  {
+                    "value": "kubepilot-lab-worker",
+                    "status": "ok"
+                  }
+                ]
+              ]
+            }
+          ],
+          "charts": [
+            {
+              "title": "Instances",
+              "series": [
+                {
+                  "name": "up",
+                  "data": [
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "desired",
+                "data": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            },
+            {
+              "title": "Restarts",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            }
+          ]
+        },
+        {
+          "name": "CPU",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "CPUNode",
+              "title": "Node CPU utilization",
+              "status": "ok",
+              "message": "",
+              "threshold": 80,
+              "unit": "percent"
+            },
+            {
+              "id": "CPUContainer",
+              "title": "Container CPU utilization",
+              "status": "ok",
+              "message": "",
+              "threshold": 80,
+              "unit": "percent"
+            }
+          ],
+          "tables": [],
+          "charts": [
+            {
+              "title": "container: chat-api",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0.0109913,
+                    0.0107522,
+                    0.0029137332,
+                    0.0033746667,
+                    0.0035704,
+                    0.0035485334
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "container: chat-api",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0.00024080186,
+                    0.000086634536,
+                    0.000079212565,
+                    0.000043824235,
+                    0.000024738334,
+                    0.000027594268
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "container: chat-api",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "overview",
+              "series": [
+                {
+                  "name": "kubepilot-lab-worker",
+                  "data": [
+                    54.032864,
+                    19.236912,
+                    16.452414,
+                    16.52424,
+                    15.742876,
+                    15.838483
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker",
+              "series": [
+                {
+                  "name": "user",
+                  "data": [
+                    17.81205,
+                    15.589711,
+                    12.895134,
+                    12.983536,
+                    12.525977,
+                    12.66623
+                  ]
+                },
+                {
+                  "name": "nice",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "system",
+                  "data": [
+                    25.825886,
+                    3.2422721,
+                    3.0812645,
+                    3.0877912,
+                    2.8980556,
+                    2.904576
+                  ]
+                },
+                {
+                  "name": "iowait",
+                  "data": [
+                    10.2507925,
+                    0.26805064,
+                    0.32779408,
+                    0.3047912,
+                    0.18788965,
+                    0.13099068
+                  ]
+                },
+                {
+                  "name": "steal",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "irq",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                },
+                {
+                  "name": "softirq",
+                  "data": [
+                    0.14413376,
+                    0.13687693,
+                    0.14821993,
+                    0.14812283,
+                    0.1309534,
+                    0.13668594
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker",
+              "series": [
+                {
+                  "name": "tempo",
+                  "data": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                },
+                {
+                  "name": "coroot-node-agent",
+                  "data": [
+                    0.027653867,
+                    0.027139533,
+                    0.0276988,
+                    0.0265926,
+                    0.025594033,
+                    0.025682466
+                  ]
+                },
+                {
+                  "name": "containerd",
+                  "data": [
+                    0.021214267,
+                    0.016848333,
+                    0.0153821,
+                    0.015268333,
+                    0.015688466,
+                    0.015761066
+                  ]
+                },
+                {
+                  "name": "chat-api",
+                  "data": [
+                    0.0109913,
+                    0.0107522,
+                    0.0029137332,
+                    0.0033746667,
+                    0.0035704,
+                    0.0035485334
+                  ]
+                },
+                {
+                  "name": "other",
+                  "data": [
+                    0.005292933,
+                    0.0059268,
+                    0.0069484995,
+                    0.0058084,
+                    0.0040256,
+                    0.0043387003
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "total",
+                "data": [
+                  12,
+                  12,
+                  12,
+                  12,
+                  12,
+                  12
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "MemoryOOM",
+              "title": "Out of Memory",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            },
+            {
+              "id": "MemoryPressure",
+              "title": "Memory pressure",
+              "status": "ok",
+              "message": "",
+              "threshold": 0.02,
+              "unit": "second"
+            },
+            {
+              "id": "MemoryLeakPercent",
+              "title": "Memory leak",
+              "status": "ok",
+              "message": "",
+              "threshold": 10,
+              "unit": ""
+            }
+          ],
+          "tables": [],
+          "charts": [
+            {
+              "title": "RSS container: chat-api",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    68571140,
+                    68571140,
+                    68571140,
+                    68595710,
+                    68599810,
+                    68599810
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "limit",
+                "data": [
+                  268435460,
+                  268435460,
+                  268435460,
+                  268435460,
+                  268435460,
+                  268435460
+                ]
+              }
+            },
+            {
+              "title": "RSS",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    68571140,
+                    68571140,
+                    68571140,
+                    68595710,
+                    68599810,
+                    68599810
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "RSS + PageCache",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    73957380,
+                    73957380,
+                    73957380,
+                    73981950,
+                    73986050,
+                    73986050
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "some",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "full",
+              "series": [
+                {
+                  "name": "chat-api-7f9456fbd4-szft7",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "Node memory usage (unreclaimable), %",
+              "series": [
+                {
+                  "name": "kubepilot-lab-worker",
+                  "data": [
+                    71.01931,
+                    70.54469,
+                    70.7747,
+                    70.746216,
+                    70.48543,
+                    69.81733
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "kubepilot-lab-worker",
+              "series": [
+                {
+                  "name": "tempo",
+                  "data": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                },
+                {
+                  "name": "containerd",
+                  "data": [
+                    203214850,
+                    203603970,
+                    203116540,
+                    202907650,
+                    203104260,
+                    202629120
+                  ]
+                },
+                {
+                  "name": "chat-api",
+                  "data": [
+                    68571140,
+                    68571140,
+                    68571140,
+                    68595710,
+                    68599810,
+                    68599810
+                  ]
+                },
+                {
+                  "name": "coroot-node-agent",
+                  "data": [
+                    62423040,
+                    62427136,
+                    62427136,
+                    62431230,
+                    63700990,
+                    63709184
+                  ]
+                },
+                {
+                  "name": "other",
+                  "data": [
+                    154230780,
+                    154894340,
+                    155127800,
+                    155250690,
+                    155267070,
+                    154259460
+                  ]
+                }
+              ],
+              "threshold": {
+                "name": "total",
+                "data": [
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000,
+                  32572533000
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Net",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "NetworkRTT",
+              "title": "Network RTT within the cluster",
+              "status": "ok",
+              "message": "",
+              "threshold": 0.01,
+              "unit": "second"
+            },
+            {
+              "id": "NetworkRTTExternal",
+              "title": "Network RTT to external services",
+              "status": "ok",
+              "message": "",
+              "threshold": 0.2,
+              "unit": "second"
+            },
+            {
+              "id": "NetworkRTTOtherClusters",
+              "title": "Network RTT to services in other clusters",
+              "status": "ok",
+              "message": "",
+              "threshold": 0.1,
+              "unit": "second"
+            },
+            {
+              "id": "NetworkTCPConnections",
+              "title": "TCP connections",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            },
+            {
+              "id": "NetworkConnectivity",
+              "title": "Network connectivity",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            }
+          ],
+          "tables": [],
+          "charts": [
+            {
+              "title": "Network RTT (in-cluster), seconds",
+              "series": [
+                {
+                  "name": "→otel-collector",
+                  "data": [
+                    0.000038595,
+                    0.000020062,
+                    0.000024574,
+                    0.000022609,
+                    0.000031327,
+                    0.000036019
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "TCP connection latency, seconds",
+              "series": [
+                {
+                  "name": "→otel-collector",
+                  "data": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "Active TCP connections",
+              "series": [
+                {
+                  "name": "→otel-collector",
+                  "data": [
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "TCP connection attempts, per second",
+              "series": [
+                {
+                  "name": "→otel-collector",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "inbound",
+              "series": [
+                {
+                  "name": "←otel-collector",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            },
+            {
+              "title": "outbound",
+              "series": [
+                {
+                  "name": "→otel-collector",
+                  "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              ],
+              "threshold": null
+            }
+          ]
+        },
+        {
+          "name": "Logs",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "LogErrors",
+              "title": "Errors",
+              "status": "ok",
+              "message": "",
+              "threshold": 0,
+              "unit": ""
+            }
+          ],
+          "tables": [],
+          "charts": []
+        },
+        {
+          "name": "Deployments",
+          "status": "ok",
+          "checks": [
+            {
+              "id": "DeploymentStatus",
+              "title": "Deployment status",
+              "status": "ok",
+              "message": "",
+              "threshold": 180,
+              "unit": "second"
+            }
+          ],
+          "tables": [
+            {
+              "header": [
+                "Deployment",
+                "Deployed",
+                "Summary"
+              ],
+              "rows": [
+                [
+                  {
+                    "value": "7f9456fbd4: chat-api:d8299e496c0a",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "8 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Collecting data...",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "6f86945d96",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "9 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "7f9456fbd4: chat-api:d8299e496c0a",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "9 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5f9b9d87b9",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "10 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "7f9456fbd4: chat-api:d8299e496c0a",
+                    "status": "ok"
+                  },
+                  {
+                    "value": "54 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "No notable changes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "5f9b9d87b9",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "56 minutes ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "7f9456fbd4: chat-api:d8299e496c0a",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ],
+                [
+                  {
+                    "value": "6f86945d96",
+                    "status": "unknown"
+                  },
+                  {
+                    "value": "1 hour ago",
+                    "status": null
+                  },
+                  {
+                    "value": "Not enough data due to the lifetime < 30 minutes",
+                    "status": null
+                  }
+                ]
+              ]
+            }
+          ],
+          "charts": []
+        },
+        {
+          "name": "Profiling",
+          "status": "unknown",
+          "checks": [],
+          "tables": [],
+          "charts": []
+        },
+        {
+          "name": "Tracing",
+          "status": "unknown",
+          "checks": [],
+          "tables": [],
+          "charts": []
+        }
+      ]
+    }
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-20T13:09:03.195Z",
+      "to": "2026-10-20T13:14:36.955Z",
+      "baseline": {
+        "from": "2026-10-20T13:06:03.174Z",
+        "to": "2026-10-20T13:09:03.195Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-20T13:14:36.955Z",
+          "to": "2026-10-20T13:14:41.188Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "oom-killed",
+        "cause": "oom_killed",
+        "confidence": 0.96,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-7d785c95dc-6slrm"
+        },
+        "summary": "Container in pod model-server-7d785c95dc-6slrm (deployment/model-server) was OOMKilled (exit code 137) and restarted 5 times",
+        "evidence": [
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-20T13:09:48Z",
+            "summary": "kube_pod_container_status_last_terminated_reason{pod=\"model-server-7d785c95dc-6slrm\",reason=\"OOMKilled\"} == 1"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-20T13:12:48Z",
+            "summary": "kube_pod_container_status_restarts_total{pod=\"model-server-7d785c95dc-6slrm\"} reached 5"
+          },
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-20T13:13:39Z",
+            "summary": "Warning BackOff on pod model-server-7d785c95dc-6slrm: Back-off restarting failed container model-server in pod model-server-7d785c95dc-6slrm_genai(71485bf5-4b2f-454f-a5de-a209a9d869ce)"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T13:09:31Z",
+            "summary": "63 requests failed in the analysis window while model-server-7d785c95dc-6slrm was crash-looping"
+          }
+        ]
+      }
+    ]
+  }
+}

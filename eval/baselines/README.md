@@ -64,17 +64,17 @@ few minutes:
 
 ### 3.2 Coroot Community Edition
 - Deployed into `observability` (pinned image digest) connected to the lab's
-  existing Prometheus (`http://kube-prometheus-stack-prometheus.observability:9090`)
+  existing Prometheus (`http://prometheus-server.observability:80`)
   and `coroot-node-agent` DaemonSet.
 - Queried via its HTTP API (`/api/project/.../overview/applications` and
-  `/api/project/.../app/genai:deployment:model-server` / `genai:deployment:chat-api`)
-  to record all active inspection statuses (`status`, `audits`, `reports`,
-  `instances`, ` logs/events`).
+  `/api/project/.../app/...:genai:Deployment:model-server` / `...:genai:Deployment:chat-api`)
+  to record all active inspection statuses (`status`, `checks`, `reports`,
+  `instances`, `deployments`).
 
 ### 3.3 HolmesGPT
 - Executed via the pinned HolmesGPT container image with read-only access to:
   - the cluster (`kubeconfig`),
-  - Prometheus (`http://kube-prometheus-stack-prometheus.observability:9090`),
+  - Prometheus (`http://prometheus-server.observability:80`),
   - Grafana Tempo (`http://tempo.observability:3200`).
 - **Out-of-cluster self-hosted LLM by default:** To remain 100% self-hosted and
   ensure that faults injected into the in-cluster `genai/model-server` (such as
