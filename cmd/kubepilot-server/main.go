@@ -51,7 +51,6 @@ func run(args []string) error {
 
 	liveCfg := live.Config{
 		Kubeconfig:    *kubeconfig,
-		KubeAPIURL:    *kubeAPIURL,
 		Namespace:     *namespace,
 		ObsNamespace:  *obsNamespace,
 		PrometheusURL: *promURL,
