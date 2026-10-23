@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 540" width="100%" height="540" role="img" aria-label="KubePilot Live CLI &amp; Web Console Animated Showcase">
+  <defs>
+    <linearGradient id="winBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#070a12"/>
+    </linearGradient>
+    <linearGradient id="bannerRose" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(244,63,94,0.16)"/>
+      <stop offset="100%" stop-color="rgba(15,23,42,0.85)"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.25); }
+    }
+    @keyframes flowDash {
+      to { stroke-dashoffset: -24; }
+    }
+    @keyframes faultGlow {
+      0%, 100% { stroke-opacity: 0.95; }
+      50% { stroke-opacity: 0.35; }
+    }
+    @keyframes termLine1 {
+      0%, 5% { opacity: 0; }
+      10%, 95% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes termLine2 {
+      0%, 16% { opacity: 0; }
+      22%, 95% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes termLine3 {
+      0%, 30% { opacity: 0; }
+      36%, 95% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes termLine4 {
+      0%, 46% { opacity: 0; }
+      52%, 95% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes gaugeSweep {
+      0%, 15% { stroke-dashoffset: 138; }
+      35%, 95% { stroke-dashoffset: 11; }
+      100% { stroke-dashoffset: 138; }
+    }
+
+    .live-dot { animation: pulseDot 1.8s infinite ease-in-out; transform-origin: center; transform-box: fill-box; }
+    .flow-arrow { stroke-dasharray: 5 4; animation: flowDash 1.1s linear infinite; }
+    .fault-box { animation: faultGlow 2s ease-in-out infinite; }
+    .t1 { animation: termLine1 11s infinite; }
+    .t2 { animation: termLine2 11s infinite; }
+    .t3 { animation: termLine3 11s infinite; }
+    .t4 { animation: termLine4 11s infinite; }
+    .gauge-arc { animation: gaugeSweep 11s infinite ease-out; }
+  </style>
+
+  <!-- Outer Frame -->
+  <rect width="1100" height="540" rx="16" fill="url(#winBg)" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Top Browser / Terminal Chrome Bar -->
+  <rect x="0" y="0" width="1100" height="38" rx="16" fill="#0f172a"/>
+  <rect x="0" y="22" width="1100" height="16" fill="#0f172a"/>
+  <line x1="0" y1="38" x2="1100" y2="38" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="20" cy="19" r="5.5" fill="#f43f5e"/>
+  <circle cx="38" cy="19" r="5.5" fill="#f59e0b"/>
+  <circle cx="56" cy="19" r="5.5" fill="#10b981"/>
+  <text x="82" y="23" fill="#94a3b8" class="mono" font-size="11.5" font-weight="600">kubectl why-slow CLI</text>
+  <line x1="435" y1="0" x2="435" y2="540" stroke="#1e293b" stroke-width="1.5"/>
+  <text x="455" y="23" fill="#e2e8f0" class="sans" font-size="12" font-weight="700">KubePilot Web Console — http://127.0.0.1:8090</text>
+  <rect x="975" y="9" width="108" height="20" rx="10" fill="rgba(16,185,129,0.14)" stroke="#10b981" stroke-width="1"/>
+  <circle class="live-dot" cx="988" cy="19" r="3.5" fill="#10b981"/>
+  <text x="998" y="23" fill="#10b981" class="mono" font-size="10.5" font-weight="700">SSE LIVE · 0 FP</text>
+
+  <!-- ================= LEFT PANEL: ANIMATED CLI TERMINAL ================= -->
+  <g transform="translate(18, 56)">
+    <text x="0" y="16" fill="#38bdf8" class="mono" font-size="11.5" font-weight="700">$ kubectl why-slow --namespace genai</text>
+
+    <g class="t1" transform="translate(0, 38)">
+      <text x="0" y="0" fill="#10b981" class="mono" font-size="11" font-weight="700">Status: diagnosed (0.28s · 0 LLM calls · Read-Only)</text>
+      <text x="0" y="17" fill="#94a3b8" class="mono" font-size="10.5">Window: 2026-10-20T12:55:56Z -&gt; 13:00:58Z (64 traces)</text>
+      <rect x="0" y="28" width="398" height="44" rx="6" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="1"/>
+      <text x="10" y="45" fill="#fda4af" class="mono" font-size="11" font-weight="700">[1] cpu_throttling (confidence=0.92, rule=cpu-throttling)</text>
+      <text x="10" y="62" fill="#e2e8f0" class="mono" font-size="10">Workload: deployment/model-server (pod model-server-57p7c)</text>
+    </g>
+
+    <g class="t2" transform="translate(0, 128)">
+      <text x="0" y="0" fill="#cbd5e1" class="mono" font-size="10.5" font-weight="700">Correlated Multi-Signal Proof:</text>
+      <text x="0" y="18" fill="#38bdf8" class="mono" font-size="10">• [prometheus @ 13:00:55Z] CFS throttled = 93.3%</text>
+      <text x="12" y="32" fill="#94a3b8" class="mono" font-size="9.5">(2774/2974 periods on pod model-server-57p7c)</text>
+      <text x="0" y="49" fill="#f59e0b" class="mono" font-size="10">• [request_log @ 13:00:45Z] p50 latency 493ms -&gt; 3262ms</text>
+      <text x="12" y="63" fill="#94a3b8" class="mono" font-size="9.5">(x6.61 inflation · 6 HTTP 502/504 timeouts)</text>
+      <text x="0" y="80" fill="#a855f7" class="mono" font-size="10">• [prometheus @ 13:00:55Z] predicted_tokens_seconds</text>
+      <text x="12" y="94" fill="#94a3b8" class="mono" font-size="9.5">dropped 50.3 tok/s -&gt; 12.8 tok/s avg</text>
+      <text x="0" y="111" fill="#10b981" class="mono" font-size="10">• [k8s_event @ 12:55:56Z] ResizeStarted limits.cpu=300m</text>
+    </g>
+
+    <g class="t3" transform="translate(0, 260)">
+      <text x="0" y="0" fill="#38bdf8" class="mono" font-size="11.5" font-weight="700">$ curl -s :8090/api/v1/incidents/.../security</text>
+      <text x="0" y="18" fill="#10b981" class="mono" font-size="10.5">Posture Score: 83/100 (PSS-Restricted · Read-Only RBAC)</text>
+      <text x="0" y="34" fill="#94a3b8" class="mono" font-size="10">✓ rbac_least_privilege: PASS (get/list/watch only)</text>
+      <text x="0" y="49" fill="#94a3b8" class="mono" font-size="10">✓ prompt_privacy_redaction: PASS (0/64 prompts stored)</text>
+      <text x="0" y="64" fill="#94a3b8" class="mono" font-size="10">✓ patch_security_guard: PASS (GitOps PR safe)</text>
+      <text x="0" y="79" fill="#f59e0b" class="mono" font-size="10">! volume_isolation: WARN (1 hostPath -&gt; use RO PVC)</text>
+    </g>
+
+    <g class="t4" transform="translate(0, 362)">
+      <text x="0" y="0" fill="#38bdf8" class="mono" font-size="11.5" font-weight="700">$ kubectl why-slow --run-dir test--nofault--decoy-oom</text>
+      <rect x="0" y="10" width="398" height="42" rx="6" fill="rgba(16,185,129,0.11)" stroke="#10b981" stroke-width="1"/>
+      <text x="10" y="27" fill="#6ee7b7" class="mono" font-size="10.5" font-weight="700">Status: unknown (Honest Abstention · 0 False Positives)</text>
+      <text x="10" y="43" fill="#94a3b8" class="mono" font-size="9.5">Ignored decoy OOM in neighbor namespace; genai SLOs healthy.</text>
+    </g>
+
+    <!-- Bottom Benchmark Bar -->
+    <rect x="0" y="432" width="398" height="36" rx="6" fill="#0f172a" stroke="#1e293b"/>
+    <text x="12" y="454" fill="#cbd5e1" class="mono" font-size="10.5">Held-Out Test Split (n=45): <tspan fill="#10b981" font-weight="700">24/24 Recall</tspan> · <tspan fill="#38bdf8" font-weight="700">0/21 FP</tspan></text>
+  </g>
+
+  <!-- ================= RIGHT PANEL: EMBEDDED WEB CONSOLE ================= -->
+  <g transform="translate(452, 52)">
+    <!-- 1. Incident Hero Banner -->
+    <rect x="0" y="0" width="630" height="84" rx="10" fill="url(#bannerRose)" stroke="#f43f5e" stroke-width="1.2"/>
+    <circle cx="18" cy="20" r="4" fill="#f43f5e"/>
+    <text x="28" y="24" fill="#fda4af" class="mono" font-size="10" font-weight="700">ROOT CAUSE ISOLATED · CONTAINER CGROUP CPU QUOTA</text>
+    <text x="14" y="46" fill="#f8fafc" class="sans" font-size="17" font-weight="800">CFS CPU Quota Throttling on deployment/model-server</text>
+    <text x="14" y="67" fill="#cbd5e1" class="mono" font-size="10.5">ID: dev--cpu-throttle--limit-300m--r1  ·  64 OTel Traces  ·  4 K8s Events  ·  ↓ Post-Mortem (.md)  ·  ↓ Bundle (.tar.gz)</text>
+
+    <!-- Confidence Gauge -->
+    <g transform="translate(556, 12)">
+      <circle cx="30" cy="30" r="22" fill="none" stroke="#1e293b" stroke-width="5"/>
+      <circle class="gauge-arc" cx="30" cy="30" r="22" fill="none" stroke="#f43f5e" stroke-width="5" stroke-linecap="round"
+              stroke-dasharray="138" stroke-dashoffset="11" transform="rotate(-90 30 30)"/>
+      <text x="30" y="34" text-anchor="middle" fill="#f8fafc" class="mono" font-size="12" font-weight="700">92%</text>
+    </g>
+
+    <!-- 2. Service Architecture & Blast-Radius Topology -->
+    <rect x="0" y="96" width="630" height="122" rx="10" fill="#0f172a" stroke="#1e293b"/>
+    <text x="14" y="116" fill="#e2e8f0" class="sans" font-size="12" font-weight="700">Service Architecture &amp; Blast-Radius Topology</text>
+    <text x="485" y="116" fill="#38bdf8" class="mono" font-size="10">Live 5-Signal Correlation</text>
+
+    <!-- Node 1: loadgen -->
+    <g transform="translate(14, 128)">
+      <rect width="122" height="76" rx="8" fill="#0b1324" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="10" y="18" fill="#94a3b8" class="mono" font-size="9.5">CLIENT TRAFFIC</text>
+      <text x="10" y="34" fill="#f8fafc" class="mono" font-size="12" font-weight="700">loadgen</text>
+      <text x="10" y="50" fill="#cbd5e1" class="mono" font-size="9.5">P95: 30,034 ms</text>
+      <text x="10" y="65" fill="#f59e0b" class="mono" font-size="9.5" font-weight="700">23.1% HTTP Err</text>
+    </g>
+    <line class="flow-arrow" x1="138" y1="166" x2="168" y2="166" stroke="#6366f1" stroke-width="2"/>
+
+    <!-- Node 2: chat-api -->
+    <g transform="translate(170, 128)">
+      <rect width="122" height="76" rx="8" fill="#0b1324" stroke="#10b981" stroke-width="1.2"/>
+      <text x="10" y="18" fill="#94a3b8" class="mono" font-size="9.5">API GATEWAY POD</text>
+      <text x="10" y="34" fill="#f8fafc" class="mono" font-size="12" font-weight="700">chat-api</text>
+      <text x="10" y="50" fill="#cbd5e1" class="mono" font-size="9.5">App Gap: 14 ms</text>
+      <text x="10" y="65" fill="#10b981" class="mono" font-size="9.5" font-weight="700">● Gateway OK</text>
+    </g>
+    <line class="flow-arrow" x1="294" y1="166" x2="324" y2="166" stroke="#f43f5e" stroke-width="2"/>
+
+    <!-- Node 3: model-server (FAULT) -->
+    <g transform="translate(326, 128)">
+      <rect class="fault-box" width="144" height="76" rx="8" fill="rgba(244,63,94,0.14)" stroke="#f43f5e" stroke-width="2"/>
+      <text x="10" y="18" fill="#fda4af" class="mono" font-size="9.5" font-weight="700">LLM INFERENCE POD</text>
+      <text x="10" y="34" fill="#f8fafc" class="mono" font-size="12" font-weight="700">model-server</text>
+      <text x="10" y="50" fill="#cbd5e1" class="mono" font-size="9.5">Limit: 300m CPU</text>
+      <text x="10" y="65" fill="#f43f5e" class="mono" font-size="9.5" font-weight="700">● 93.3% Throttled</text>
+    </g>
+    <line class="flow-arrow" x1="472" y1="166" x2="498" y2="166" stroke="#10b981" stroke-width="2"/>
+
+    <!-- Node 4: K8s Node -->
+    <g transform="translate(500, 128)">
+      <rect width="116" height="76" rx="8" fill="#0b1324" stroke="#10b981" stroke-width="1.2"/>
+      <text x="10" y="18" fill="#94a3b8" class="mono" font-size="9.5">K8S WORKER NODE</text>
+      <text x="10" y="34" fill="#f8fafc" class="mono" font-size="11.5" font-weight="700">kind-worker2</text>
+      <text x="10" y="50" fill="#cbd5e1" class="mono" font-size="9.5">PSI Waiting: 0%</text>
+      <text x="10" y="65" fill="#10b981" class="mono" font-size="9.5" font-weight="700">● Node OK</text>
+    </g>
+
+    <!-- 3. Baseline vs Incident Comparator Strip -->
+    <rect x="0" y="228" width="630" height="76" rx="10" fill="#0f172a" stroke="#1e293b"/>
+    <text x="14" y="247" fill="#e2e8f0" class="sans" font-size="11.5" font-weight="700">Incident vs. Healthy Baseline Comparison (/compare)</text>
+
+    <g transform="translate(14, 256)">
+      <rect x="0" y="0" width="144" height="38" rx="6" fill="#0b1324" stroke="#f43f5e" stroke-width="1"/>
+      <text x="8" y="15" fill="#94a3b8" class="mono" font-size="9.5">P50 Latency</text>
+      <text x="88" y="15" fill="#f43f5e" class="mono" font-size="9.5" font-weight="700">+559.2%</text>
+      <text x="8" y="31" fill="#e2e8f0" class="mono" font-size="10">493ms → 3262ms</text>
+
+      <rect x="154" y="0" width="144" height="38" rx="6" fill="#0b1324" stroke="#f43f5e" stroke-width="1"/>
+      <text x="162" y="15" fill="#94a3b8" class="mono" font-size="9.5">CFS Throttled</text>
+      <text x="246" y="15" fill="#f43f5e" class="mono" font-size="9.5" font-weight="700">+91.5%</text>
+      <text x="162" y="31" fill="#e2e8f0" class="mono" font-size="10">1.8% → 93.3%</text>
+
+      <rect x="308" y="0" width="144" height="38" rx="6" fill="#0b1324" stroke="#f59e0b" stroke-width="1"/>
+      <text x="316" y="15" fill="#94a3b8" class="mono" font-size="9.5">Token Speed</text>
+      <text x="398" y="15" fill="#f59e0b" class="mono" font-size="9.5" font-weight="700">-74.6%</text>
+      <text x="316" y="31" fill="#e2e8f0" class="mono" font-size="10">50.3 → 12.8 tok/s</text>
+
+      <rect x="462" y="0" width="140" height="38" rx="6" fill="#0b1324" stroke="#10b981" stroke-width="1"/>
+      <text x="470" y="15" fill="#94a3b8" class="mono" font-size="9.5">App Pre-Inf Gap</text>
+      <text x="556" y="15" fill="#10b981" class="mono" font-size="9.5" font-weight="700">NORMAL</text>
+      <text x="470" y="31" fill="#e2e8f0" class="mono" font-size="10">12ms → 14ms</text>
+    </g>
+
+    <!-- 4. Bottom Split: FinOps 2.0 Card + DevSecOps & Controlled SRE Runbook -->
+    <g transform="translate(0, 314)">
+      <!-- FinOps 2.0 Card -->
+      <rect x="0" y="0" width="308" height="162" rx="10" fill="#0f172a" stroke="#1e293b"/>
+      <text x="14" y="22" fill="#e2e8f0" class="sans" font-size="11.5" font-weight="700">OpenCost Operational FinOps 2.0</text>
+      <rect x="228" y="9" width="68" height="18" rx="9" fill="rgba(245,158,11,0.16)"/>
+      <text x="262" y="21" text-anchor="middle" fill="#f59e0b" class="mono" font-size="9.5" font-weight="700">65% Waste</text>
+
+      <text x="14" y="46" fill="#94a3b8" class="mono" font-size="10">30-Day Projected Waste:</text>
+      <text x="175" y="46" fill="#f59e0b" class="mono" font-size="11" font-weight="700">$31.51/mo (of $48.47)</text>
+
+      <text x="14" y="66" fill="#94a3b8" class="mono" font-size="10">Unit Cost (1k req / 1M tok):</text>
+      <text x="175" y="66" fill="#e2e8f0" class="mono" font-size="10.5" font-weight="700">$0.28 / $7.50</text>
+
+      <text x="14" y="86" fill="#94a3b8" class="mono" font-size="10">GitOps Patch Monthly Delta:</text>
+      <text x="175" y="86" fill="#10b981" class="mono" font-size="11" font-weight="700">+$0.00 / mo (4x tok/s)</text>
+
+      <rect x="12" y="100" width="284" height="50" rx="6" fill="#0b1324" stroke="#1e293b"/>
+      <text x="20" y="118" fill="#cbd5e1" class="mono" font-size="9.5">ROI Decision: Right-sizing limits.cpu to</text>
+      <text x="20" y="132" fill="#cbd5e1" class="mono" font-size="9.5">2000m eliminates $31.51/mo waste and cuts</text>
+      <text x="20" y="145" fill="#38bdf8" class="mono" font-size="9.5" font-weight="700">$/1M output tokens by ~70% at +$0/mo.</text>
+
+      <!-- DevSecOps & Controlled SRE Runbook Card -->
+      <rect x="322" y="0" width="308" height="162" rx="10" fill="#0f172a" stroke="#1e293b"/>
+      <text x="336" y="22" fill="#e2e8f0" class="sans" font-size="11.5" font-weight="700">DevSecOps PSS &amp; Controlled Runbook</text>
+      <rect x="546" y="9" width="72" height="18" rx="9" fill="rgba(16,185,129,0.16)"/>
+      <text x="582" y="21" text-anchor="middle" fill="#10b981" class="mono" font-size="9.5" font-weight="700">83/100 PSS</text>
+
+      <text x="336" y="45" fill="#cbd5e1" class="mono" font-size="9.8">1. [Read-Only] kubectl describe &amp; why-slow</text>
+      <text x="336" y="64" fill="#cbd5e1" class="mono" font-size="9.8">2. [Dry-Run]   kubectl apply --dry-run=server</text>
+      <text x="336" y="83" fill="#fda4af" class="mono" font-size="9.8">3. [Approval]  kubectl apply -f patch.yaml</text>
+      <text x="336" y="102" fill="#fda4af" class="mono" font-size="9.8">4. [Rollback]  kubectl rollout undo model-server</text>
+
+      <rect x="334" y="114" width="284" height="36" rx="6" fill="rgba(99,102,241,0.14)" stroke="#6366f1"/>
+      <text x="344" y="130" fill="#e2e8f0" class="mono" font-size="9.5" font-weight="700">Controlled AI Copilot (/explain): 5 Guardrails</text>
+      <text x="344" y="143" fill="#94a3b8" class="mono" font-size="9">Root-cause locked to Go engine · 0 prompts exposed</text>
+    </g>
+  </g>
+</svg>

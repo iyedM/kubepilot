@@ -1,23 +1,68 @@
-# KubePilot
+<p align="center">
+  <img src="docs/assets/kubepilot-banner.svg" alt="KubePilot — Deterministic Root-Cause Diagnosis, FinOps &amp; DevSecOps for Slow GenAI on Kubernetes" width="100%"/>
+</p>
 
-[![CI](https://github.com/iyedM/kubepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/iyedM/kubepilot/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/iyedM/kubepilot?label=release&color=0ea5e9)](https://github.com/iyedM/kubepilot/releases)
-[![Go 1.26](https://img.shields.io/badge/Go-1.26%20(Zero%20External%20Deps)-00ADD8?logo=go&logoColor=white)](go.mod)
-[![Security Posture](https://img.shields.io/badge/RBAC-Read--Only%20%C2%B7%20PSS--Restricted-10b981)](charts/kubepilot/templates/rbac.yaml)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/iyedM/kubepilot/actions/workflows/ci.yml"><img src="https://github.com/iyedM/kubepilot/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/iyedM/kubepilot/releases"><img src="https://img.shields.io/github/v/release/iyedM/kubepilot?label=release&amp;color=0ea5e9" alt="Release"/></a>
+  <a href="go.mod"><img src="https://img.shields.io/badge/Go-1.26%20(Zero%20External%20Deps)-00ADD8?logo=go&amp;logoColor=white" alt="Go 1.26"/></a>
+  <a href="charts/kubepilot/templates/rbac.yaml"><img src="https://img.shields.io/badge/RBAC-Read--Only%20%C2%B7%20PSS--Restricted-10b981" alt="Security Posture"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache-2.0"/></a>
+</p>
 
-**KubePilot** is an open-source, self-hosted, **read-only** Kubernetes diagnosis tool and service in Go that answers one question:
+**KubePilot** is an open-source, self-hosted, **read-only** Kubernetes diagnosis tool and service in Go that answers one question in `< 0.5 seconds`:
 
 > **Why was this GenAI request on Kubernetes slow, or why did it fail?**
 
+<p align="center">
+  <img src="docs/assets/kubepilot-demo.svg" alt="KubePilot Animated CLI &amp; Embedded Web Console Showcase" width="100%"/>
+</p>
+
 Given a trace ID or a time window, KubePilot correlates:
-- **OpenTelemetry traces** carrying `gen_ai.*` spans (from Grafana Tempo),
+- **OpenTelemetry traces** carrying `gen_ai.*` spans (from Grafana Tempo, with zero prompt/completion capture),
 - **Kubernetes events and Pod/Node/PVC state**, and
 - **Prometheus metrics** (cAdvisor CFS throttling, Linux PSI CPU pressure, `kube-state-metrics`, and `llama.cpp` serving metrics),
 
 and outputs the **top-3 probable causes**, each with **timestamped evidence**, a **confidence score**, an **OpenCost Operational FinOps 2.0 ROI & waste estimate**, a **DevSecOps PSS-Restricted posture audit**, and a **controlled Human-in-the-Loop SRE runbook**. When the evidence is ambiguous, it returns **`"unknown"`** instead of guessing.
 
 > **Methodological disclaimer:** All benchmark and baseline comparison numbers reported in this repository are measured on **faults injected in a single-cluster local `kind` lab** (`kubepilot-lab`) with one CPU-served model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`), one GenAI application (`chat-api`), and synthetic traffic (`loadgen`), **not on real production incidents**.
+
+---
+
+## Instant Install & Quickstart
+
+### Option 1: Install in Your Kubernetes Cluster (Helm Chart & `kubectl why-slow` Plugin)
+
+```sh
+# A. Deploy the read-only KubePilot server, Web Console & GenAIIncident CRD via Helm:
+helm upgrade --install kubepilot ./charts/kubepilot \
+  --namespace kubepilot-system --create-namespace \
+  --set targetNamespace=genai
+
+# B. Or install the native kubectl plugin (kubectl why-slow) via Go / Krew manifest:
+go install github.com/iyedM/kubepilot/cmd/why-slow@latest
+kubectl krew install --manifest=packaging/krew/why-slow.yaml
+
+# C. Diagnose any live Kubernetes namespace over the last 5 minutes (requires only get/list/watch RBAC):
+kubectl why-slow --namespace genai --prometheus-url http://localhost:9090 --tempo-url http://localhost:3200
+```
+
+### Option 2: 60-Second Offline Showcase (No Cluster Required)
+
+Test the CLI, Web Console, Operational FinOps 2.0, DevSecOps PSS Auditor, and What-If Chaos Simulator immediately against the **64 recorded lab runs** in [`eval/runs/`](eval/runs/):
+
+```sh
+# Run the complete 1-click end-to-end showcase:
+bash scripts/demo-showcase.sh
+
+# Or launch the self-hosted Web Console on http://127.0.0.1:8090 preloaded with the 19 dev runs:
+make build
+./bin/kubepilot-server --listen 127.0.0.1:8090 --seed-runs-dir eval/runs/dev --seed-limit 19
+```
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart LR
@@ -71,31 +116,6 @@ flowchart LR
   - **SRE Post-Mortem Markdown, GitOps Patch & Portable `.tar.gz` Bundles** (`/api/v1/incidents/{id}/postmortem`, `/api/v1/incidents/{id}/bundle`, `/api/v1/incidents/{id}/compare`)
   - **Prometheus `/metrics` Exporter, Alertmanager Auto-Triage Receiver & Official Grafana Dashboard** (`/metrics`, `/api/v1/alerts/alertmanager`, [`charts/kubepilot/dashboards/kubepilot-overview.json`](charts/kubepilot/dashboards/kubepilot-overview.json))
   - **Read-Only `GenAIIncident` CustomResourceDefinition Operator** ([`internal/operator`](internal/operator/operator.go), [`charts/kubepilot/crds/`](charts/kubepilot/crds/genaiincidents.kubepilot.io.yaml))
-
----
-
-## Quickstart (60-Second Offline Demo)
-
-You can build and test KubePilot immediately against the 64 recorded lab runs in [`eval/runs/`](eval/runs/) without spinning up a cluster:
-
-```sh
-# Run the complete 1-click end-to-end showcase (CLI + kubectl plugin + FinOps 2.0 + DevSecOps + Runbook + Simulator):
-bash scripts/demo-showcase.sh
-
-# Or step-by-step:
-# 1. Build ./bin/why-slow, ./bin/kubectl-why_slow, ./bin/kubepilot-server, and ./bin/eval-score
-make build
-
-# 2. Diagnose a recorded CFS CPU throttling fault run
-./bin/why-slow --run-dir eval/runs/dev/dev--cpu-throttle--limit-300m--r1
-
-# 3. Diagnose a recorded 2000 ms pre-inference application delay
-./bin/why-slow --run-dir eval/runs/dev/dev--app-delay--delay-2000ms--r1
-
-# 4. Launch the self-hosted Web UI & HTTP API preloaded with the 19 dev runs
-./bin/kubepilot-server --listen 127.0.0.1:8090 --seed-runs-dir eval/runs/dev --seed-limit 19
-# -> Open http://127.0.0.1:8090
-```
 
 ### HTTP API & SRE Endpoints (`kubepilot-server`)
 
