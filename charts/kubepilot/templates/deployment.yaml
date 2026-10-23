@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: kubepilot
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubepilot
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kubepilot
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ default .Release.Name .Values.serviceAccount.name }}
+      containers:
+        - name: kubepilot-server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--listen=:{{ .Values.service.port }}"
+            - "--namespace={{ .Values.targetNamespace }}"
+            - "--obs-namespace={{ .Values.observabilityNamespace }}"
+            - "--prometheus-url={{ .Values.prometheusURL }}"
+            - "--tempo-url={{ .Values.tempoURL }}"
+            - "--poll-interval={{ .Values.pollInterval }}"
+          {{- if .Values.openCostURL }}
+            - "--opencost-url={{ .Values.openCostURL }}"
+          {{- end }}
+          {{- if .Values.operator.enabled }}
+            - "--enable-operator=true"
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

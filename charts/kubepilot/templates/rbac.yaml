@@ -1,0 +1,51 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-readonly
+  labels:
+    app.kubernetes.io/name: kubepilot
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  # Strictly read-only access to cluster telemetry and workload state (CLAUDE.md rule 4).
+  # No create/update/patch/delete permissions on Pods, Deployments, or Nodes.
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - events
+      - nodes
+      - persistentvolumeclaims
+      - services
+      - services/proxy
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+    verbs: ["get", "list", "watch"]
+{{- if .Values.operator.enabled }}
+  # Optional Phase P7 read-only GenAIIncident CRD reporting (only writes GenAIIncident CRs).
+  - apiGroups: ["kubepilot.io"]
+    resources:
+      - genaiincidents
+      - genaiincidents/status
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Name }}-readonly
+  labels:
+    app.kubernetes.io/name: kubepilot
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-readonly
+subjects:
+  - kind: ServiceAccount
+    name: {{ default .Release.Name .Values.serviceAccount.name }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

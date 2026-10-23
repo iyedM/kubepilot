@@ -1,0 +1,18 @@
+apiVersion: v2
+name: kubepilot
+description: Read-only Kubernetes diagnosis service and Web UI explaining why GenAI requests were slow or failed
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - genai
+  - opentelemetry
+  - prometheus
+  - tempo
+  - observability
+home: https://github.com/iyedM/kubepilot
+sources:
+  - https://github.com/iyedM/kubepilot
+maintainers:
+  - name: iyedM

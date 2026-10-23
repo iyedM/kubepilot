@@ -1,0 +1,45 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/iyedm/kubepilot
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+serviceAccount:
+  create: true
+  name: ""
+
+rbac:
+  create: true
+
+targetNamespace: "genai"
+observabilityNamespace: "observability"
+prometheusURL: "http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090"
+tempoURL: "http://tempo.observability.svc.cluster.local:3200"
+openCostURL: ""
+pollInterval: "60s"
+
+operator:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 8090
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  capabilities:
+    drop:
+      - ALL

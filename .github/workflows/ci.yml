@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Go Test, Benchmark Score, ShellCheck & Helm Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.26
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          check-latest: true
+
+      - name: Check gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed on: $unformatted" >&2
+            exit 1
+          fi
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run Go unit tests with race detector
+        run: go test -race -v ./...
+
+      - name: Build binaries (why-slow, kubepilot-server, eval-score)
+        run: |
+          mkdir -p bin
+          go build -trimpath -o bin/why-slow ./cmd/why-slow
+          go build -trimpath -o bin/kubepilot-server ./cmd/kubepilot-server
+          go build -trimpath -o bin/eval-score ./cmd/eval-score
+
+      - name: Verify pre-registered benchmark scores (dev and held-out test splits)
+        run: |
+          go run ./cmd/eval-score --split dev
+          go run ./cmd/eval-score --split test
+
+      - name: Lint shell scripts (ShellCheck)
+        run: make lint
+
+      - name: Lint Helm chart
+        run: helm lint charts/kubepilot

@@ -1,0 +1,47 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: why-slow
+spec:
+  version: v0.1.0
+  homepage: https://github.com/iyedM/kubepilot
+  shortDescription: Explain why a GenAI request on Kubernetes was slow or failed
+  description: |
+    kubectl why-slow correlates OpenTelemetry traces (gen_ai.* spans from Tempo),
+    Kubernetes events and pod state, and Prometheus metrics through deterministic,
+    explainable rules (zero LLM in the diagnosis path, strictly read-only RBAC).
+    It outputs the top-3 probable causes with timestamped evidence and a confidence
+    score, or "unknown" when evidence is ambiguous.
+  caveats: |
+    Requires read-only access to the target namespace (pods, events, pods/log) and
+    connectivity to Prometheus and Grafana Tempo (either via Kubernetes Service
+    proxy or --prometheus-url / --tempo-url).
+  platforms:
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/iyedM/kubepilot/releases/download/v0.1.0/kubectl-why_slow_linux_amd64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-why_slow
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      uri: https://github.com/iyedM/kubepilot/releases/download/v0.1.0/kubectl-why_slow_linux_arm64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-why_slow
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/iyedM/kubepilot/releases/download/v0.1.0/kubectl-why_slow_darwin_amd64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-why_slow
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      uri: https://github.com/iyedM/kubepilot/releases/download/v0.1.0/kubectl-why_slow_darwin_arm64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-why_slow

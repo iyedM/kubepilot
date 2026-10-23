@@ -16,7 +16,7 @@ INHIBIT :=
 endif
 LAB_SCRIPTS := $(wildcard lab/scripts/*.sh lab/compat/*.sh lab/apps/*/*.sh lab/faults/*.sh lab/baselines/*.sh lab/ebpf/*.sh)
 
-.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix test test-app eval-score lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
+.PHONY: help tools models verify-pins lab-up lab-check bench-model compat-matrix build test test-app eval-score lab-down lab-stats lint fault-cpu-throttle fault-oomkill fault-reset fault-check run-fault run-batch baseline-stability lab-hooks-on lab-hooks-off fault-unschedulable fault-readiness-fail fault-cold-start fault-config-regression fault-host-contention fault-app-delay
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -56,6 +56,12 @@ lint: ## shellcheck the lab scripts (pinned image)
 
 compat-matrix: ## Record what each OpenAI instrumentation package emits (fixtures for P2)
 	lab/compat/run-matrix.sh
+
+build: ## Build why-slow, kubepilot-server and eval-score into ./bin
+	@mkdir -p bin
+	go build -trimpath -o bin/why-slow ./cmd/why-slow
+	go build -trimpath -o bin/kubepilot-server ./cmd/kubepilot-server
+	go build -trimpath -o bin/eval-score ./cmd/eval-score
 
 test: ## Run gofmt check, go vet and Go unit tests with the race detector
 	@unformatted="$$(gofmt -l .)"; \
