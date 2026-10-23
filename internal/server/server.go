@@ -533,6 +533,25 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 		rel = strings.TrimSuffix(rel, "/postmortem")
 	}
 	inc, ok := s.GetIncident(rel)
+	if !ok && !strings.Contains(rel, "/") && !strings.Contains(rel, "..") {
+		for _, split := range []string{"dev", "test"} {
+			candidate := filepath.Join("eval", "runs", split, rel)
+			if snap, meta, err := offline.LoadRunDir(candidate, offline.Options{
+				SkewTolerance: s.cfg.LiveConfig.SkewTolerance,
+			}); err == nil {
+				rep := rules.Diagnose(snap)
+				loaded := s.buildRecord(r.Context(), "run-dir", rel, snap, rep)
+				if meta != nil && meta.RunID != "" {
+					loaded.ID = meta.RunID
+				} else {
+					loaded.ID = rel
+				}
+				inc = s.RecordIncident(loaded)
+				ok = true
+				break
+			}
+		}
+	}
 	if !ok {
 		writeError(w, http.StatusNotFound, fmt.Sprintf("incident %q not found", rel))
 		return
