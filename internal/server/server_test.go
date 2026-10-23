@@ -1,0 +1,170 @@
+package server
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/iyedM/kubepilot/internal/collector/live"
+	"github.com/iyedM/kubepilot/internal/snapshot"
+)
+
+type stubCostEstimator struct{}
+
+func (stubCostEstimator) Estimate(_ context.Context, _ *snapshot.Snapshot, rep snapshot.Report) (*CostSummary, error) {
+	if rep.Status != snapshot.StatusDiagnosed {
+		return nil, nil
+	}
+	return &CostSummary{
+		Currency:           "USD",
+		Workload:           "deployment/model-server",
+		Namespace:          "genai",
+		WindowDurationSec:  180,
+		TotalWindowCost:    0.042,
+		EstimatedWasteCost: 0.031,
+		CPUCost:            0.035,
+		RAMCost:            0.007,
+		Source:             "opencost-stub",
+		Explanation:        "stub waste estimate",
+	}, nil
+}
+
+func TestHealthAndReadyEndpoints(t *testing.T) {
+	srv := New(Config{})
+	for _, path := range []string{"/healthz", "/readyz"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+		srv.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s returned status %d, want 200", path, rec.Code)
+		}
+		var body map[string]string
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("unmarshal %s: %v", path, err)
+		}
+		if body["status"] != "ok" || body["mode"] != "read-only" {
+			t.Fatalf("unexpected %s body: %+v", path, body)
+		}
+	}
+}
+
+func TestDiagnoseOfflineDevRunAndIncidentsAPI(t *testing.T) {
+	srv := New(Config{
+		CostEstimator: stubCostEstimator{},
+	})
+
+	runDir := filepath.Join("..", "..", "eval", "runs", "dev", "dev--cpu-throttle--limit-300m--r1")
+	payload, _ := json.Marshal(DiagnoseRequest{
+		RunDir: runDir,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/diagnose", bytes.NewReader(payload))
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("POST /api/v1/diagnose status=%d body=%s", rec.Code, rec.Body.String())
+	}
+
+	var inc IncidentRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &inc); err != nil {
+		t.Fatalf("unmarshal IncidentRecord: %v", err)
+	}
+	if inc.Report.Status != snapshot.StatusDiagnosed {
+		t.Fatalf("got status %q, want %q", inc.Report.Status, snapshot.StatusDiagnosed)
+	}
+	if len(inc.Report.TopCauses) == 0 || inc.Report.TopCauses[0].Cause != snapshot.CauseCPUThrottling {
+		t.Fatalf("unexpected top cause: %+v", inc.Report.TopCauses)
+	}
+	if inc.Cost == nil || inc.Cost.Source != "opencost-stub" {
+		t.Fatalf("expected attached CostSummary, got %+v", inc.Cost)
+	}
+
+	// Query /api/v1/incidents?cause=cpu_throttling
+	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents?cause=cpu_throttling", nil)
+	listRec := httptest.NewRecorder()
+	srv.ServeHTTP(listRec, listReq)
+	if listRec.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/incidents status=%d", listRec.Code)
+	}
+	var listResp struct {
+		Count     int              `json:"count"`
+		Incidents []IncidentRecord `json:"incidents"`
+	}
+	if err := json.Unmarshal(listRec.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("unmarshal list: %v", err)
+	}
+	if listResp.Count != 1 || listResp.Incidents[0].ID != inc.ID {
+		t.Fatalf("unexpected incidents list: %+v", listResp)
+	}
+
+	// Query /api/v1/incidents/{id}
+	byIDReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/"+inc.ID, nil)
+	byIDRec := httptest.NewRecorder()
+	srv.ServeHTTP(byIDRec, byIDReq)
+	if byIDRec.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/incidents/%s status=%d", inc.ID, byIDRec.Code)
+	}
+}
+
+func TestLiveCollectMockAndSeedFromRunsDir(t *testing.T) {
+	now := time.Date(2026, 10, 23, 2, 0, 0, 0, time.UTC)
+	srv := New(Config{
+		Collect: func(_ context.Context, cfg live.Config) (*snapshot.Snapshot, error) {
+			return &snapshot.Snapshot{
+				Window: snapshot.Window{
+					From:          now.Add(-2 * time.Minute),
+					To:            now,
+					SkewTolerance: 30 * time.Second,
+				},
+				TargetTraceID: cfg.TraceID,
+				Pods: []snapshot.PodSnapshot{
+					{
+						Name:      "model-server-abc",
+						Namespace: "genai",
+						Workload:  "deployment/model-server",
+						Phase:     "Pending",
+					},
+				},
+				Events: []snapshot.K8sEvent{
+					{
+						Timestamp:    now.Add(-30 * time.Second),
+						Namespace:    "genai",
+						InvolvedKind: "Pod",
+						InvolvedName: "model-server-abc",
+						Type:         "Warning",
+						Reason:       "FailedScheduling",
+						Message:      "0/3 nodes are available: 3 Insufficient cpu.",
+					},
+				},
+			}, nil
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/diagnose?trace_id=trace-123", nil)
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/diagnose status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var inc IncidentRecord
+	if err := json.Unmarshal(rec.Body.Bytes(), &inc); err != nil {
+		t.Fatalf("unmarshal live incident: %v", err)
+	}
+	if inc.Report.Status != snapshot.StatusDiagnosed || inc.Report.TopCauses[0].Cause != snapshot.CauseUnschedulable {
+		t.Fatalf("expected unschedulable diagnosis, got %+v", inc.Report)
+	}
+
+	devDir := filepath.Join("..", "..", "eval", "runs", "dev")
+	n, err := srv.SeedFromRunsDir(context.Background(), devDir, 3)
+	if err != nil {
+		t.Fatalf("SeedFromRunsDir: %v", err)
+	}
+	if n != 3 {
+		t.Fatalf("SeedFromRunsDir loaded %d runs, want 3", n)
+	}
+}
