@@ -1,0 +1,158 @@
+{
+  "case_id": "readiness-fail--probe-path-404",
+  "fault": "readiness-fail",
+  "variant": "probe-path-404",
+  "expected_cause": "readiness_failing",
+  "target_workload": "deployment/model-server",
+  "window": {
+    "from_utc": "2026-10-23T00:59:30.573Z",
+    "to_utc": "2026-10-23T01:00:18.276Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 70052,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T00:59:30.573Z to 2026-10-23T01:00:18.276Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "<tool_call>\n{\"name\": \"fetch_pod_logs\", \"arguments\": {\"pod_name\": \"chat-api\", \"namespace\": \"genai\", \"start_time\": \"2026-10-23T00:59:30.573Z\", \"end_time\": \"2026-10-23T01:00:18.276Z\", \"limit\": 100, \"filter\": \"error\", \"exclude_filter\": \"health\"}}\n</tool_call>",
+    "num_llm_calls": 5,
+    "prompt_tokens": 51923,
+    "completion_tokens": 569,
+    "total_tokens": 52492,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"chat-api\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "chat-api",
+          "start_time": "2026-10-23T00:59:30.573Z",
+          "end_time": "2026-10-23T01:00:18.276Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.06091761589050293,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"model-server\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "model-server",
+          "start_time": "2026-10-23T00:59:30.573Z",
+          "end_time": "2026-10-23T01:00:18.276Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.03772258758544922,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "chat-api",
+          "namespace": "genai",
+          "start_time": "2026-10-23T00:59:30.573Z",
+          "end_time": "2026-10-23T01:00:18.276Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "model-server",
+          "namespace": "genai",
+          "start_time": "2026-10-23T00:59:30.573Z",
+          "end_time": "2026-10-23T01:00:18.276Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-20T16:51:33.489Z",
+      "to": "2026-10-20T16:57:06.561Z",
+      "baseline": {
+        "from": "2026-10-20T16:48:33.469Z",
+        "to": "2026-10-20T16:51:33.489Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-20T16:57:06.561Z",
+          "to": "2026-10-20T16:57:10.809Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "readiness-failing",
+        "cause": "readiness_failing",
+        "confidence": 0.94,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-6b46964796-qkvvp"
+        },
+        "summary": "Pod model-server-6b46964796-qkvvp (deployment/model-server) is Running but never became Ready (Readiness probe failed: HTTP probe failed with statuscode: 404)",
+        "evidence": [
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-20T16:57:06Z",
+            "summary": "Unhealthy on pod model-server-6b46964796-qkvvp: Readiness probe failed: HTTP probe failed with statuscode: 404"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-20T16:52:48Z",
+            "summary": "kube_pod_status_ready{condition=\"true\",pod=\"model-server-6b46964796-qkvvp\"} == 0 throughout the fault window"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T16:52:03Z",
+            "summary": "62 requests failed while model-server-6b46964796-qkvvp had no Ready endpoint"
+          }
+        ]
+      }
+    ]
+  }
+}

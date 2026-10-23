@@ -1,0 +1,163 @@
+{
+  "case_id": "oomkill--app-oom-40mi",
+  "fault": "oomkill",
+  "variant": "app-oom-40mi",
+  "expected_cause": "oom_killed",
+  "target_workload": "deployment/chat-api",
+  "window": {
+    "from_utc": "2026-10-23T00:54:25.126Z",
+    "to_utc": "2026-10-23T00:54:43.281Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 70405,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T00:54:25.126Z to 2026-10-23T00:54:43.281Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "<tool_call>\n{\"name\": \"fetch_pod_logs\", \"arguments\": {\"pod_name\": \"chat-api\", \"namespace\": \"genai\", \"start_time\": \"2026-10-23T00:54:25.126Z\", \"end_time\": \"2026-10-23T00:54:43.281Z\", \"limit\": 100, \"filter\": \"error\", \"exclude_filter\": \"health\"}}\n</tool_call>",
+    "num_llm_calls": 5,
+    "prompt_tokens": 51911,
+    "completion_tokens": 569,
+    "total_tokens": 52480,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"chat-api\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "chat-api",
+          "start_time": "2026-10-23T00:54:25.126Z",
+          "end_time": "2026-10-23T00:54:43.281Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.058418989181518555,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"model-server\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "model-server",
+          "start_time": "2026-10-23T00:54:25.126Z",
+          "end_time": "2026-10-23T00:54:43.281Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.0404660701751709,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "chat-api",
+          "namespace": "genai",
+          "start_time": "2026-10-23T00:54:25.126Z",
+          "end_time": "2026-10-23T00:54:43.281Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "model-server",
+          "namespace": "genai",
+          "start_time": "2026-10-23T00:54:25.126Z",
+          "end_time": "2026-10-23T00:54:43.281Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-22T01:18:01.543Z",
+      "to": "2026-10-22T01:23:05.059Z",
+      "baseline": {
+        "from": "2026-10-22T01:15:01.514Z",
+        "to": "2026-10-22T01:18:01.543Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-22T01:23:05.059Z",
+          "to": "2026-10-22T01:23:12.122Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "oom-killed",
+        "cause": "oom_killed",
+        "confidence": 0.96,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/chat-api",
+          "pod": "chat-api-6f86945d96-x98pw"
+        },
+        "summary": "Container in pod chat-api-6f86945d96-x98pw (deployment/chat-api) was OOMKilled (exit code 137) at memory limit 40Mi and restarted 5 times",
+        "evidence": [
+          {
+            "source": "k8s_pod",
+            "timestamp": "2026-10-22T01:20:57Z",
+            "summary": "pod chat-api-6f86945d96-x98pw container chat-api terminated with reason=OOMKilled (exitCode=137, restarts=5, memoryLimit=40Mi)"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-22T01:18:46Z",
+            "summary": "kube_pod_container_status_last_terminated_reason{pod=\"chat-api-6f86945d96-x98pw\",reason=\"OOMKilled\"} == 1"
+          },
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-22T01:22:25Z",
+            "summary": "Warning BackOff on pod chat-api-6f86945d96-x98pw: Back-off restarting failed container chat-api in pod chat-api-6f86945d96-x98pw_genai(758bd147-ab63-47c1-8ec5-bb0deecaaf0b)"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-22T01:18:05Z",
+            "summary": "61 requests failed in the analysis window while chat-api-6f86945d96-x98pw was crash-looping"
+          }
+        ]
+      }
+    ]
+  }
+}

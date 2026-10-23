@@ -1,0 +1,163 @@
+{
+  "case_id": "cold-start--model-download-10mbs",
+  "fault": "cold-start",
+  "variant": "model-download-10mbs",
+  "expected_cause": "cold_start",
+  "target_workload": "deployment/model-server",
+  "window": {
+    "from_utc": "2026-10-23T01:03:40.944Z",
+    "to_utc": "2026-10-23T01:04:41.200Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 76447,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T01:03:40.944Z to 2026-10-23T01:04:41.200Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "<tool_call>\n{\"name\": \"fetch_pod_logs\", \"arguments\": {\"pod_name\": \"chat-api\", \"namespace\": \"genai\", \"start_time\": \"2026-10-23T01:03:40.944Z\", \"end_time\": \"2026-10-23T01:04:41.200Z\", \"limit\": 100, \"filter\": \"error|metrics|ping\", \"exclude_filter\": \"health|metrics|ping\"}}\n</tool_call>",
+    "num_llm_calls": 5,
+    "prompt_tokens": 52063,
+    "completion_tokens": 609,
+    "total_tokens": 52672,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"chat-api\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "chat-api",
+          "start_time": "2026-10-23T01:03:40.944Z",
+          "end_time": "2026-10-23T01:04:41.200Z",
+          "filter": "error|metrics|ping",
+          "exclude_filter": "health|metrics|ping",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.049916982650756836,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"model-server\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "model-server",
+          "start_time": "2026-10-23T01:03:40.944Z",
+          "end_time": "2026-10-23T01:04:41.200Z",
+          "filter": "error|metrics|ping",
+          "exclude_filter": "health|metrics|ping",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.04020047187805176,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "chat-api",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:03:40.944Z",
+          "end_time": "2026-10-23T01:04:41.200Z",
+          "limit": 100,
+          "filter": "error|metrics|ping",
+          "exclude_filter": "health|metrics|ping"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "model-server",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:03:40.944Z",
+          "end_time": "2026-10-23T01:04:41.200Z",
+          "limit": 100,
+          "filter": "error|metrics|ping",
+          "exclude_filter": "health|metrics|ping"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-20T23:41:39.566Z",
+      "to": "2026-10-20T23:47:32.101Z",
+      "baseline": {
+        "from": "2026-10-20T23:38:39.539Z",
+        "to": "2026-10-20T23:41:39.566Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-20T23:47:32.101Z",
+          "to": "2026-10-20T23:48:06.123Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "cold-start",
+        "cause": "cold_start",
+        "confidence": 0.93,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-bd95fc88f-jn6b9"
+        },
+        "summary": "Slow cold start on pod model-server-bd95fc88f-jn6b9 (deployment/model-server): initContainer model fetch delayed main container start by 49s before becoming Ready",
+        "evidence": [
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-20T23:41:39Z",
+            "summary": "pod model-server-bd95fc88f-jn6b9 Scheduled at 2026-10-20T23:41:39Z"
+          },
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-20T23:42:28Z",
+            "summary": "pod model-server-bd95fc88f-jn6b9 cold start: initContainer model fetch delayed main container start by 49s"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T23:41:42Z",
+            "summary": "10 requests failed while model-server-bd95fc88f-jn6b9 was starting"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T23:42:38Z",
+            "summary": "serving recovered at 2026-10-20T23:42:38Z (59 requests succeeded afterwards)"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "case_id": "cpu-throttle--limit-300m",
+  "fault": "cpu-throttle",
+  "variant": "limit-300m",
+  "expected_cause": "cpu_throttling",
+  "target_workload": "deployment/model-server",
+  "window": {
+    "from_utc": "2026-10-23T00:51:38.425Z",
+    "to_utc": "2026-10-23T00:51:53.569Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 31360,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T00:51:38.425Z to 2026-10-23T00:51:53.569Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "The tool call output indicates that the query was invalid. The error message suggests that the `service_name` parameter is missing or is not a valid identifier. To fix this, ensure the `service_name` parameter is provided and is a valid identifier.",
+    "num_llm_calls": 2,
+    "prompt_tokens": 33278,
+    "completion_tokens": 215,
+    "total_tokens": 33493,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "tempo_fetch_traces_comparative_sample",
+        "toolset_name": "grafana/tempo",
+        "description": "Grafana: Simple Tempo Traces Comparison",
+        "status": "error",
+        "error": "Error fetching traces: Tempo API error 400: invalid TraceQL query: parse error at line 1, col 2: unknown identifier: service_name",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "service_name": "chat-api",
+          "pod_name": "model-server",
+          "namespace_name": "genai",
+          "deployment_name": "deployments",
+          "node_name": "chat-api",
+          "base_query": "service_name=\"chat-api\" and name=\"model-server\" and status=\"Running\"",
+          "sample_count": 3,
+          "start": "2026-10-23T00:51:38.425Z",
+          "end": "2026-10-23T00:51:53.569Z"
+        },
+        "elapsed_seconds": 0.005270719528198242,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-20T12:55:56.017Z",
+      "to": "2026-10-20T13:00:58.479Z",
+      "baseline": {
+        "from": "2026-10-20T12:52:55.993Z",
+        "to": "2026-10-20T12:55:56.017Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-20T13:00:58.479Z",
+          "to": "2026-10-20T13:01:03.57Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "cpu-throttling",
+        "cause": "cpu_throttling",
+        "confidence": 0.92,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-6c974f9667-57p7c"
+        },
+        "summary": "Pod model-server-6c974f9667-57p7c (deployment/model-server) is CFS CPU-throttled (93.3% of periods throttled), increasing p50 latency x6.61 (493 ms -> 3262 ms)",
+        "evidence": [
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-20T13:00:55Z",
+            "summary": "container_cpu_cfs_throttled_periods_total / container_cpu_cfs_periods_total = 0.933 (2774/2974 periods) on pod model-server-6c974f9667-57p7c"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T13:00:45Z",
+            "summary": "request p50 latency increased to 3261.5 ms vs 493.3 ms baseline (x6.61)"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-20T13:00:55Z",
+            "summary": "llamacpp:predicted_tokens_seconds dropped from 50.3 tok/s baseline to 12.8 tok/s avg (min 7.4 tok/s)"
+          },
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-20T12:55:56Z",
+            "summary": "ResizeStarted on pod model-server-6c974f9667-57p7c: Pod resize started: {\"containers\":[{\"name\":\"model-server\",\"resources\":{\"limits\":{\"cpu\":\"300m\",\"memory\":\"1536Mi\"},\"requests\":{\"cpu\":\"300m\",\"memory\":\"768Mi\"}}}],\"generation\":2}"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-20T12:56:59Z",
+            "summary": "6 requests failed or timed out while model-server-6c974f9667-57p7c was CPU-throttled"
+          }
+        ]
+      }
+    ]
+  }
+}

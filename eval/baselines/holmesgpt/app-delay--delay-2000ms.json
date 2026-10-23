@@ -1,0 +1,148 @@
+{
+  "case_id": "app-delay--delay-2000ms",
+  "fault": "app-delay",
+  "variant": "delay-2000ms",
+  "expected_cause": "unknown_no_infrastructure_cause",
+  "target_workload": "deployment/chat-api",
+  "window": {
+    "from_utc": "2026-10-23T01:11:33.396Z",
+    "to_utc": "2026-10-23T01:11:48.738Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 75132,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T01:11:33.396Z to 2026-10-23T01:11:48.738Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "<tool_call>\n{\"name\": \"fetch_pod_logs\", \"arguments\": {\"pod_name\": \"chat-api\", \"namespace\": \"genai\", \"start_time\": \"2026-10-23T01:11:33.396Z\", \"end_time\": \"2026-10-23T01:11:48.738Z\", \"limit\": 100, \"filter\": \"error|fail\", \"exclude_filter\": \"health|metrics|ping\"}}\n</tool_call>",
+    "num_llm_calls": 5,
+    "prompt_tokens": 52037,
+    "completion_tokens": 599,
+    "total_tokens": 52636,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"chat-api\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "chat-api",
+          "start_time": "2026-10-23T01:11:33.396Z",
+          "end_time": "2026-10-23T01:11:48.738Z",
+          "filter": "error|fail",
+          "exclude_filter": "health|metrics|ping",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.06290817260742188,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"model-server\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "model-server",
+          "start_time": "2026-10-23T01:11:33.396Z",
+          "end_time": "2026-10-23T01:11:48.738Z",
+          "filter": "error|fail",
+          "exclude_filter": "health|metrics|ping",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.037195682525634766,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "chat-api",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:11:33.396Z",
+          "end_time": "2026-10-23T01:11:48.738Z",
+          "limit": 100,
+          "filter": "error|fail",
+          "exclude_filter": "health|metrics|ping"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "model-server",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:11:33.396Z",
+          "end_time": "2026-10-23T01:11:48.738Z",
+          "limit": 100,
+          "filter": "error|fail",
+          "exclude_filter": "health|metrics|ping"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-21T14:16:49.987Z",
+      "to": "2026-10-21T14:21:51Z",
+      "baseline": {
+        "from": "2026-10-21T14:13:49.957Z",
+        "to": "2026-10-21T14:16:49.987Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-21T14:21:51Z",
+          "to": "2026-10-21T14:21:53.561Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "unknown-no-infrastructure-cause",
+        "cause": "unknown_no_infrastructure_cause",
+        "confidence": 0.85,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/chat-api",
+          "pod": "chat-api-69fb959bd4-2lst4"
+        },
+        "summary": "Application pre-inference delay in deployment/chat-api (trace gap HTTP span start -> GenAI span start: p50=2001 ms, p90=2001 ms, 51/51 traces >= 500 ms) with no infrastructure or configuration cause",
+        "evidence": [
+          {
+            "source": "trace",
+            "timestamp": "2026-10-21T14:21:48.715224995Z",
+            "summary": "trace gap HTTP span start -> GenAI span start: p50=2001 ms, p90=2001 ms, max=2001 ms (51/51 traces >= 500 ms); no Kubernetes event, resource metric, or configuration change in genai"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "case_id": "config-regression--threads-1",
+  "fault": "config-regression",
+  "variant": "threads-1",
+  "expected_cause": "config_change",
+  "target_workload": "deployment/model-server",
+  "window": {
+    "from_utc": "2026-10-23T01:06:04.156Z",
+    "to_utc": "2026-10-23T01:06:24.264Z"
+  },
+  "holmesgpt": {
+    "image": "us-central1-docker.pkg.dev/genuine-flight-317411/devel/holmes:0.45.0@sha256:a6edc27204a8725d45419863474c41e2822333e938a8e79fafb99068131629c3",
+    "model": "openai/qwen2.5-0.5b-instruct",
+    "llm_api_base": "http://127.0.0.1:18081/v1",
+    "exit_code": 0,
+    "query_ms": 71344,
+    "prompt": "Investigate namespace genai (deployments chat-api and model-server). Users report that chat completions are currently failing or slow (window 2026-10-23T01:06:04.156Z to 2026-10-23T01:06:24.264Z). Identify whether there is an active issue in genai, which pod/deployment is affected, and the specific root cause.",
+    "result": "<tool_call>\n{\"name\": \"fetch_pod_logs\", \"arguments\": {\"pod_name\": \"chat-api\", \"namespace\": \"genai\", \"start_time\": \"2026-10-23T01:06:04.156Z\", \"end_time\": \"2026-10-23T01:06:24.264Z\", \"limit\": 100, \"filter\": \"error\", \"exclude_filter\": \"health\"}}\n</tool_call>",
+    "num_llm_calls": 5,
+    "prompt_tokens": 51892,
+    "completion_tokens": 569,
+    "total_tokens": 52461,
+    "finish_reason": "stop",
+    "tool_calls": [
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"chat-api\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "chat-api",
+          "start_time": "2026-10-23T01:06:04.156Z",
+          "end_time": "2026-10-23T01:06:24.264Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.0444178581237793,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "error: error from server (NotFound): pods \"model-server\" not found in namespace \"genai\"",
+        "return_code": 1,
+        "invocation": null,
+        "params": {
+          "namespace": "genai",
+          "pod_name": "model-server",
+          "start_time": "2026-10-23T01:06:04.156Z",
+          "end_time": "2026-10-23T01:06:24.264Z",
+          "filter": "error",
+          "exclude_filter": "health",
+          "limit": 100
+        },
+        "elapsed_seconds": 0.03927493095397949,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=chat-api, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "chat-api",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:06:04.156Z",
+          "end_time": "2026-10-23T01:06:24.264Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      },
+      {
+        "tool_name": "fetch_pod_logs",
+        "toolset_name": "kubernetes/logs",
+        "description": "Fetch Logs (pod=model-server, namespace=genai)",
+        "status": "error",
+        "error": "Refusing to run this tool call because it has already been called during this session with the exact same parameters.\nMove on with your investigation to a different tool or change the parameter values.",
+        "return_code": null,
+        "invocation": null,
+        "params": {
+          "pod_name": "model-server",
+          "namespace": "genai",
+          "start_time": "2026-10-23T01:06:04.156Z",
+          "end_time": "2026-10-23T01:06:24.264Z",
+          "limit": 100,
+          "filter": "error",
+          "exclude_filter": "health"
+        },
+        "elapsed_seconds": null,
+        "data_preview": ""
+      }
+    ]
+  },
+  "kubepilot": {
+    "status": "diagnosed",
+    "window": {
+      "from": "2026-10-21T06:19:26.155Z",
+      "to": "2026-10-21T06:24:29.76Z",
+      "baseline": {
+        "from": "2026-10-21T06:16:26.123Z",
+        "to": "2026-10-21T06:19:26.155Z",
+        "reason": "baseline"
+      },
+      "excluded": [
+        {
+          "from": "2026-10-21T06:24:29.76Z",
+          "to": "2026-10-21T06:25:04.423Z",
+          "reason": "lab reset outage"
+        }
+      ],
+      "skewTolerance": 30000000000
+    },
+    "topCauses": [
+      {
+        "rule": "config-change",
+        "cause": "config_change",
+        "confidence": 0.88,
+        "component": {
+          "namespace": "genai",
+          "kind": "Pod",
+          "workload": "deployment/model-server",
+          "pod": "model-server-58dc78d5f6-7rmjw"
+        },
+        "summary": "Rollout of deployment/model-server (pod model-server-58dc78d5f6-7rmjw) degraded serving without resource pressure: p50 latency x1.63 (498 ms -> 813 ms)",
+        "evidence": [
+          {
+            "source": "k8s_event",
+            "timestamp": "2026-10-21T06:19:26Z",
+            "summary": "ScalingReplicaSet on Deployment/model-server: Scaled down replica set model-server-5bd4cc46f9 from 1 to 0"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-21T06:24:26Z",
+            "summary": "no resource pressure on model-server-58dc78d5f6-7rmjw: CFS throttled fraction 0.000 (0/1802 periods), CPU usage 0.52 cores, 0 HTTP errors after rollout"
+          },
+          {
+            "source": "prometheus",
+            "timestamp": "2026-10-21T06:24:26Z",
+            "summary": "llamacpp:predicted_tokens_seconds dropped from 46.7 tok/s baseline to 32.4 tok/s avg (min 29.3 tok/s)"
+          },
+          {
+            "source": "request_log",
+            "timestamp": "2026-10-21T06:24:12Z",
+            "summary": "request p50 latency increased to 813.0 ms after rollout vs 497.5 ms baseline (x1.63)"
+          }
+        ]
+      }
+    ]
+  }
+}
