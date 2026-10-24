@@ -405,4 +405,3 @@ func TestSSECompareAlertmanagerBundleAndSimulate(t *testing.T) {
 		t.Fatalf("unexpected GitOpsPRPlan: %+v", prPlan)
 	}
 }
-

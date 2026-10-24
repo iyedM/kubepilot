@@ -1981,4 +1981,3 @@ patches:
 		ArgoCDVerifyCommand:     argoCmd,
 	}
 }
-
