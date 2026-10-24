@@ -592,6 +592,9 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(rel, "/explain"):
 		subAction = "explain"
 		rel = strings.TrimSuffix(rel, "/explain")
+	case strings.HasSuffix(rel, "/gitops-pr"):
+		subAction = "gitops-pr"
+		rel = strings.TrimSuffix(rel, "/gitops-pr")
 	}
 
 	if subAction == "explain" {
@@ -658,6 +661,9 @@ func (s *Server) handleIncidentByID(w http.ResponseWriter, r *http.Request) {
 			req.Model = r.URL.Query().Get("model")
 		}
 		writeJSON(w, http.StatusOK, BuildCopilotExplanation(r.Context(), inc, req))
+		return
+	case "gitops-pr":
+		writeJSON(w, http.StatusOK, BuildGitOpsPRPlan(inc))
 		return
 	case "bundle":
 		tgz, err := BuildIncidentBundleTarGz(inc)

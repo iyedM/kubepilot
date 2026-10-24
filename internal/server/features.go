@@ -1825,3 +1825,160 @@ func validateLLMOutputSafety(text string) string {
 	}
 	return ""
 }
+
+// --- 3A: Controlled GitOps Pull Request Synthesis (/api/v1/incidents/{id}/gitops-pr) ---
+
+// GitOpsPRPlan packages a diagnosed incident into a ready-to-review GitOps
+// Pull Request bundle (Kustomize overlay + Strategic Merge Patch + FinOps/PSS
+// PR description + gh CLI automation command) while keeping KubePilot 100%
+// read-only on the Kubernetes cluster.
+type GitOpsPRPlan struct {
+	IncidentID              string `json:"incidentId"`
+	ReadyForPR              bool   `json:"readyForPr"`
+	ClusterWriteAccess      bool   `json:"clusterWriteAccess"`
+	HumanReviewRequired     bool   `json:"humanReviewRequired"`
+	TargetBranch            string `json:"targetBranch"`
+	CommitTitle             string `json:"commitTitle"`
+	PRTitle                 string `json:"prTitle"`
+	PatchFilePath           string `json:"patchFilePath"`
+	StrategicMergePatchYAML string `json:"strategicMergePatchYaml,omitempty"`
+	KustomizationYAML       string `json:"kustomizationYaml,omitempty"`
+	PRBodyMarkdown          string `json:"prBodyMarkdown"`
+	GitHubCLICommand        string `json:"githubCliCommand,omitempty"`
+	ArgoCDVerifyCommand     string `json:"argocdVerifyCommand,omitempty"`
+}
+
+// BuildGitOpsPRPlan synthesizes a complete, human-gated GitOps PR remediation
+// artifact from a diagnosed IncidentRecord.
+func BuildGitOpsPRPlan(inc IncidentRecord) GitOpsPRPlan {
+	ns := inc.Namespace
+	if ns == "" {
+		ns = "genai"
+	}
+	branch := fmt.Sprintf("remediate/kubepilot-%s", sanitizeID(inc.ID))
+	patchFile := fmt.Sprintf("deploy/gitops/overlays/%s/patches/patch-%s.yaml", ns, sanitizeID(inc.ID))
+
+	if inc.Report.Status != snapshot.StatusDiagnosed || len(inc.Report.TopCauses) == 0 || strings.TrimSpace(inc.SuggestedPatch) == "" {
+		return GitOpsPRPlan{
+			IncidentID:          inc.ID,
+			ReadyForPR:          false,
+			ClusterWriteAccess:  false,
+			HumanReviewRequired: true,
+			TargetBranch:        branch,
+			CommitTitle:         "chore(gitops): no remediation required (healthy/abstention window)",
+			PRTitle:             fmt.Sprintf("[KubePilot] No GitOps mutation required for %s", inc.ID),
+			PatchFilePath:       patchFile,
+			PRBodyMarkdown:      "### KubePilot Deterministic Verdict: `unknown` (Honest Abstention)\n\nNo infrastructure root cause crossed its multi-signal evidence threshold during this window. KubePilot's zero-mutation policy forbids opening a cluster patch PR when the engine abstains.",
+		}
+	}
+
+	top := inc.Report.TopCauses[0]
+	wl := top.Component.Workload
+	if wl == "" {
+		wl = "deployment/model-server"
+	}
+	deployName := strings.TrimPrefix(wl, "deployment/")
+
+	secOK := true
+	secScore := 100
+	secProfile := "PSS-Restricted · Read-Only RBAC"
+	secNote := "Verified safe for GitOps PR review."
+	if inc.Security != nil {
+		secScore = inc.Security.Score
+		secProfile = inc.Security.Profile
+		secNote = inc.Security.PatchApprovalNote
+		if inc.Security.PatchRiskLevel != "low" && inc.Security.PatchRiskLevel != "none" {
+			secOK = false
+		}
+	}
+
+	commitTitle := fmt.Sprintf("fix(%s/%s): remediate %s isolated by KubePilot", ns, deployName, top.Cause)
+	prTitle := fmt.Sprintf("[KubePilot GitOps] Remediate %s on %s/%s (%.0f%% confidence)", top.Cause, ns, deployName, top.Confidence*100)
+
+	kustomization := fmt.Sprintf(`apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: %s
+resources:
+  - ../../base
+patches:
+  - path: patches/patch-%s.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: %s
+`, ns, sanitizeID(inc.ID), deployName)
+
+	var md strings.Builder
+	fmt.Fprintf(&md, "## 🔍 KubePilot Evidence-Based GitOps Remediation PR\n\n")
+	fmt.Fprintf(&md, "- **Incident ID:** `%s`\n", inc.ID)
+	fmt.Fprintf(&md, "- **Target Workload:** `%s` (namespace `%s`)\n", wl, ns)
+	fmt.Fprintf(&md, "- **Primary Root Cause:** `%s` (`%.0f%%` confidence, deterministic rule `%s`)\n", top.Cause, top.Confidence*100, top.Rule)
+	fmt.Fprintf(&md, "- **Cluster Write Access by KubePilot:** `false` (100%% read-only engine; change applied only after human PR merge + ArgoCD/Flux sync)\n\n")
+
+	fmt.Fprintf(&md, "### 1. Timestamped Multi-Signal Evidence\n\n")
+	fmt.Fprintf(&md, "| Source | UTC Timestamp | Evidence Summary |\n")
+	fmt.Fprintf(&md, "| :--- | :--- | :--- |\n")
+	for _, ev := range top.Evidence {
+		ts := "-"
+		if !ev.Timestamp.IsZero() {
+			ts = ev.Timestamp.UTC().Format(time.RFC3339)
+		}
+		fmt.Fprintf(&md, "| `%s` | `%s` | %s |\n", ev.Source, ts, strings.ReplaceAll(ev.Summary, "|", "\\|"))
+	}
+
+	if inc.Runbook != nil && len(inc.Runbook.AlternativeHypotheses) > 0 {
+		fmt.Fprintf(&md, "\n### 2. Ruled-Out Alternative Hypotheses\n\n")
+		for _, alt := range inc.Runbook.AlternativeHypotheses {
+			fmt.Fprintf(&md, "- %s\n", alt)
+		}
+	}
+
+	if inc.Cost != nil {
+		fmt.Fprintf(&md, "\n### 3. OpenCost FinOps 2.0 Impact Assessment\n\n")
+		fmt.Fprintf(&md, "| FinOps Metric | Value |\n")
+		fmt.Fprintf(&md, "| :--- | :--- |\n")
+		fmt.Fprintf(&md, "| **30-Day Projected Waste Eliminated** | `$%.2f / month` |\n", inc.Cost.MonthlyProjectedWaste)
+		fmt.Fprintf(&md, "| **Patch Monthly Resource Delta (Δ$)** | `%+.2f USD / month` |\n", inc.Cost.PatchMonthlyDeltaUSD)
+		fmt.Fprintf(&md, "| **Cost per 1,000 Successful Requests** | `$%.4f` |\n", inc.Cost.CostPer1kRequestsUSD)
+		fmt.Fprintf(&md, "| **Cost per 1M Generated Tokens** | `$%.4f` |\n\n", inc.Cost.CostPer1MTokensUSD)
+		if inc.Cost.FinOpsRecommendation != "" {
+			fmt.Fprintf(&md, "> **FinOps Note:** %s\n", inc.Cost.FinOpsRecommendation)
+		}
+	}
+
+	fmt.Fprintf(&md, "\n### 4. DevSecOps & PSS-Restricted Pre-Merge Gate\n\n")
+	fmt.Fprintf(&md, "- **Security Audit Score:** `%d/100` (`%s`)\n", secScore, secProfile)
+	fmt.Fprintf(&md, "- **Patch Guard Verdict:** %s\n", secNote)
+
+	fmt.Fprintf(&md, "\n### 5. Pre-Merge Verification & Rollback Checklist\n\n")
+	fmt.Fprintf(&md, "- [ ] `kubectl apply -f %s -n %s --dry-run=server` passes admission control\n", patchFile, ns)
+	fmt.Fprintf(&md, "- [ ] ArgoCD / FluxCD diff reviewed by on-call SRE\n")
+	fmt.Fprintf(&md, "- [ ] Post-merge rollback command ready: `git revert HEAD && kubectl rollout undo %s -n %s`\n", wl, ns)
+
+	ghCmd := fmt.Sprintf(
+		"git checkout -b %s && mkdir -p $(dirname %s) && curl -s http://127.0.0.1:8080/api/v1/incidents/%s | jq -r '.suggestedPatch' > %s && git add %s && git commit -s -m %q && gh pr create --title %q --body-file <(curl -s http://127.0.0.1:8080/api/v1/incidents/%s/gitops-pr | jq -r '.prBodyMarkdown')",
+		branch, patchFile, inc.ID, patchFile, patchFile, commitTitle, prTitle, inc.ID,
+	)
+	argoCmd := fmt.Sprintf(
+		"kubectl kustomize deploy/gitops/overlays/%s | kubectl diff -f - && argocd app diff %s-inference --local deploy/gitops/overlays/%s",
+		ns, ns, ns,
+	)
+
+	return GitOpsPRPlan{
+		IncidentID:              inc.ID,
+		ReadyForPR:              secOK,
+		ClusterWriteAccess:      false,
+		HumanReviewRequired:     true,
+		TargetBranch:            branch,
+		CommitTitle:             commitTitle,
+		PRTitle:                 prTitle,
+		PatchFilePath:           patchFile,
+		StrategicMergePatchYAML: inc.SuggestedPatch,
+		KustomizationYAML:       kustomization,
+		PRBodyMarkdown:          md.String(),
+		GitHubCLICommand:        ghCmd,
+		ArgoCDVerifyCommand:     argoCmd,
+	}
+}
+

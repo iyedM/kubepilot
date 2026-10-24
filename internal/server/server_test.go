@@ -389,4 +389,20 @@ func TestSSECompareAlertmanagerBundleAndSimulate(t *testing.T) {
 	if !strings.Contains(expBlocked.LLMSafetyStatus, "blocked-by-guardrail") || expBlocked.LLMExplanation != "" {
 		t.Fatalf("expected guardrail to block unsafe LLM output, got: %+v", expBlocked)
 	}
+
+	// Verify Controlled GitOps PR Synthesis endpoint (/gitops-pr)
+	prReq := httptest.NewRequest(http.MethodGet, "/api/v1/incidents/dev--cpu-throttle--limit-300m--r1/gitops-pr", nil)
+	prRec := httptest.NewRecorder()
+	srv.ServeHTTP(prRec, prReq)
+	if prRec.Code != http.StatusOK {
+		t.Fatalf("GET /gitops-pr status=%d body=%s", prRec.Code, prRec.Body.String())
+	}
+	var prPlan GitOpsPRPlan
+	if err := json.Unmarshal(prRec.Body.Bytes(), &prPlan); err != nil {
+		t.Fatalf("unmarshal GitOpsPRPlan: %v", err)
+	}
+	if !prPlan.ReadyForPR || prPlan.ClusterWriteAccess || !prPlan.HumanReviewRequired || !strings.Contains(prPlan.KustomizationYAML, "kind: Kustomization") || !strings.Contains(prPlan.PRBodyMarkdown, "PSS-Restricted") {
+		t.Fatalf("unexpected GitOpsPRPlan: %+v", prPlan)
+	}
 }
+
