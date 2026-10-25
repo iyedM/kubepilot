@@ -53,3 +53,12 @@ eval/runs/**/pods.json
 eval/runs/**/loadgen.jsonl
 eval/runs/**/traces.jsonl
 eval/runs/**/metrics.json
+
+# Terraform local state and provider cache
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+

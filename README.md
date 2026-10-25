@@ -31,7 +31,7 @@ and outputs the **top-3 probable causes**, each with **timestamped evidence**, a
 
 ## Instant Install & Quickstart
 
-### Option 1: Install in Your Kubernetes Cluster (Helm Chart & `kubectl why-slow` Plugin)
+### Option 1: Install in Your Kubernetes Cluster (Helm, Terraform IaC & `kubectl why-slow` Plugin)
 
 ```sh
 # A. Deploy the read-only KubePilot server, Web Console & GenAIIncident CRD via Helm:
@@ -39,11 +39,14 @@ helm upgrade --install kubepilot ./charts/kubepilot \
   --namespace kubepilot-system --create-namespace \
   --set targetNamespace=genai
 
-# B. Or install the native kubectl plugin (kubectl why-slow) via Go / Krew manifest:
+# B. Or provision via Terraform IaC (with PSS-Restricted namespaces, ResourceQuota & Zero-Trust NetworkPolicy):
+terraform -chdir=deploy/terraform init && terraform -chdir=deploy/terraform apply
+
+# C. Or install the native kubectl plugin (kubectl why-slow) via Go / Krew manifest:
 go install github.com/iyedM/kubepilot/cmd/why-slow@latest
 kubectl krew install --manifest=packaging/krew/why-slow.yaml
 
-# C. Diagnose any live Kubernetes namespace over the last 5 minutes (requires only get/list/watch RBAC):
+# D. Diagnose any live Kubernetes namespace over the last 5 minutes (requires only get/list/watch RBAC):
 kubectl why-slow --namespace genai --prometheus-url http://localhost:9090 --tempo-url http://localhost:3200
 ```
 
