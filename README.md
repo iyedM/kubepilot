@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://doi.org/10.5281/zenodo.23844969"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23844969.svg" alt="DOI: 10.5281/zenodo.23844969"/></a>
   <a href="https://github.com/iyedM/kubepilot/actions/workflows/ci.yml"><img src="https://github.com/iyedM/kubepilot/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
   <a href="https://github.com/iyedM/kubepilot/releases"><img src="https://img.shields.io/github/v/release/iyedM/kubepilot?label=release&amp;color=0ea5e9" alt="Release"/></a>
   <a href="go.mod"><img src="https://img.shields.io/badge/Go-1.26%20(Zero%20External%20Deps)-00ADD8?logo=go&amp;logoColor=white" alt="Go 1.26"/></a>
